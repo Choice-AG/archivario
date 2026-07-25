@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\goiza\\\\OneDrive\\\\Documentos\\\\Github\\\\archivario\\\\.claude\")",
+      "Bash(xargs wc -l)",
+      "WebSearch"
+    ]
+  }
+}
