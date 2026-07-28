@@ -25,6 +25,7 @@ const DEFAULT_FILTERS = { search: "", types: [], statuses: [], priorities: [], s
 function App_MediaTracker() {
   const [session, setSession] = useState(undefined); // undefined = comprobando, null = sin sesión
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [items, setItems] = useState([]);
   const [sagas, setSagas] = useState([]);
   const [darkMode, setDarkMode] = useState(true);
@@ -46,28 +47,34 @@ function App_MediaTracker() {
   useEffect(() => {
     if (!session) return;
     setReady(false);
+    setLoadError("");
     (async () => {
-      const userId = session.user.id;
-      const [it, sg, prefs] = await Promise.all([
-        fetchItems(userId),
-        fetchSagas(userId),
-        storageLoad(STORAGE_KEYS.prefs, { darkMode: true, display: "grid" }),
-      ]);
-      const isFirstRun = it.length === 0 && sg.length === 0;
-      if (isFirstRun) {
-        await Promise.all([
-          upsertItems(userId, SEED_ITEMS),
-          ...SEED_SAGAS.map((s) => upsertSaga(userId, s)),
+      try {
+        const userId = session.user.id;
+        const [it, sg, prefs] = await Promise.all([
+          fetchItems(userId),
+          fetchSagas(userId),
+          storageLoad(STORAGE_KEYS.prefs, { darkMode: true, display: "grid" }),
         ]);
-        setItems(SEED_ITEMS);
-        setSagas(SEED_SAGAS);
-      } else {
-        setItems(it);
-        setSagas(sg);
+        const isFirstRun = it.length === 0 && sg.length === 0;
+        if (isFirstRun) {
+          await Promise.all([
+            upsertItems(userId, SEED_ITEMS),
+            ...SEED_SAGAS.map((s) => upsertSaga(userId, s)),
+          ]);
+          setItems(SEED_ITEMS);
+          setSagas(SEED_SAGAS);
+        } else {
+          setItems(it);
+          setSagas(sg);
+        }
+        setDarkMode(prefs.darkMode);
+        setDisplay(prefs.display || "grid");
+        setReady(true);
+      } catch (err) {
+        console.error(err);
+        setLoadError(err.message || "No se pudo cargar tu colección.");
       }
-      setDarkMode(prefs.darkMode);
-      setDisplay(prefs.display || "grid");
-      setReady(true);
     })();
   }, [session]);
 
@@ -94,7 +101,7 @@ function App_MediaTracker() {
   };
   const deleteItem = (id) => {
     setItems(items.filter((p) => p.id !== id));
-    deleteItemRemote(id).catch(console.error);
+    deleteItemRemote(userId, id).catch(console.error);
     setItemModal(null);
   };
 
@@ -108,7 +115,7 @@ function App_MediaTracker() {
     const clearedItems = items.map((it) => (it.sagaId === id ? { ...it, sagaId: "" } : it));
     setSagas(sagas.filter((p) => p.id !== id));
     setItems(clearedItems);
-    deleteSagaRemote(id).catch(console.error);
+    deleteSagaRemote(userId, id).catch(console.error);
     upsertItems(userId, clearedItems.filter((it) => it.sagaId === "")).catch(console.error);
     setSagaModal(null);
     setNav({ tab: "sagas" });
@@ -185,6 +192,16 @@ function App_MediaTracker() {
 
   if (!session) {
     return <AuthScreen />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="mt-app mt-loading">
+        <p style={{ color: "var(--stamp)" }}>{loadError}</p>
+        <button className="mt-tab" onClick={() => setSession({ ...session })}>Reintentar</button>
+        <button className="mt-tab" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
+      </div>
+    );
   }
 
   if (!ready) {
