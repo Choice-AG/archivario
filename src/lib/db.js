@@ -1,5 +1,7 @@
 import { supabase } from "./supabaseClient";
 
+const ON_CONFLICT = "id,user_id";
+
 export async function fetchItems(userId) {
   const { data, error } = await supabase.from("items").select("data").eq("user_id", userId);
   if (error) throw error;
@@ -15,7 +17,7 @@ export async function fetchSagas(userId) {
 export async function upsertItem(userId, item) {
   const { error } = await supabase
     .from("items")
-    .upsert({ id: item.id, user_id: userId, data: item, updated_at: new Date().toISOString() });
+    .upsert({ id: item.id, user_id: userId, data: item, updated_at: new Date().toISOString() }, { onConflict: ON_CONFLICT });
   if (error) throw error;
 }
 
@@ -24,23 +26,23 @@ export async function upsertItems(userId, items) {
   const rows = items.map((item) => ({
     id: item.id, user_id: userId, data: item, updated_at: new Date().toISOString(),
   }));
-  const { error } = await supabase.from("items").upsert(rows);
+  const { error } = await supabase.from("items").upsert(rows, { onConflict: ON_CONFLICT });
   if (error) throw error;
 }
 
-export async function deleteItemRemote(id) {
-  const { error } = await supabase.from("items").delete().eq("id", id);
+export async function deleteItemRemote(userId, id) {
+  const { error } = await supabase.from("items").delete().eq("id", id).eq("user_id", userId);
   if (error) throw error;
 }
 
 export async function upsertSaga(userId, saga) {
   const { error } = await supabase
     .from("sagas")
-    .upsert({ id: saga.id, user_id: userId, data: saga, updated_at: new Date().toISOString() });
+    .upsert({ id: saga.id, user_id: userId, data: saga, updated_at: new Date().toISOString() }, { onConflict: ON_CONFLICT });
   if (error) throw error;
 }
 
-export async function deleteSagaRemote(id) {
-  const { error } = await supabase.from("sagas").delete().eq("id", id);
+export async function deleteSagaRemote(userId, id) {
+  const { error } = await supabase.from("sagas").delete().eq("id", id).eq("user_id", userId);
   if (error) throw error;
 }

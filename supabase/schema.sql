@@ -1,20 +1,29 @@
--- Archivario · esquema de base de datos
+-- Archivario · esquema de base de datos (v2 - clave primaria compuesta)
 -- Ejecuta esto en Supabase Dashboard -> SQL Editor -> New query -> Run
+--
+-- ATENCION: esto borra las tablas items/sagas si ya existian (y sus datos) para
+-- poder recrearlas con la clave primaria correcta. Solo hay datos de prueba por
+-- ahora, así que es seguro ejecutarlo.
 
-create table if not exists public.sagas (
-  id text primary key,
+drop table if exists public.items cascade;
+drop table if exists public.sagas cascade;
+
+create table public.sagas (
+  id text not null,
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   data jsonb not null,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  primary key (id, user_id)
 );
 
-create table if not exists public.items (
-  id text primary key,
+create table public.items (
+  id text not null,
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   data jsonb not null,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  primary key (id, user_id)
 );
 
 create index if not exists sagas_user_id_idx on public.sagas(user_id);
