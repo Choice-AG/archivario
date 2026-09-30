@@ -35,12 +35,6 @@
       "collectionGroup": "catalogCache",
       "fieldPath": "value",
       "indexes": []
-    },
-    {
-      "collectionGroup": "catalogCache",
-      "fieldPath": "expireAt",
-      "ttl": true,
-      "indexes": []
     }
   ]
 }

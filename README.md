@@ -54,7 +54,7 @@ Registra una aplicación Confidential en Twitch y activa 2FA. Conserva Client ID
 
 Las consultas al catálogo (búsqueda, ficha, tiempos, saga) requieren login. Los resultados públicos se cachean 24 horas en Firestore y una respuesta ya cacheada no consume límite. Solo las consultas que llegan a IGDB cuentan: 20 por minuto por usuario y 150 por minuto en total. Sin IGDB puedes añadir juegos manualmente.
 
-Los documentos de caché incluyen `expireAt`. `firestore.indexes.json` activa una política TTL sobre ese campo y excluye de índices los arrays grandes de la biblioteca; publícalo con `firebase deploy --only firestore:indexes`. Los documentos de caché antiguos sin `expireAt` pueden borrarse a mano.
+La TTL de Firestore requiere facturación, así que en Spark el servidor borra de vez en cuando (en ~5 % de las consultas a IGDB) hasta 20 documentos de caché caducados. `firestore.indexes.json` excluye de índices los arrays grandes de la biblioteca y el contenido de la caché; publícalo con `firebase deploy --only firestore:indexes`.
 
 ## Funcionalidad
 
