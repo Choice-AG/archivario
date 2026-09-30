@@ -32,7 +32,7 @@ import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
-import { useLibraryFilters } from "./library-filters";
+import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Modal, type Execute } from "./shared";
 
 export function ArchivarioApp({
@@ -170,7 +170,7 @@ function Dashboard({
     if (gameId || view === "Sagas") backToLibrary();
     setView(name);
     filterState.setPage(1);
-    if (name === "Próximos") filterState.reset({ ownership: "all" });
+    if (name === "Próximos") filterState.reset(viewDefaults("Próximos"));
   };
   useEffect(() => {
     const read = () => {
@@ -402,7 +402,13 @@ function Dashboard({
                   <p>
                     {view === "Próximos"
                       ? "Todos tus juegos pendientes y tus próximos favoritos. Sin fechas límite."
-                      : "Un lugar para volver a tus mundos favoritos."}
+                      : view === "Diario"
+                        ? "Cada día que jugaste, con lo que quisiste recordar."
+                        : view === "Calendario"
+                          ? "Mira de un vistazo qué jugaste cada día del mes."
+                          : view === "Favoritos"
+                            ? "Los juegos que marcaste con el corazón."
+                            : "Un lugar para volver a tus mundos favoritos."}
                   </p>
                 </div>
                 <Button onClick={() => setModal({ kind: "add" })}>
@@ -436,20 +442,22 @@ function Dashboard({
                 <section className="panel">
                   <div className="section-header">
                     <h2>Tu diario</h2>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setModal({ kind: "bulk" })}
-                    >
-                      Registrar varios días
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() =>
-                        setModal({ kind: "activity", date: today })
-                      }
-                    >
-                      <Plus size={16} /> Registrar un día
-                    </Button>
+                    <div className="section-actions">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setModal({ kind: "bulk" })}
+                      >
+                        Registrar varios días
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          setModal({ kind: "activity", date: today })
+                        }
+                      >
+                        <Plus size={16} /> Registrar un día
+                      </Button>
+                    </div>
                   </div>
                   <Recent
                     state={state}

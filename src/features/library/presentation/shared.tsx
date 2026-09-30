@@ -33,7 +33,7 @@ export function Modal({
         <DialogTitle className="text-2xl font-semibold tracking-tight pr-8">
           {title}
         </DialogTitle>
-        <DialogDescription className="mt-2 mb-6 text-sm text-slate-400">
+        <DialogDescription className="dialog-description">
           {description ?? "Tu biblioteca personal, a tu ritmo."}
         </DialogDescription>
         {children}

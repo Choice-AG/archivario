@@ -29,8 +29,14 @@ export const defaultFilters: LibraryFilters = {
   sort: "recent",
 };
 
-// Filtros del panel que difieren del valor por defecto (sin búsqueda, estado ni orden).
-export function countActiveFilters(f: LibraryFilters) {
+export function viewDefaults(view: string): LibraryFilters {
+  return view === "Próximos"
+    ? { ...defaultFilters, ownership: "all" }
+    : defaultFilters;
+}
+// Filtros del panel que difieren del valor por defecto de la vista.
+export function countActiveFilters(f: LibraryFilters, view = "Biblioteca") {
+  const defaults = viewDefaults(view);
   return (
     [
       "platform",
@@ -41,7 +47,7 @@ export function countActiveFilters(f: LibraryFilters) {
       "ratingFilter",
       "searchSpoilers",
     ] as const
-  ).filter((key) => f[key] !== defaultFilters[key]).length;
+  ).filter((key) => f[key] !== defaults[key]).length;
 }
 
 export function useLibraryFilters() {

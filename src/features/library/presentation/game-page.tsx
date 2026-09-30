@@ -410,6 +410,15 @@ export function GamePage({
               Tiempos: "Ajustar estimaciones",
             }[editor] ?? editor
           }
+          description={
+            {
+              Ficha: "Título, plataformas, tiendas y tu valoración.",
+              Notas: "Tu reseña y las notas con spoilers, siempre privadas.",
+              Partidas:
+                "Cada partida o rejugada, con su estado y dónde lo dejaste.",
+              Tiempos: "Cuánto dura el juego según IGDB o según tú.",
+            }[editor]
+          }
           onClose={() => setEditor(undefined)}
         >
           <GameDetails

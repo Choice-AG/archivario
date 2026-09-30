@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Cover, type Execute } from "./shared";
@@ -26,6 +26,15 @@ export function DayActivity({
     [editor, setEditor] = useState<
       { activity?: Activity; gameId?: string } | undefined
     >(initial || gameId ? { activity: initial, gameId } : undefined);
+  const editorRef = useRef<HTMLElement>(null);
+  // Al abrir el editor, se desplaza hasta él (queda bajo la lista del día).
+  useEffect(() => {
+    if (editor)
+      editorRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+  }, [editor]);
   const activities = state.activities
     .filter((a) => a.date === day)
     .sort((a, b) =>
@@ -125,7 +134,7 @@ export function DayActivity({
         <p className="info-note">Todavía no has registrado juegos este día.</p>
       )}
       {editor && (
-        <section className="day-editor">
+        <section className="day-editor" ref={editorRef}>
           <div className="section-header">
             <h3>{editor.activity ? "Editar actividad" : "Registrar juego"}</h3>
             <Button variant="ghost" onClick={() => setEditor(undefined)}>

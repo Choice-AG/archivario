@@ -87,7 +87,7 @@ export function YearReview({
               </div>
             ))}
           </div>
-          <h3>Tus mejor valorados de este año</h3>
+          <h3>Tus juegos mejor valorados del año</h3>
           <p className="muted text-xs">
             Juegos con actividad o una partida completada en {year}, según tu
             nota actual.

@@ -305,7 +305,10 @@ export function Sagas({
           <p className="saga-source">
             {release
               ? "Ordenado por las fechas de lanzamiento registradas."
-              : saga.source || "Guía personal sin fuente indicada"}
+              : saga.source
+                  .replace(/https?:\/\/[^\s]+/g, "")
+                  .replace(/[\s·,;:-]+$/, "")
+                  .trim() || "Guía personal sin fuente indicada"}
             {saga.order === "release" || release
               ? " El lanzamiento no determina el orden narrativo."
               : " · Recomendación de recorrido; no es una cronología universal."}
