@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
-import type { Execute } from "./app";
+import type { Execute } from "./shared";
 export function MultiGameDay({
   state,
   date,

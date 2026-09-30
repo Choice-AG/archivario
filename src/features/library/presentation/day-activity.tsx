@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Cover, type Execute } from "./app";
+import { Cover, type Execute } from "./shared";
 import { MultiGameDay } from "./multi-game-day";
 import { ActivityForm } from "./forms";
 import type { Activity, Library } from "../domain/model";

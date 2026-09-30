@@ -575,8 +575,8 @@ main#main-content {
   background: #c7b48b12;
 }
 .game-genre {
-  font-size: 9px;
-  color: #646e88;
+  font-size: 11px;
+  color: var(--muted);
 }
 .today-button {
   font-size: 10px;

@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Game, GameTimes, Library } from "../domain/model";
-import { formatHours, timeLabels, type TimeMode } from "../domain/daily";
-import type { ApiRequest, Execute } from "./app";
+import { formatHours, timeLabels } from "../domain/daily";
+import type { ApiRequest, Execute } from "./shared";
 const modes = ["main", "extras", "complete"] as const;
 export function GameTimeForm({
   game,

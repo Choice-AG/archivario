@@ -10,7 +10,7 @@ import {
   type TimeMode,
 } from "../domain/daily";
 import { moveGame, playableGames } from "../domain/planning";
-import type { Execute } from "./app";
+import type { Execute } from "./shared";
 export function Planning({
   state,
   execute,
@@ -27,6 +27,7 @@ export function Planning({
         {["Mis listas", "¿A qué juego hoy?", "Comparar"].map((t) => (
           <button
             key={t}
+            aria-pressed={tab === t}
             className={tab === t ? "selected" : ""}
             onClick={() => setTab(t)}
           >
@@ -324,6 +325,8 @@ function Picker({
   function choose() {
     const alternatives = games.filter((g) => g.id !== chosen);
     const pool = alternatives.length ? alternatives : games;
+    // Se ejecuta en un evento de clic, no durante el render.
+    // eslint-disable-next-line react-hooks/purity
     setChosen(pool[Math.floor(Math.random() * pool.length)]?.id ?? "");
   }
   return (

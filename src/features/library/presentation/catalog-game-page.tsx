@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
-import { Modal, type ApiRequest, type Execute } from "./app";
+import { Modal, type ApiRequest, type Execute } from "./shared";
 import { AddGame } from "./add-game";
 import { GameSeries } from "./game-series";
 import { formatHours, timeLabels } from "../domain/daily";
-import type { Library, GameTimes, Saga } from "../domain/model";
+import type { Library, GameTimes } from "../domain/model";
 import type { CatalogGame } from "./use-catalog-search";
-import guides from "../infrastructure/saga-guides.json";
+import { useSagaGuides } from "./saga-guides";
+import { fetchCatalogDetails } from "./catalog-details-cache";
 type Details = CatalogGame & {
   summary: string;
   releaseDate: string;
@@ -22,6 +23,7 @@ export function CatalogGamePage({
   execute,
   demo,
   onBack,
+  backLabel = "Volver a Sagas",
   onGame,
 }: {
   id: number;
@@ -30,9 +32,11 @@ export function CatalogGamePage({
   execute: Execute;
   demo: boolean;
   onBack: () => void;
+  backLabel?: string;
   onGame: (id: string) => void;
 }) {
-  const entry = [...(state.sagas ?? []), ...(guides as Saga[])]
+  const guides = useSagaGuides();
+  const entry = [...(state.sagas ?? []), ...(guides ?? [])]
     .flatMap((s) => s.entries)
     .find((e) => e.catalogId === id);
   const [data, setData] = useState<Details>(),
@@ -47,10 +51,9 @@ export function CatalogGamePage({
     let active = true;
     setError("");
     setTimeError("");
-    request("/api/catalog/details?id=" + id, { signal: c.signal })
-      .then((r) => r.json())
+    fetchCatalogDetails(request, id)
       .then((d) => {
-        if (active) setData(d);
+        if (active) setData(d as Details);
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -89,7 +92,7 @@ export function CatalogGamePage({
   return (
     <div className="game-page">
       <button className="game-back" onClick={onBack}>
-        ← Volver a Sagas
+        ← {backLabel}
       </button>
       {error && (
         <p className="form-error" role="alert">

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { ApiRequest } from "./app";
+import type { ApiRequest } from "./shared";
+import { fetchCatalogDetails } from "./catalog-details-cache";
 type Details = {
   summary: string;
   releaseDate: string;
@@ -21,14 +22,10 @@ export function CatalogDetails({
     [retry, setRetry] = useState(0);
   useEffect(() => {
     if (!catalogId || demo) return;
-    const controller = new AbortController();
     let active = true;
     setError("");
     setData(undefined);
-    request("/api/catalog/details?id=" + catalogId, {
-      signal: controller.signal,
-    })
-      .then((r) => r.json())
+    fetchCatalogDetails(request, catalogId)
       .then((d) => {
         if (active) setData(d);
       })
@@ -37,7 +34,6 @@ export function CatalogDetails({
       });
     return () => {
       active = false;
-      controller.abort();
     };
   }, [catalogId, demo, request, retry]);
   if (!catalogId)

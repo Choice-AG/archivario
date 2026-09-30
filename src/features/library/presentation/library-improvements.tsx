@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCatalogSearch } from "./use-catalog-search";
-import { Modal, type ApiRequest, type Execute, Cover } from "./app";
+import { Modal, type ApiRequest, type Execute, Cover } from "./shared";
 import { statuses, type Library, type Status } from "../domain/model";
-import guideData from "../infrastructure/saga-guides.json";
+import { useSagaGuides } from "./saga-guides";
 export function GlobalSearch({
   state,
   request,
@@ -23,6 +23,7 @@ export function GlobalSearch({
     >([]),
     [sagaError, setSagaError] = useState("");
   const [open, setOpen] = useState(false);
+  const guides = useSagaGuides(open) ?? [];
   const search = useCatalogSearch(request, open && !demo);
   const q = search.query.trim().toLocaleLowerCase("es");
   useEffect(() => {
@@ -52,7 +53,7 @@ export function GlobalSearch({
   );
   const sagas = [
     ...(state.sagas ?? []),
-    ...guideData.filter((g) => !state.sagas?.some((s) => s.id === g.id)),
+    ...guides.filter((g) => !state.sagas?.some((s) => s.id === g.id)),
   ].filter((s) => s.name.toLocaleLowerCase("es").includes(q));
   return (
     <>

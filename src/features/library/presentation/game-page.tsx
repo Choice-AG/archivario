@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Heart, Pencil, Plus, Star } from "lucide-react";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
-import { Cover, Modal, type ApiRequest, type Execute } from "./app";
+import { Cover, Modal, type ApiRequest, type Execute } from "./shared";
 import { GameDetails } from "./forms";
 import { GameSeries } from "./game-series";
 import { CatalogDetails } from "./catalog-details";

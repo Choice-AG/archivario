@@ -40,7 +40,8 @@ export function useLibrary(user: User | null) {
         headers: { ...init.headers, Authorization: "Bearer " + token },
       });
       if (!response.ok) {
-        const data = await response.json();
+        // Un 502 de la plataforma puede devolver HTML en lugar de JSON.
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error ?? "No se ha podido conectar.");
       }
       return response;
@@ -85,7 +86,12 @@ export function useLibrary(user: User | null) {
       if (user) reload().catch((e) => setError(e.message));
     };
     window.addEventListener("focus", focus);
-    const timer = user ? window.setInterval(focus, 30000) : undefined;
+    // Solo se sincroniza en segundo plano con la pestaña visible (ahorra cuota).
+    const timer = user
+      ? window.setInterval(() => {
+          if (document.visibilityState === "visible") focus();
+        }, 60000)
+      : undefined;
     return () => {
       mounted.current = false;
       window.removeEventListener("focus", focus);
@@ -128,11 +134,13 @@ export function useLibrary(user: User | null) {
       const message =
         e instanceof Error ? e.message : "No se ha podido guardar.";
       setError(message);
+      // Tras un conflicto u otro fallo, se recupera el estado del servidor.
+      locked.current = false;
+      if (user) reload().catch(() => {});
       throw e;
     } finally {
       locked.current = false;
       setBusy(false);
-      if (user) reload().catch(() => {});
     }
   }
   async function undo() {

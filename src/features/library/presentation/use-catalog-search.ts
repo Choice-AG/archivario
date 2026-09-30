@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { ApiRequest } from "./app";
+import type { ApiRequest } from "./shared";
 
 export type CatalogGame = {
   catalogId: number;

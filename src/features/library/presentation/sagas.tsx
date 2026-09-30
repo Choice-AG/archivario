@@ -2,12 +2,11 @@
 import { useEffect, useState } from "react";
 import { EditionPicker } from "./edition-picker";
 import { Button } from "@/components/ui/button";
-import { Modal, type ApiRequest, type Execute } from "./app";
+import { Modal, type ApiRequest, type Execute } from "./shared";
 import type { Library, Saga, SagaEntry } from "../domain/model";
-import guideData from "../infrastructure/saga-guides.json";
 import artworkData from "../infrastructure/saga-artworks.json";
+import { useSagaGuides } from "./saga-guides";
 const artworks: Record<string, string> = artworkData;
-const guides = guideData as Saga[];
 function sagaImage(s: Saga) {
   return (
     artworks[s.id] ??
@@ -61,7 +60,23 @@ export function Sagas({
     [draft, setDraft] = useState<Saga>(),
     [preview, setPreview] = useState<Saga>(),
     [release, setRelease] = useState(false),
-    [confirm, setConfirm] = useState(false);
+    [confirm, setConfirm] = useState(false),
+    [draftKeys, setDraftKeys] = useState<string[]>([]);
+  const loadedGuides = useSagaGuides(),
+    guides = loadedGuides ?? [];
+  function openDraft(s: Saga) {
+    setDraftKeys(s.entries.map(() => crypto.randomUUID()));
+    setDraft(s);
+  }
+  function moveDraftEntry(i: number, j: number) {
+    if (!draft) return;
+    const entries = [...draft.entries],
+      keys = [...draftKeys];
+    [entries[i], entries[j]] = [entries[j], entries[i]];
+    [keys[i], keys[j]] = [keys[j], keys[i]];
+    setDraftKeys(keys);
+    setDraft({ ...draft, entries });
+  }
   const saved = (state.sagas ?? []).map((s) => ({
       ...s,
       entries: s.entries.map((e) => ({
@@ -77,8 +92,9 @@ export function Sagas({
       saved.find((s) => s.id === selectedId) ??
       (preview?.id === selectedId ? preview : undefined) ??
       guides.find((s) => s.id === selectedId);
+  const hasSaga = !!saga;
   useEffect(() => {
-    if (!selectedId || saga || demo || !/^igdb-[1-9]\d*$/.test(selectedId))
+    if (!selectedId || hasSaga || demo || !/^igdb-[1-9]\d*$/.test(selectedId))
       return;
     const c = new AbortController();
     setBusy(true);
@@ -96,8 +112,12 @@ export function Sagas({
       .finally(() => {
         if (!c.signal.aborted) setBusy(false);
       });
-    return () => c.abort();
-  }, [selectedId, !!saga, demo, request]);
+    return () => {
+      c.abort();
+      // Sin esto, salir durante la carga dejaba los botones deshabilitados.
+      setBusy(false);
+    };
+  }, [selectedId, hasSaga, demo, request]);
   useEffect(() => {
     setRelease(false);
     setConfirm(false);
@@ -155,7 +175,7 @@ export function Sagas({
     }
   }
   function fromLibrary() {
-    setDraft({
+    openDraft({
       id: crypto.randomUUID(),
       name: "",
       description: "",
@@ -171,6 +191,7 @@ export function Sagas({
       await execute({ type: "save-saga", saga: s });
       setPreview(undefined);
       setDraft(undefined);
+      setDraftKeys([]);
       onSelect(s.id);
     } catch (e) {
       setError((e as Error).message);
@@ -220,7 +241,7 @@ export function Sagas({
               <div className="form-actions">
                 <Button
                   disabled={busy}
-                  onClick={() => setDraft(structuredClone(saga))}
+                  onClick={() => openDraft(structuredClone(saga))}
                 >
                   Editar guía
                 </Button>
@@ -462,7 +483,9 @@ export function Sagas({
         </>
       ) : selectedId ? (
         <section className="empty-state">
-          <h1>{busy ? "Cargando saga…" : "Saga no guardada"}</h1>
+          <h1>
+            {busy || !loadedGuides ? "Cargando saga…" : "Saga no guardada"}
+          </h1>
           <p>Vuelve a buscarla o abre una de tus guías.</p>
           <Button onClick={() => onSelect(undefined)}>Volver a Sagas</Button>
         </section>
@@ -634,7 +657,7 @@ export function Sagas({
                 mano elige cronología o recomendado.
               </p>
               {draft.entries.map((e, i) => (
-                <details className="saga-entry-editor" key={i}>
+                <details className="saga-entry-editor" key={draftKeys[i] ?? i}>
                   <summary>
                     {i + 1}. {e.title}
                   </summary>
@@ -643,14 +666,7 @@ export function Sagas({
                       type="button"
                       variant="ghost"
                       disabled={i === 0 || draft.order === "release"}
-                      onClick={() => {
-                        const entries = [...draft.entries];
-                        [entries[i - 1], entries[i]] = [
-                          entries[i],
-                          entries[i - 1],
-                        ];
-                        setDraft({ ...draft, entries });
-                      }}
+                      onClick={() => moveDraftEntry(i, i - 1)}
                     >
                       Subir
                     </Button>
@@ -661,26 +677,20 @@ export function Sagas({
                         i === draft.entries.length - 1 ||
                         draft.order === "release"
                       }
-                      onClick={() => {
-                        const entries = [...draft.entries];
-                        [entries[i + 1], entries[i]] = [
-                          entries[i],
-                          entries[i + 1],
-                        ];
-                        setDraft({ ...draft, entries });
-                      }}
+                      onClick={() => moveDraftEntry(i, i + 1)}
                     >
                       Bajar
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={() =>
+                      onClick={() => {
+                        setDraftKeys(draftKeys.filter((_, n) => n !== i));
                         setDraft({
                           ...draft,
                           entries: draft.entries.filter((_, n) => n !== i),
-                        })
-                      }
+                        });
+                      }}
                     >
                       Quitar título
                     </Button>
@@ -755,6 +765,7 @@ export function Sagas({
                       note: "",
                       optional: false,
                     };
+                    setDraftKeys([...draftKeys, crypto.randomUUID()]);
                     setDraft({ ...draft, entries: [...draft.entries, entry] });
                   }}
                 >

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Modal, type ApiRequest } from "./app";
+import { Modal, type ApiRequest } from "./shared";
+import { fetchCatalogDetails } from "./catalog-details-cache";
 export function GameGallery({
   id,
   request,
@@ -19,11 +20,9 @@ export function GameGallery({
     [retry, setRetry] = useState(0);
   useEffect(() => {
     if (!id || demo) return;
-    const c = new AbortController();
     let active = true;
     setError("");
-    request("/api/catalog/details?id=" + id, { signal: c.signal })
-      .then((r) => r.json())
+    fetchCatalogDetails(request, id)
       .then((d) => {
         if (active) setImages(d.screenshots ?? []);
       })
@@ -32,7 +31,6 @@ export function GameGallery({
       });
     return () => {
       active = false;
-      c.abort();
     };
   }, [id, demo, request, retry]);
   return (
@@ -57,6 +55,9 @@ export function GameGallery({
               src={src}
               alt={"Captura del juego " + (i + 1)}
               loading="lazy"
+              decoding="async"
+              width={1920}
+              height={1080}
             />
           </button>
         ))}

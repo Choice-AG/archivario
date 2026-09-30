@@ -1,6 +1,6 @@
 "use client";
 import { useCatalogSearch } from "./use-catalog-search";
-import type { ApiRequest } from "./app";
+import type { ApiRequest } from "./shared";
 import type { SagaEntry, Library } from "../domain/model";
 export function EditionPicker({
   entry,

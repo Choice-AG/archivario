@@ -2,16 +2,7 @@
 import { GameTimeForm } from "./game-times";
 import { CatalogDetails } from "./catalog-details";
 import { useState } from "react";
-import {
-  Plus,
-  Search,
-  Download,
-  Upload,
-  Trash2,
-  Save,
-  Check,
-  ChevronRight,
-} from "lucide-react";
+import { Plus, Download, Upload, Trash2, Save, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { backupSchema } from "../application/validation";
 import {
@@ -25,16 +16,8 @@ import {
   type Library,
   type Run,
 } from "../domain/model";
-import type { ApiRequest, Execute } from "./app";
-const value = (f: FormData, key: string) => String(f.get(key) ?? "").trim();
-const list = (s: string) => [
-  ...new Set(
-    s
-      .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean),
-  ),
-];
+import type { ApiRequest, Execute } from "./shared";
+import { list, RatingOptions, value } from "./form-utils";
 function FormError({ message }: { message: string }) {
   return message ? (
     <p className="form-error" role="alert">
@@ -66,8 +49,8 @@ export function GameDetails({
   onClose: () => void;
   onActivity: () => void;
 }) {
-  const [tab, setTab] = useState(initialSection),
-    [error, setError] = useState(""),
+  const tab = initialSection;
+  const [error, setError] = useState(""),
     [pending, setPending] = useState(false),
     [newRun, setNewRun] = useState(false),
     [confirmDelete, setConfirmDelete] = useState(false);
@@ -82,6 +65,7 @@ export function GameDetails({
             setPending(true);
             setError("");
             const f = new FormData(e.currentTarget);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { rating: _rating, approximateHours: _hours, ...base } = game;
             try {
               await execute({
@@ -141,12 +125,7 @@ export function GameDetails({
             <label>
               Tu valoración
               <select name="rating" defaultValue={game.rating ?? ""}>
-                <option value="">Sin valorar</option>
-                {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map((n) => (
-                  <option key={n} value={n}>
-                    {n.toLocaleString("es")} / 10
-                  </option>
-                ))}
+                <RatingOptions />
               </select>
             </label>
             <label>
@@ -203,11 +182,13 @@ export function GameDetails({
                   variant="destructive"
                   disabled={pending}
                   onClick={async () => {
+                    setPending(true);
                     try {
                       await execute({ type: "delete-game", id: game.id });
                       onClose();
                     } catch (e) {
                       setError(message(e));
+                      setPending(false);
                     }
                   }}
                 >
@@ -326,12 +307,7 @@ export function GameDetails({
                   <span className="status-badge">Principal</span>
                 )}
               </summary>
-              <RunForm
-                key={r.id + ":" + state.revision}
-                run={r}
-                game={game}
-                execute={execute}
-              />
+              <RunForm key={r.id} run={r} game={game} execute={execute} />
             </details>
           ))}
           {newRun ? (
@@ -496,12 +472,7 @@ function RunForm({
       <label>
         Valoración de esta partida
         <select name="runRating" defaultValue={run?.rating ?? ""}>
-          <option value="">Sin valorar</option>
-          {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map((n) => (
-            <option key={n} value={n}>
-              {n.toLocaleString("es")} / 10
-            </option>
-          ))}
+          <RatingOptions />
         </select>
       </label>
       <label>
@@ -599,7 +570,6 @@ export function ActivityForm({
     );
   return (
     <form
-      key={selected + selectedDate}
       onSubmit={async (e) => {
         e.preventDefault();
         setPending(true);
@@ -658,6 +628,7 @@ export function ActivityForm({
       <label>
         Partida <small>Opcional</small>
         <select
+          key={selected}
           name="runId"
           defaultValue={
             activity?.runId ??
@@ -678,6 +649,7 @@ export function ActivityForm({
       <label>
         Algo para recordar <small>Opcional · privado</small>
         <textarea
+          key={activity?.id ?? "new"}
           name="note"
           rows={4}
           maxLength={1000}
@@ -709,11 +681,13 @@ export function ActivityForm({
             variant="destructive"
             disabled={pending}
             onClick={async () => {
+              setPending(true);
               try {
                 await execute({ type: "delete-activity", id: activity.id });
                 onClose();
               } catch (e) {
                 setError(message(e));
+                setPending(false);
               }
             }}
           >

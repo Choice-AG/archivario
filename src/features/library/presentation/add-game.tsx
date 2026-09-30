@@ -10,20 +10,10 @@ import {
   type Library,
   type Run,
 } from "../domain/model";
-import type { ApiRequest, Execute } from "./app";
+import type { ApiRequest, Execute } from "./shared";
 import { platformChoices, preferredPlatforms } from "./catalog-data";
 import { useCatalogSearch, type CatalogGame } from "./use-catalog-search";
-
-const value = (form: FormData, key: string) =>
-  String(form.get(key) ?? "").trim();
-const list = (s: string) => [
-  ...new Set(
-    s
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean),
-  ),
-];
+import { list, value } from "./form-utils";
 
 export function AddGame({
   state,
@@ -119,6 +109,7 @@ export function AddGame({
     <div>
       <div className="segmented">
         <button
+          aria-pressed={!manual}
           className={!manual ? "selected" : ""}
           onClick={() => {
             setManual(false);
@@ -128,6 +119,7 @@ export function AddGame({
           Buscar en IGDB
         </button>
         <button
+          aria-pressed={manual}
           className={manual ? "selected" : ""}
           onClick={() => {
             setManual(true);

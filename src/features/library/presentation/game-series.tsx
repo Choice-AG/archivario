@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { ApiRequest } from "./app";
+import type { ApiRequest } from "./shared";
 import type { Library } from "../domain/model";
 export type SeriesData = {
   names: string[];
