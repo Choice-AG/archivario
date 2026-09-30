@@ -37,6 +37,23 @@ export async function authenticate(request: Request, allowDeletion = false) {
     );
   return user;
 }
+// Límite en memoria por instancia: frena ráfagas sin gastar lecturas de Firestore.
+const windows = new Map<string, { start: number; count: number }>();
+export function throttle(key: string, max: number, windowMs = 60000) {
+  const now = Date.now(),
+    current = windows.get(key);
+  const entry =
+    current && now - current.start < windowMs
+      ? current
+      : { start: now, count: 0 };
+  if (entry.count >= max)
+    throw new HttpError(429, "Demasiados cambios seguidos. Espera un momento.");
+  entry.count++;
+  windows.set(key, entry);
+  if (windows.size > 5000)
+    for (const [k, v] of windows)
+      if (now - v.start >= windowMs) windows.delete(k);
+}
 export async function body(request: Request, max = 500000) {
   if (Number(request.headers.get("content-length") ?? 0) > max)
     throw new HttpError(413, "El archivo es demasiado grande.");
@@ -69,7 +86,11 @@ export async function route(work: () => Promise<Response>): Promise<Response> {
     if (e instanceof DomainError) return json({ error: e.message }, 400);
     if (e instanceof ConflictError) return json({ error: e.message }, 409);
     if (e instanceof HttpError) return json({ error: e.message }, e.status);
-    console.error("Error de API", e instanceof Error ? e.name : "Error");
+    // Solo nombre y mensaje: nunca el cuerpo de la petición.
+    console.error(
+      "Error de API",
+      e instanceof Error ? e.name + ": " + e.message : "Error",
+    );
     return json(
       { error: "No se ha podido completar la operación. Inténtalo de nuevo." },
       500,

@@ -58,3 +58,9 @@ it("exige autenticación reciente antes de borrar", async () => {
   expect((await DELETE(request("old"))).status).toBe(401);
   expect(mocks.deleteUser).not.toHaveBeenCalled();
 });
+it("avisa de un borrado parcial si falla la eliminación en Auth", async () => {
+  mocks.deleteUser.mockRejectedValueOnce(new Error("auth down"));
+  const response = await DELETE(request());
+  expect(response.status).toBe(503);
+  expect((await response.json()).error).toMatch(/Vuelve a intentarlo/);
+});

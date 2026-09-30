@@ -1,4 +1,4 @@
-import { authenticate, body, json, route } from "@/server/http";
+import { authenticate, body, json, route, throttle } from "@/server/http";
 import { library } from "@/server/container";
 import { mutationSchema } from "@/features/library/application/validation";
 export const dynamic = "force-dynamic";
@@ -12,6 +12,7 @@ export function GET(request: Request) {
 export function POST(request: Request) {
   return route(async () => {
     const user = await authenticate(request);
+    throttle("library:" + user.uid, 60);
     const input = mutationSchema.parse(await body(request));
     return json(await library.execute(user.uid, input.revision, input.command));
   });
