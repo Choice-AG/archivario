@@ -17,6 +17,8 @@
 - Importación con formato v1 y vista previa obligatoria en UI. Sustituir biblioteca es una decisión explícita; política por defecto: omitir juegos duplicados completos.
 - Demostración local claramente marcada cuando no hay configuración Firebase.
 - Primer adaptador Firestore usa agregado acotado por usuario. Migración a colecciones prevista antes de bibliotecas grandes.
-- No se han creado recursos remotos ni publicado la aplicación.
+- Publicada en Vercel Hobby con Firebase Spark (ver FREE-HOSTING.md).
 
 - Avatares con iniciales para evitar depender de Cloud Storage. Credenciales de Vercel solo en variables privadas del servidor.
+- Portadas con `<img>` en lugar de next/image para no gastar la cuota de optimización de Vercel Hobby.
+- El dominio no depende de Zod; validation.ts comprueba en compilación que esquemas y tipos coinciden.

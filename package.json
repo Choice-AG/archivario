@@ -20,7 +20,7 @@
     "clsx": "^2.1.1",
     "firebase": "^12.19.0",
     "firebase-admin": "^14.5.0",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.49.0",
     "next": "^16.3.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -49,6 +49,9 @@
     },
     "jwks-rsa": {
       "jose": "5.10.0"
+    },
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.14.5"
     }
   },
   "engines": {

@@ -15,9 +15,9 @@ Actividad idempotente «He jugado hoy», guardado de reseña/spoiler, nueva reju
 
 Las pruebas unitarias cubren fecha local, fechas imposibles, propiedad de partidas, máximo de tres próximos, valoraciones, no derivación de horas, borrado relacionado, formato y duplicados de importación, separación entre usuarios, conflictos de revisión y bloqueo al eliminar cuenta.
 
-## Pendiente de configuración
+## Pendiente de configuración (histórico, resuelto el 30-09-2026)
 
-No se ha usado un proyecto Firebase real ni credenciales IGDB. Login, correos, IAM, búsqueda IGDB y borrado remoto requieren prueba contra el proyecto elegido. La infraestructura está implementada; no se presenta como una integración ya verificada.
+En esta primera verificación no se usó un proyecto Firebase real ni credenciales IGDB; ver las entradas del 30-09-2026 más abajo. Login, correos, IAM, búsqueda IGDB y borrado remoto requieren prueba contra el proyecto elegido. La infraestructura está implementada; no se presenta como una integración ya verificada.
 
 ## Dependencias
 
@@ -33,3 +33,5 @@ Se ha retirado Storage de la aplicación y del borrado de cuenta. Se han añadid
 30-09-2026: Firebase Admin/jwks-rsa usa override jose 5.10.0 por incompatibilidad require(ESM) en Vercel Node 22. Prueba real de carga y resolución de clave RSA añadida: 24 pruebas unitarias correctas. Producción devuelve 200 para la web y 401 en API sin sesión. Firestore Standard gratuito inicializado con reglas cerradas.
 
 30-09-2026: IGDB configurado como secretos de producción. Despliegue dpl_2nCHQXTqF1gh88MW5kSteRKsNaZt listo. Búsqueda autenticada real de Hollow Knight en /api/catalog: HTTP 200, 16 resultados. Cuenta temporal de verificación y contador eliminados al terminar. Authentication y Firestore conectados; correo/contraseña y dominio publicados habilitados.
+
+01-10-2026: Revisión general. Corregidos: sobrescritura de actividad al cambiar de fecha, fechas de finalización en lotes, enlaces de sagas a juegos borrados, caché del catálogo consultada antes del límite, token IGDB ante 401, CSP y cabeceras, estados de carga de sagas y formularios que perdían texto. Añadidos ESLint, Prettier y CI. 65 pruebas unitarias y 24 recorridos de navegador correctos; npm audit sin vulnerabilidades.

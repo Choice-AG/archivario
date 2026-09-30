@@ -1,5 +1,15 @@
 import { z } from "zod";
-import { activityId, assertLibrary, statuses } from "../domain/model";
+import {
+  activityId,
+  assertLibrary,
+  statuses,
+  type Activity,
+  type Game,
+  type GameList,
+  type Profile,
+  type Run,
+  type Saga,
+} from "../domain/model";
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
 export const localDate = z
   .string()
@@ -250,3 +260,16 @@ export const commandSchema = z.discriminatedUnion("type", [
 export const mutationSchema = z
   .object({ revision: z.number().int().nonnegative(), command: commandSchema })
   .strict();
+
+// El dominio no depende de Zod; estas comprobaciones de tipos evitan que los
+// esquemas y los tipos del dominio se desincronicen.
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+const schemasMatchDomain: [
+  Same<z.infer<typeof gameSchema>, Game>,
+  Same<z.infer<typeof runSchema>, Run>,
+  Same<z.infer<typeof activitySchema>, Activity>,
+  Same<z.infer<typeof profileSchema>, Profile>,
+  Same<z.infer<typeof listSchema>, GameList>,
+  Same<z.infer<typeof sagaSchema>, Saga>,
+] = [true, true, true, true, true, true];
+void schemasMatchDomain;

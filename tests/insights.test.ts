@@ -3,6 +3,7 @@ import {
   annualSummary,
   sortGames,
 } from "../src/features/library/domain/insights";
+import { formatHours } from "../src/features/library/domain/daily";
 import {
   emptyLibrary,
   type Game,
@@ -53,15 +54,17 @@ it("counts distinct active days and games, includes completed replays, excludes 
     { id: "2", gameId: "b", date: "2026-01-01", note: "" },
     { id: "3", gameId: "c", date: "2025-01-01", note: "" },
   ];
-  state.runs = [1, 2].map(
-    (i) =>
-      ({
-        id: String(i),
-        gameId: "a",
-        status: "completado",
-        completedOn: "2026-02-01",
-      }) as Run,
-  );
+  state.runs = [1, 2].map((i): Run => ({
+    id: String(i),
+    gameId: "a",
+    label: "Partida " + i,
+    platform: "PC",
+    status: "completado",
+    completion: "historia",
+    startedOn: "2026-01-01",
+    completedOn: "2026-02-01",
+    whereLeft: "",
+  }));
   const summary = annualSummary(state, "2026");
   expect(summary).toMatchObject({
     games: 2,
@@ -72,4 +75,27 @@ it("counts distinct active days and games, includes completed replays, excludes 
   expect(summary.months).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   expect(summary.best.map((g) => g.id)).toEqual(["a"]);
   expect(annualSummary(emptyLibrary(), "2026").average).toBeUndefined();
+});
+it("orders by most recent activity, then by last update, then by title", () => {
+  const state = emptyLibrary();
+  state.games = [
+    game("b", { updatedAt: "2026-03-01" }),
+    game("a", { updatedAt: "2026-03-01" }),
+    game("old", { updatedAt: "2026-01-01" }),
+    game("played"),
+  ];
+  state.activities = [
+    { id: "x", gameId: "played", date: "2026-05-01", note: "" },
+    { id: "y", gameId: "played", date: "2026-04-01", note: "" },
+  ];
+  expect(sortGames(state.games, state, "recent").map((g) => g.id)).toEqual([
+    "played",
+    "a",
+    "b",
+    "old",
+  ]);
+});
+it("formats hours in Spanish and reports missing data", () => {
+  expect(formatHours(undefined)).toBe("Sin datos");
+  expect(formatHours(12.5)).toBe("12,5 h");
 });
