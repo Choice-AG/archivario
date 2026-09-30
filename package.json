@@ -8,7 +8,10 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",
@@ -18,7 +21,7 @@
     "firebase": "^12.19.0",
     "firebase-admin": "^14.5.0",
     "lucide-react": "^0.468.0",
-    "next": "^16.0.0",
+    "next": "^16.3.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "server-only": "^0.0.1",
@@ -32,10 +35,13 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
     "jsdom": "^29.1.1",
+    "prettier": "^3.9.9",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.9.0",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.3"
   },
   "overrides": {
     "gaxios": {

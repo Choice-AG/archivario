@@ -88,7 +88,6 @@ Arquitectura: docs/ARCHITECTURE.md. Decisiones: docs/DECISIONS.md.
 - [Vercel Hobby](https://vercel.com/docs/plans/hobby)
 - [IGDB](https://api-docs.igdb.com/)
 
-
 ## Flujo de trabajo con GitHub
 
 El código fuente y sus pruebas deben guardarse en GitHub. Las credenciales se mantienen en

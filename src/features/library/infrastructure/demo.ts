@@ -1,8 +1,4 @@
-import {
-  activityId,
-  dateInZone,
-  type Library,
-} from "../domain/model";
+import { activityId, dateInZone, type Library } from "../domain/model";
 export function demoLibrary(): Library {
   const today = dateInZone(new Date(), "Europe/Madrid"),
     month = today.slice(0, 7),
@@ -18,8 +14,7 @@ export function demoLibrary(): Library {
       status: "jugando",
       rating: 9.5,
       hours: 27,
-      where:
-        "Explorando Ciudad de Lágrimas. Me falta abrir el camino al este.",
+      where: "Explorando Ciudad de Lágrimas. Me falta abrir el camino al este.",
     },
     {
       id: "stardew",
@@ -31,8 +26,7 @@ export function demoLibrary(): Library {
       status: "jugando",
       rating: 9,
       hours: undefined,
-      where:
-        "Primer otoño. Preparar el invernadero y visitar a Robin.",
+      where: "Primer otoño. Preparar el invernadero y visitar a Robin.",
     },
     {
       id: "hades",
@@ -115,8 +109,7 @@ export function demoLibrary(): Library {
       label: "Primera partida",
       platform: g.platforms[0],
       status: g.status as "jugando" | "pendiente" | "completado",
-      completion:
-        g.status === "completado" ? "historia" : "sin especificar",
+      completion: g.status === "completado" ? "historia" : "sin especificar",
       startedOn: month + "-01",
       ...(g.status === "completado"
         ? { completedOn: month + "-02", completionMinutes: 960 }
