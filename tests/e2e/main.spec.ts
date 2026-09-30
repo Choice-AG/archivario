@@ -200,3 +200,21 @@ test('buscador global, continuar, lote y varios juegos en un día',async({page})
  await expect(page.locator('.day-game').filter({hasText:'Hollow Knight'})).toContainText('Explorando');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('guardar saga confirma su ubicación y la biblioteca permite encontrarla',async({page})=>{
+ await page.goto('/sagas/guide-kingdom-hearts?demo=1');
+ await page.getByRole('button',{name:'Guardar saga',exact:true}).click();
+ await expect(page.locator('.saga-save-status')).toContainText('Guardada en Mis sagas');
+ await page.getByRole('button',{name:'Ver mis sagas',exact:true}).click();
+ await expect(page.locator('.saved-sagas').getByRole('heading',{name:'Kingdom Hearts',exact:true})).toBeVisible();
+ await page.reload();
+ await expect(page.locator('.saved-sagas').getByRole('heading',{name:'Kingdom Hearts',exact:true})).toBeVisible();
+ const nav=page.locator((page.viewportSize()?.width??1440)<=640?'.bottom-nav':'.sidebar nav');
+ await nav.getByRole('button',{name:'Biblioteca',exact:false}).click();
+ await expect(page.getByRole('button',{name:'Mis sagas (1)',exact:true})).toBeVisible();
+ await expect(page.locator('.game-card')).toHaveCount(6);
+ await page.getByRole('button',{name:'Mis sagas (1)',exact:true}).click();
+ await page.locator('.saved-sagas .saga-tile').click();
+ await expect(page.locator('.saga-save-status')).toContainText('Guardada en Mis sagas');
+ await expect(page.getByRole('button',{name:'Guardar saga',exact:true})).toHaveCount(0);
+});
