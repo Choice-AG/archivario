@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { expect,it } from "vitest";
-it("Firebase Admin carga y resuelve claves públicas sin require de ESM",()=>{
- const script=`
+import { expect, it } from "vitest";
+it("Firebase Admin carga y resuelve claves públicas sin require de ESM", () => {
+  const script = `
  require("firebase-admin/auth");
  const {generateKeyPairSync}=require("node:crypto");
  const {dirname,join}=require("node:path");
@@ -11,6 +11,10 @@ it("Firebase Admin carga y resuelve claves públicas sin require de ESM",()=>{
  .then(keys=>{if(keys.length!==1||!keys[0].getPublicKey().includes("BEGIN PUBLIC KEY"))process.exit(1);console.log("ok");})
  .catch(()=>process.exit(1));
  `;
- const result=execFileSync(process.execPath,["--no-experimental-require-module","-e",script],{encoding:"utf8",cwd:process.cwd()});
- expect(result.trim()).toBe("ok");
+  const result = execFileSync(
+    process.execPath,
+    ["--no-experimental-require-module", "-e", script],
+    { encoding: "utf8", cwd: process.cwd() },
+  );
+  expect(result.trim()).toBe("ok");
 });

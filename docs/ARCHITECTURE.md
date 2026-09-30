@@ -14,9 +14,11 @@ El estado de biblioteca se obtiene de la partida principal. Completar historia o
 
 ## API
 
-- GET/POST /api/library: estado privado y comandos validados.
+- GET/POST /api/library: estado privado y comandos validados. POST limita ráfagas por instancia (60 cambios/min).
 - GET /api/library/games?page: página de juegos.
-- GET /api/catalog?q&page: catálogo público filtrado mediante acceso autenticado.
+- GET /api/catalog?q&page: búsqueda en el catálogo público mediante acceso autenticado.
+- GET /api/catalog/details?id, /times?id, /series?id: ficha, duración y saga de IGDB de un juego.
+- GET /api/catalog/sagas?q | ?id: búsqueda de colecciones de IGDB y sus juegos.
 - DELETE /api/account: borrado con confirmación y autenticación de menos de cinco minutos.
 
 Cada Route Handler obtiene la identidad de Firebase Auth. El repositorio recibe ese UID, nunca un propietario del cuerpo. Se rechazan propiedades desconocidas en los comandos. Las relaciones partida/juego/actividad se validan sobre la biblioteca del propietario.
@@ -27,8 +29,14 @@ POST compara revision en una transacción Firestore. Ante un conflicto, responde
 
 No se importa Firestore/Storage en cliente. Sus reglas deniegan lecturas/escrituras. Todas las rutas privadas se marcan dinámicas y devuelven no-store + Vary Authorization. La pantalla de usuario se desmonta al cambiar la identidad. El único almacenamiento local de biblioteca es el de demostración; Firebase Auth gestiona su propia sesión.
 
-Solo catálogo IGDB es caché compartida. El token de catálogo es exclusivo del servidor. Los avatares con iniciales se generan en la interfaz sin almacenamiento de imágenes.
+Solo catálogo IGDB es caché compartida. Se consulta la caché antes de aplicar límites: solo las consultas a IGDB cuentan (20/min por usuario, 150/min global). El token de catálogo es exclusivo del servidor, se renueva una sola vez ante peticiones simultáneas y se descarta si IGDB responde 401. Los documentos de caché llevan `expireAt` para la TTL de Firestore. Los avatares con iniciales se generan en la interfaz sin almacenamiento de imágenes.
+
+Las respuestas llevan CSP, HSTS, Permissions-Policy, nosniff y X-Frame-Options (next.config.ts). Las portadas se sirven con `<img>` desde IGDB/Steam para no consumir la optimización de imágenes de Vercel Hobby.
+
+## Presentación
+
+`app.tsx` gestiona la navegación y los modales; la biblioteca (`library-view.tsx`, `library-filters.ts`, `game-card.tsx`), el diario y el calendario (`journal.tsx`) y el acceso (`login.tsx`) viven en módulos propios. `shared.tsx` contiene Modal, Cover y los tipos Execute/ApiRequest. Las guías de sagas se cargan bajo demanda (`saga-guides.ts`) y los detalles del catálogo se piden una sola vez por juego (`catalog-details-cache.ts`).
 
 ## Evolución
 
-El agregado por usuario hace pequeños y fiables los cambios atómicos de v0.1; sus límites se validan antes de escribir. Para escalar, cambiar el adaptador a colecciones, paginación real con cursores y comandos transaccionales por entidad. Añadir emuladores, control global de cuotas IGDB y pruebas de eliminación parcial antes del lanzamiento público.
+El agregado por usuario hace pequeños y fiables los cambios atómicos de v0.1; sus límites se validan antes de escribir. Para escalar, cambiar el adaptador a colecciones, paginación real con cursores y comandos transaccionales por entidad. Añadir emuladores y considerar exigir correo verificado antes del lanzamiento público.

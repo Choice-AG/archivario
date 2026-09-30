@@ -1,10 +1,4 @@
-import {
-  authenticate,
-  body,
-  HttpError,
-  json,
-  route,
-} from "@/server/http";
+import { authenticate, body, HttpError, json, route } from "@/server/http";
 import { adminAuth, db } from "@/server/firebase";
 import { deletionRef } from "@/server/lifecycle";
 export const dynamic = "force-dynamic";
@@ -21,11 +15,16 @@ export function DELETE(request: Request) {
       );
     await deletionRef(user.uid).set({ deleting: true });
 
-    await db().recursiveDelete(
-      db().collection("users").doc(user.uid),
-    );
+    await db().recursiveDelete(db().collection("users").doc(user.uid));
     await db().collection("catalogLimits").doc(user.uid).delete();
-    await adminAuth().deleteUser(user.uid);
+    try {
+      await adminAuth().deleteUser(user.uid);
+    } catch {
+      throw new HttpError(
+        503,
+        "Tus datos se han borrado, pero la cuenta no. Vuelve a intentarlo para terminar.",
+      );
+    }
     return json({ deleted: true });
   });
 }

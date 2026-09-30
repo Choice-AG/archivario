@@ -52,7 +52,9 @@ El servicio administrativo usa las credenciales solo en el servidor y comprueba 
 
 Registra una aplicación Confidential en Twitch y activa 2FA. Conserva Client ID y Client Secret solo en variables del servidor. Archivario obtiene el token de aplicación automáticamente.
 
-Las búsquedas requieren login, texto válido y paginación; están limitadas a 20 por minuto por usuario. Los resultados públicos se cachean durante 24 horas en Firestore. Sin IGDB puedes añadir juegos manualmente.
+Las consultas al catálogo (búsqueda, ficha, tiempos, saga) requieren login. Los resultados públicos se cachean 24 horas en Firestore y una respuesta ya cacheada no consume límite. Solo las consultas que llegan a IGDB cuentan: 20 por minuto por usuario y 150 por minuto en total. Sin IGDB puedes añadir juegos manualmente.
+
+Los documentos de caché incluyen `expireAt`. `firestore.indexes.json` activa una política TTL sobre ese campo y excluye de índices los arrays grandes de la biblioteca; publícalo con `firebase deploy --only firestore:indexes`. Los documentos de caché antiguos sin `expireAt` pueden borrarse a mano.
 
 ## Funcionalidad
 
@@ -60,15 +62,18 @@ Biblioteca multiplataforma; estados; favoritos y próximos tres; filtros; valora
 
 No hay cronómetros ni horas derivadas de actividad. El tiempo de finalización es manual y opcional por partida.
 
-Exportación JSON v1 e importación validada con vista previa y política de duplicados. Perfil privado, zona horaria, eliminación de datos/cuenta con confirmación y sesión reciente. Sincronización al recuperar el foco y cada 30 segundos.
+Exportación JSON v1 e importación validada con vista previa y política de duplicados. Perfil privado, zona horaria, eliminación de datos/cuenta con confirmación y sesión reciente. Sincronización al recuperar el foco y cada 60 segundos mientras la pestaña está visible.
 
 ## Verificación
 
+- npm run format:check (npm run format para corregir)
+- npm run lint
 - npm run typecheck
 - npm test
-- npm run build
-- npm run test:e2e (requiere instalar Chromium mediante npx playwright install chromium)
+- npm run test:e2e (compila antes de probar; requiere npx playwright install chromium)
 - npm audit
+
+GitHub Actions ejecuta estas comprobaciones en cada push a main y en cada pull request (.github/workflows/ci.yml). Las pruebas e2e usan la demostración, sin credenciales.
 
 Las pruebas de Firebase usan adaptadores simulados: no equivalen a una verificación de IAM o del proyecto real. El borrado de cuenta se prueba sin ningún adaptador Storage.
 
@@ -88,7 +93,6 @@ Arquitectura: docs/ARCHITECTURE.md. Decisiones: docs/DECISIONS.md.
 - [Vercel Hobby](https://vercel.com/docs/plans/hobby)
 - [IGDB](https://api-docs.igdb.com/)
 
-
 ## Flujo de trabajo con GitHub
 
 El código fuente y sus pruebas deben guardarse en GitHub. Las credenciales se mantienen en
@@ -96,6 +100,6 @@ El código fuente y sus pruebas deben guardarse en GitHub. Las credenciales se m
 no se incluyen en los commits. La carpeta `work/` contiene comprobaciones temporales y también
 queda fuera del repositorio.
 
-Antes de integrar cambios: `npm test`, `npm run build` y `npm run test:e2e`.
+Antes de integrar cambios: `npm run lint`, `npm test` y `npm run test:e2e`.
 La publicación debe realizarse desde la rama de producción del repositorio conectado a Vercel.
 La conexión del repositorio y la rama se configura en el proyecto existente, conservando sus variables.
