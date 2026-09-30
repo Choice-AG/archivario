@@ -1,4 +1,5 @@
 "use client";
+import { formatDate, StatusOptions, statusLabel } from "./format";
 import { GameTimeForm } from "./game-times";
 import { CatalogDetails } from "./catalog-details";
 import { useState } from "react";
@@ -9,7 +10,6 @@ import {
   activityId,
   dateInZone,
   importPreview,
-  statuses,
   type Activity,
   type Backup,
   type Game,
@@ -300,7 +300,7 @@ export function GameDetails({
                 <span>
                   {r.label}
                   <small>
-                    {r.platform} · {r.status}
+                    {r.platform} · {statusLabel(r.status)}
                   </small>
                 </span>
                 {game.primaryRunId === r.id && (
@@ -420,9 +420,7 @@ function RunForm({
             value={status}
             onChange={(e) => setStatus(e.target.value as Run["status"])}
           >
-            {statuses.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
+            <StatusOptions />
           </select>
         </label>
         <label>
@@ -432,7 +430,9 @@ function RunForm({
             defaultValue={run?.completion ?? "sin especificar"}
           >
             {["sin especificar", "historia", "100%"].map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>
+                {statusLabel(s)}
+              </option>
             ))}
           </select>
         </label>
@@ -675,7 +675,7 @@ export function ActivityForm({
       </div>
       {confirm && activity && (
         <div className="danger-area">
-          <p>¿Eliminar la actividad del {activity.date}?</p>
+          <p>¿Eliminar la actividad del {formatDate(activity.date)}?</p>
           <Button
             type="button"
             variant="destructive"

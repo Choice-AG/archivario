@@ -1,0 +1,32 @@
+import { statuses, type Status } from "../domain/model";
+
+const dateFormat = new Intl.DateTimeFormat("es", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+// Fechas locales "AAAA-MM-DD" mostradas como "1 oct 2026".
+export function formatDate(date: string | undefined) {
+  if (!date) return "";
+  const parsed = new Date(date + "T00:00:00Z");
+  return isNaN(parsed.getTime()) ? date : dateFormat.format(parsed);
+}
+export function DateText({ date }: { date: string }) {
+  return <time dateTime={date}>{formatDate(date)}</time>;
+}
+
+export function statusLabel(status: string) {
+  return status ? status[0].toLocaleUpperCase("es") + status.slice(1) : status;
+}
+export function StatusOptions() {
+  return (
+    <>
+      {statuses.map((s: Status) => (
+        <option key={s} value={s}>
+          {statusLabel(s)}
+        </option>
+      ))}
+    </>
+  );
+}

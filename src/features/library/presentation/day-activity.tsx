@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Cover, type Execute } from "./shared";
 import { MultiGameDay } from "./multi-game-day";
@@ -54,19 +55,18 @@ export function DayActivity({
           {activities.length}{" "}
           {activities.length === 1 ? "juego registrado" : "juegos registrados"}
         </h3>
-        <Button variant="secondary" onClick={() => setEditor({})}>
-          Añadir juego al día
-        </Button>
+        {!multiple && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setMultiple(true);
+              setEditor(undefined);
+            }}
+          >
+            <Plus size={16} /> Añadir juegos
+          </Button>
+        )}
       </div>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          setMultiple(true);
-          setEditor(undefined);
-        }}
-      >
-        Registrar varios juegos
-      </Button>
       {multiple && (
         <MultiGameDay
           key={day}
@@ -91,9 +91,23 @@ export function DayActivity({
                 <Cover game={g} />
               </button>
               <div>
-                <button className="game-title" onClick={() => onGame(g.id)}>
-                  {g.title}
-                </button>
+                <div className="day-game-header">
+                  <button className="game-title" onClick={() => onGame(g.id)}>
+                    {g.title}
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={"Editar actividad de " + g.title}
+                    title="Editar"
+                    onClick={() => {
+                      setMultiple(false);
+                      setEditor({ activity: a });
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </Button>
+                </div>
                 <p className="muted">
                   {run
                     ? run.label + " · " + run.platform
@@ -102,12 +116,6 @@ export function DayActivity({
                 <p className="game-prose">
                   {a.note || "Sin nota para este día."}
                 </p>
-                <Button
-                  variant="ghost"
-                  onClick={() => setEditor({ activity: a })}
-                >
-                  Editar actividad de {g.title}
-                </Button>
               </div>
             </article>
           );
@@ -119,9 +127,7 @@ export function DayActivity({
       {editor && (
         <section className="day-editor">
           <div className="section-header">
-            <h3>
-              {editor.activity ? "Editar actividad" : "Registrar otro juego"}
-            </h3>
+            <h3>{editor.activity ? "Editar actividad" : "Registrar juego"}</h3>
             <Button variant="ghost" onClick={() => setEditor(undefined)}>
               Cancelar edición
             </Button>

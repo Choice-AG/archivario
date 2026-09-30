@@ -7,6 +7,13 @@ async function openDemo(page: Page, path = "/") {
     page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
   ).toBeVisible();
 }
+// Los filtros secundarios viven en un panel plegable.
+async function openFilters(page: Page) {
+  const toggle = page.getByRole("button", { name: /^Filtros/ });
+  if ((await toggle.getAttribute("aria-expanded")) !== "true")
+    await toggle.click();
+  await expect(page.locator("#library-filters")).toBeVisible();
+}
 function demoData(page: Page) {
   return page.evaluate(() =>
     JSON.parse(localStorage.getItem("archivario-demo-v1") ?? "{}"),
@@ -133,7 +140,9 @@ test("filtros de valoración, orden y resumen anual", async ({ page }) => {
   await page.getByLabel("Ordenar biblioteca").selectOption("rating");
   const ratings = await page.locator(".game-card .rating").allTextContents();
   expect(ratings.length).toBeGreaterThan(0);
+  await openFilters(page);
   await page.getByLabel("Filtrar por valoración").selectOption("unrated");
+  await expect(page.getByRole("button", { name: /^Filtros/ })).toHaveText(/1/);
   await expect(page.locator(".game-card .rating")).toHaveCount(0);
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
   await expect(page.getByLabel("Filtrar por valoración")).toHaveValue("all");
@@ -217,6 +226,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await expect(
     page.getByRole("button", { name: "Abrir Hades", exact: true }),
   ).toHaveCount(0);
+  await openFilters(page);
   await page
     .getByLabel("Disponibilidad de los juegos")
     .selectOption("wishlist");
@@ -227,6 +237,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await page
     .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
     .waitFor();
+  await openFilters(page);
   await page
     .getByLabel("Disponibilidad de los juegos")
     .selectOption("wishlist");
@@ -300,6 +311,7 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
   await expect(
     card.getByText("Historia principal: 12,5 h", { exact: true }),
   ).toBeVisible();
+  await openFilters(page);
   await page
     .getByLabel("Tipo de duración", { exact: true })
     .selectOption("extras");
@@ -513,12 +525,13 @@ test("desglose diario completo, edición de una nota y pendientes en Próximos",
   await page
     .getByLabel("Estado de Hades", { exact: true })
     .selectOption("pendiente");
-  const nav = page.locator(
-    (page.viewportSize()?.width ?? 1440) <= 640
-      ? ".bottom-nav"
-      : ".sidebar nav",
-  );
-  await nav.getByRole("button", { name: "Próximos", exact: true }).click();
+  const mobileView = (page.viewportSize()?.width ?? 1440) <= 640;
+  const nav = page.locator(mobileView ? ".bottom-nav" : ".sidebar nav");
+  // En móvil, Próximos es una vista dentro de la biblioteca.
+  await page
+    .locator(mobileView ? ".library-views" : ".sidebar nav")
+    .getByRole("button", { name: "Próximos", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Abrir Hades", exact: true }),
   ).toBeVisible();
@@ -607,7 +620,7 @@ test("buscador global, continuar, lote y varios juegos en un día", async ({
   await nav.getByRole("button", { name: "Calendario", exact: true }).click();
   await page.locator(".calendar-day.today").click();
   await page
-    .getByRole("button", { name: "Registrar varios juegos", exact: true })
+    .getByRole("button", { name: "Añadir juegos", exact: true })
     .click();
   await page.getByRole("checkbox", { name: /^Hades/ }).check();
   await page.getByRole("checkbox", { name: /^Hollow Knight/ }).check();
@@ -693,4 +706,42 @@ test("sin errores de consola ni bloqueos de CSP", async ({ page }) => {
   await page.goto("/sagas/guide-kingdom-hearts?demo=1");
   await expect(page.locator(".saga-step").first()).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("atajo de búsqueda, ficha manual simplificada y fechas legibles", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page.keyboard.press("Control+k");
+  await expect(
+    page.getByRole("heading", { name: "Buscar juegos y sagas" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page
+    .getByRole("button", { name: "Abrir Hollow Knight", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Completa la ficha", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Otros juegos de la saga" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".game-journal-row time").first()).toHaveText(
+    /^\d{1,2} [a-z]{3,4}\.? \d{4}$/,
+  );
+  await expect(
+    page.getByRole("button", { name: "Vincular con IGDB" }),
+  ).toHaveCount(0);
+});
+
+test("el aviso de guardado permite deshacer", async ({ page }) => {
+  await openDemo(page);
+  const card = page.locator(".game-card").filter({
+    has: page.getByRole("button", { name: "Abrir Celeste", exact: true }),
+  });
+  await card.getByLabel("Estado de Celeste").selectOption("jugando");
+  const toast = page.getByRole("status").filter({ hasText: "Guardado" });
+  await expect(toast).toBeVisible();
+  await toast.getByRole("button", { name: "Deshacer último cambio" }).click();
+  await expect(card.getByLabel("Estado de Celeste")).toHaveValue("pendiente");
 });
