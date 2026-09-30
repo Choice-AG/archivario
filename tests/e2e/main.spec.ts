@@ -1,21 +1,21 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+// La demo con ?demo=1 es determinista: no depende de si Firebase está configurado.
+async function openDemo(page: Page, path = "/") {
+  await page.goto(path + "?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
+  ).toBeVisible();
+}
+function demoData(page: Page) {
+  return page.evaluate(() =>
+    JSON.parse(localStorage.getItem("archivario-demo-v1") ?? "{}"),
+  );
+}
 test("biblioteca, actividad, notas, rejugada e importación", async ({
   page,
 }) => {
-  await page.goto("/");
-  await page
-    .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
-    .or(page.getByRole("button", { name: "Explorar la demostración" }))
-    .first()
-    .waitFor();
-  if (
-    await page
-      .getByRole("button", { name: "Explorar la demostración" })
-      .isVisible()
-  )
-    await page
-      .getByRole("button", { name: "Explorar la demostración" })
-      .click();
+  await openDemo(page);
   await expect(
     page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
   ).toBeVisible();
@@ -29,13 +29,13 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
     hades.getByRole("button", { name: "Registrado hoy" }),
   ).toBeVisible();
   await hades.getByRole("button", { name: "Registrado hoy" }).click();
-  const count = await page.evaluate(
-    () =>
-      JSON.parse(localStorage.getItem("archivario-demo-v1")!).activities.filter(
+  await expect
+    .poll(async () =>
+      (await demoData(page)).activities.filter(
         (a: { gameId: string }) => a.gameId === "hades",
-      ).length,
-  );
-  expect(count).toBe(1);
+      ),
+    )
+    .toHaveLength(1);
   await hades.getByRole("button", { name: "Abrir Hades", exact: true }).click();
   await page.getByRole("button", { name: "Editar notas", exact: true }).click();
   await page.getByLabel("Tu reseña personal").fill("Un viaje extraordinario.");
@@ -77,26 +77,16 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
     localStorage.removeItem("archivario-demo-v1");
   });
   await page.reload();
-  await page
-    .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
-    .or(page.getByRole("button", { name: "Explorar la demostración" }))
-    .first()
-    .waitFor();
-  if (
-    await page
-      .getByRole("button", { name: "Explorar la demostración" })
-      .isVisible()
-  )
-    await page
-      .getByRole("button", { name: "Explorar la demostración" })
-      .click();
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
+  ).toBeVisible();
   await expect(page).toHaveTitle("Archivario · Tus juegos, a tu ritmo");
   await expect(
     page.getByRole("button", { name: "Abrir Aventura de prueba" }),
   ).toBeVisible();
-  expect(
-    await page.evaluate(() => localStorage.getItem("partida-demo-v1")),
-  ).toBeNull();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("partida-demo-v1")))
+    .toBeNull();
   const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
   if (mobile)
     await page.getByRole("button", { name: "Ajustes", exact: true }).click();
@@ -123,20 +113,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
 });
 test("calendario adaptable y API cerrada", async ({ page, request }) => {
   expect((await request.get("/api/library")).status()).toBe(401);
-  await page.goto("/");
-  await page
-    .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
-    .or(page.getByRole("button", { name: "Explorar la demostración" }))
-    .first()
-    .waitFor();
-  if (
-    await page
-      .getByRole("button", { name: "Explorar la demostración" })
-      .isVisible()
-  )
-    await page
-      .getByRole("button", { name: "Explorar la demostración" })
-      .click();
+  await openDemo(page);
   const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
   await page
     .locator(mobile ? ".bottom-nav" : ".sidebar nav")
@@ -152,14 +129,7 @@ test("calendario adaptable y API cerrada", async ({ page, request }) => {
   ).toBe(true);
 });
 test("filtros de valoración, orden y resumen anual", async ({ page }) => {
-  await page.goto("/");
-  const demo = page.getByRole("button", { name: "Explorar la demostración" });
-  await page
-    .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
-    .or(demo)
-    .first()
-    .waitFor();
-  if (await demo.isVisible()) await demo.click();
+  await openDemo(page);
   await page.getByLabel("Ordenar biblioteca").selectOption("rating");
   const ratings = await page.locator(".game-card .rating").allTextContents();
   expect(ratings.length).toBeGreaterThan(0);
@@ -183,14 +153,7 @@ test("filtros de valoración, orden y resumen anual", async ({ page }) => {
 test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.getByRole("button", { name: "Explorar la demostración" });
-  await page
-    .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
-    .or(demo)
-    .first()
-    .waitFor();
-  if (await demo.isVisible()) await demo.click();
+  await openDemo(page);
   await page
     .getByRole("button", { name: "Listas y planes", exact: true })
     .click();
@@ -237,8 +200,8 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await page
     .getByRole("button", { name: "Guardar ficha", exact: true })
     .click();
-  if (await page.getByRole("dialog").isVisible())
-    await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Gestionar partidas", exact: true })
     .click();
@@ -268,8 +231,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
     .getByLabel("Disponibilidad de los juegos")
     .selectOption("wishlist");
   await page.getByRole("button", { name: "Abrir Hades", exact: true }).click();
-  if (await page.getByRole("dialog").isVisible())
-    await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Gestionar partidas", exact: true })
     .click();
@@ -293,14 +255,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
 test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.getByRole("button", { name: "Explorar la demostración" });
-  await page
-    .getByRole("heading", { name: "Tu próxima aventura empieza aquí." })
-    .or(demo)
-    .first()
-    .waitFor();
-  if (await demo.isVisible()) await demo.click();
+  await openDemo(page);
   const card = page.locator("article").filter({
     has: page.getByRole("button", {
       name: "Abrir Hollow Knight",
@@ -377,27 +332,23 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
   await page
     .getByRole("button", { name: "Guardar días seleccionados", exact: true })
     .click();
-  expect(
-    await page.evaluate(
-      () =>
-        JSON.parse(
-          localStorage.getItem("archivario-demo-v1")!,
-        ).activities.filter((a: { note: string }) => a.note === "Exploración")
-          .length,
-    ),
-  ).toBe(2);
+  await expect
+    .poll(async () =>
+      (await demoData(page)).activities.filter(
+        (a: { note: string }) => a.note === "Exploración",
+      ),
+    )
+    .toHaveLength(2);
   await page
     .getByRole("button", { name: "Deshacer último cambio", exact: true })
     .click();
-  expect(
-    await page.evaluate(
-      () =>
-        JSON.parse(
-          localStorage.getItem("archivario-demo-v1")!,
-        ).activities.filter((a: { note: string }) => a.note === "Exploración")
-          .length,
-    ),
-  ).toBe(0);
+  await expect
+    .poll(async () =>
+      (await demoData(page)).activities.filter(
+        (a: { note: string }) => a.note === "Exploración",
+      ),
+    )
+    .toHaveLength(0);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -406,7 +357,7 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
 });
 test("ficha propia, enlaces de sección y navegación del navegador", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto("/?demo=1");
   await page
     .getByRole("button", { name: "Abrir Hollow Knight", exact: true })
@@ -446,14 +397,14 @@ test("ficha propia, enlaces de sección y navegación del navegador", async ({
     ),
   ).toBe(true);
   await page.screenshot({
-    path: "work/game-page-" + (page.viewportSize()?.width ?? 0) + ".png",
+    path: testInfo.outputPath("game-page.png"),
     fullPage: true,
   });
 });
 
 test("sagas preparadas, recorrido, edición, guardado y enlace directo", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto("/sagas?demo=1");
   await expect(
     page.getByRole("heading", { name: "Historias que merecen un recorrido." }),
@@ -493,7 +444,7 @@ test("sagas preparadas, recorrido, edición, guardado y enlace directo", async (
     ),
   ).toBe(true);
   await page.screenshot({
-    path: "work/saga-" + (page.viewportSize()?.width ?? 0) + ".png",
+    path: testInfo.outputPath("saga.png"),
     fullPage: true,
   });
   await page
@@ -534,12 +485,13 @@ test("saga: consultar un juego sin tenerlo y añadirlo desde su ficha", async ({
   await expect(
     page.getByRole("button", { name: "Registrar actividad", exact: true }),
   ).toBeVisible();
-  const games = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("archivario-demo-v1")!).games.filter(
-      (g: { catalogId: number }) => g.catalogId === 1219,
-    ),
-  );
-  expect(games).toHaveLength(1);
+  await expect
+    .poll(async () =>
+      (await demoData(page)).games.filter(
+        (g: { catalogId: number }) => g.catalogId === 1219,
+      ),
+    )
+    .toHaveLength(1);
   await page.goto("/sagas/guide-kingdom-hearts?demo=1");
   await page.locator(".saga-game-link").first().click();
   await expect(page).not.toHaveURL(/igdb-1219/);
@@ -547,7 +499,7 @@ test("saga: consultar un juego sin tenerlo y añadirlo desde su ficha", async ({
 
 test("desglose diario completo, edición de una nota y pendientes en Próximos", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto("/?demo=1");
   for (const name of ["Hades", "Hollow Knight"]) {
     const card = page.locator(".game-card").filter({
@@ -597,7 +549,7 @@ test("desglose diario completo, edición de una nota y pendientes en Próximos",
     page.locator(".day-game").filter({ hasText: "Hollow Knight" }),
   ).toBeVisible();
   await page.screenshot({
-    path: "work/day-breakdown-" + page.viewportSize()?.width + ".png",
+    path: testInfo.outputPath("day-breakdown.png"),
   });
   expect(
     await page.evaluate(
@@ -723,4 +675,22 @@ test("guardar saga confirma su ubicación y la biblioteca permite encontrarla", 
   await expect(
     page.getByRole("button", { name: "Guardar saga", exact: true }),
   ).toHaveCount(0);
+});
+
+test("sin errores de consola ni bloqueos de CSP", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(m.text());
+  });
+  page.on("pageerror", (e) => errors.push(e.message));
+  await openDemo(page);
+  await page
+    .getByRole("button", { name: "Abrir Hollow Knight", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Hollow Knight", exact: true }),
+  ).toBeVisible();
+  await page.goto("/sagas/guide-kingdom-hearts?demo=1");
+  await expect(page.locator(".saga-step").first()).toBeVisible();
+  expect(errors).toEqual([]);
 });
