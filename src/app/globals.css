@@ -1187,11 +1187,7 @@ main#main-content {
     align-items: flex-start;
   }
   .page-heading > button {
-    font-size: 0;
-    padding: 11px;
-  }
-  .page-heading > button svg {
-    width: 20px;
+    padding: 10px 14px;
   }
   .dashboard-bottom {
     grid-template-columns: 1fr;
@@ -2985,4 +2981,288 @@ select:focus {
 }
 .saved-sagas .saga-library {
   margin-top: 18px;
+}
+
+/* ---- Mejoras de experiencia de uso ---- */
+
+/* Biblioteca: vistas rápidas (solo móvil), atajos y panel de filtros */
+.library-views {
+  display: none;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.library-views button {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid #ffffff0d;
+  color: #9da4bc;
+  font-size: 12px;
+}
+.library-views button.selected {
+  background: #9882e21b;
+  border-color: #a38be32d;
+  color: #cabbf3;
+}
+.library-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: -6px 0 20px;
+}
+.library-shortcuts .ui-button {
+  color: #aeb4ca;
+  font-size: 12px;
+}
+.library-tool-buttons {
+  display: flex;
+  gap: 8px;
+}
+.library-tool-buttons .ui-button {
+  white-space: nowrap;
+}
+.filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #b49cfa;
+  color: #14111f;
+  font-size: 10px;
+  font-weight: 700;
+}
+.filter-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px 14px;
+  align-items: end;
+  margin: -8px 0 22px;
+  padding: 16px;
+  border: 1px solid #ffffff0d;
+  border-radius: 14px;
+  background: #12151f;
+  font-size: 11px;
+  color: #9da4bc;
+}
+.filter-panel select {
+  margin-top: 5px;
+  font-size: 12px;
+  padding: 9px;
+}
+.filter-panel .checkbox-label {
+  font-size: 12px;
+  padding-bottom: 9px;
+}
+.result-count {
+  order: 3;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.status-row > select {
+  order: 4;
+}
+
+/* Tarjeta: la etiqueta de estado es el selector */
+.status-select {
+  position: relative;
+  padding: 0 6px 0 8px;
+  gap: 4px;
+}
+.status-select select {
+  appearance: none;
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  padding: 5px 14px 5px 0;
+  margin-right: -12px;
+  cursor: pointer;
+}
+.status-select select:disabled {
+  cursor: wait;
+}
+.status-select svg {
+  pointer-events: none;
+}
+.status-select:hover {
+  filter: brightness(1.25);
+}
+.game-genre {
+  text-align: right;
+}
+
+/* Carrusel "Continuar donde lo dejé" */
+.continue-section .section-header {
+  margin-bottom: 12px;
+}
+.continue-section .section-header h2 {
+  margin: 0;
+}
+.carousel-arrows {
+  display: flex;
+  gap: 4px;
+}
+.continue-grid {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.continue-grid::-webkit-scrollbar {
+  display: none;
+}
+.continue-grid article {
+  scroll-snap-align: start;
+}
+
+/* Búsqueda global */
+.shortcut-hint {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border: 1px solid #ffffff1c;
+  border-radius: 5px;
+  font-size: 10px;
+  font-family: inherit;
+  color: #8f97b0;
+}
+
+/* Aviso con acción de deshacer, arriba para no tapar modales ni la navegación */
+.toast {
+  top: max(18px, env(safe-area-inset-top));
+  bottom: auto;
+  padding: 10px 12px 10px 18px;
+}
+.toast .ui-button {
+  margin-left: 4px;
+  color: #cdbcff;
+}
+
+/* Modal del día */
+.day-game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Ficha: vincular con IGDB */
+.link-catalog .ui-button {
+  margin-top: 14px;
+}
+.link-catalog-search {
+  margin-top: 14px;
+}
+.link-catalog-search .catalog-results {
+  margin: 12px 0;
+}
+
+/* Login */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field input {
+  padding-right: 44px;
+}
+.password-field button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: #8f97b0;
+}
+.password-field button:hover {
+  color: #d9ccff;
+}
+.login-form label small {
+  display: block;
+  margin-top: 5px;
+  color: #8f97b0;
+  font-size: 11px;
+}
+.demo-hint {
+  margin-top: 10px;
+  max-width: 340px;
+}
+
+/* Barra de secciones de la ficha: indica que se puede desplazar */
+.game-section-links {
+  scrollbar-width: none;
+  overflow-x: auto;
+}
+.game-section-links::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .library-views {
+    display: flex;
+  }
+  .library-shortcuts {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .library-shortcuts .ui-button {
+    white-space: nowrap;
+  }
+  .filter-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filter-panel .checkbox-label {
+    grid-column: 1 / -1;
+  }
+  .library-tools {
+    flex-wrap: wrap;
+  }
+  .library-tool-buttons {
+    width: 100%;
+  }
+  .library-tool-buttons .ui-button {
+    flex: 1;
+  }
+  .shortcut-hint {
+    display: none;
+  }
+  .bottom-nav button {
+    font-size: 11px;
+    min-width: 70px;
+  }
+  .game-section-links {
+    mask-image: linear-gradient(90deg, #000 85%, transparent);
+    padding-right: 30px;
+  }
+  /* Duraciones apiladas: más legibles que tres columnas estrechas */
+  .game-time-cards {
+    grid-template-columns: 1fr;
+  }
+  .game-time-cards > div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "label value"
+      "source value";
+    align-items: center;
+    padding: 10px 14px;
+  }
+  .game-time-cards span {
+    grid-area: label;
+    min-height: 0;
+  }
+  .game-time-cards strong {
+    grid-area: value;
+    font-size: 20px;
+  }
+  .game-time-cards small {
+    grid-area: source;
+  }
+  .game-page-content > .section-label {
+    margin-top: 8px;
+  }
 }

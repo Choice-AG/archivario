@@ -1,7 +1,15 @@
 "use client";
-import { Check, Gamepad2, Heart, Plus, Sparkles } from "lucide-react";
+import { StatusOptions } from "./format";
+import {
+  Check,
+  ChevronDown,
+  Gamepad2,
+  Heart,
+  Plus,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { statuses, type Game, type Run } from "../domain/model";
+import type { Game, Run } from "../domain/model";
 import { formatHours, timeLabels, type TimeMode } from "../domain/daily";
 import { Cover } from "./shared";
 
@@ -91,27 +99,26 @@ export function GameCard({
           {g.stores[0] ?? "Sin tienda"}
         </p>
         <div className="card-bottom">
+          {/* La etiqueta de estado es a la vez el selector para cambiarlo. */}
           <span
-            className={"status-badge status-" + run.status.replace(" ", "-")}
+            className={
+              "status-badge status-select status-" +
+              run.status.replace(" ", "-")
+            }
           >
-            <i />
-            {run.status}
+            <i aria-hidden="true" />
+            <select
+              aria-label={"Estado de " + g.title}
+              value={run.status}
+              disabled={busy}
+              onChange={(e) => onStatus(e.target.value as Run["status"])}
+            >
+              <StatusOptions />
+            </select>
+            <ChevronDown size={12} aria-hidden="true" />
           </span>
           <span className="game-genre">{g.genres[0]}</span>
         </div>
-        <label className="quick-status">
-          Estado
-          <select
-            aria-label={"Estado de " + g.title}
-            value={run.status}
-            disabled={busy}
-            onChange={(e) => onStatus(e.target.value as Run["status"])}
-          >
-            {statuses.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-        </label>
         {["jugando", "en pausa"].includes(run.status) && (
           <details className="resume-note">
             <summary>Retomar partida</summary>

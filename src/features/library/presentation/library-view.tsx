@@ -1,6 +1,13 @@
 "use client";
 import { useMemo, useState } from "react";
-import { BookOpen, Search } from "lucide-react";
+import {
+  BookOpen,
+  CalendarRange,
+  Layers3,
+  ListChecks,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   activityId,
@@ -20,8 +27,13 @@ import type { GameSort } from "../domain/insights";
 import { BatchLibrary, ContinuePlaying } from "./library-improvements";
 import { GameCard } from "./game-card";
 import { MonthCard, Recent } from "./journal";
-import { useFilteredGames, type useLibraryFilters } from "./library-filters";
+import {
+  countActiveFilters,
+  useFilteredGames,
+  type useLibraryFilters,
+} from "./library-filters";
 import type { Execute } from "./shared";
+import { statusLabel } from "./format";
 
 const PAGE = 12;
 
@@ -41,6 +53,7 @@ export function LibraryView({
   onActivity,
   onEditActivity,
   onJournal,
+  onView,
 }: {
   state: Library;
   view: string;
@@ -57,9 +70,12 @@ export function LibraryView({
   onActivity: (gameId: string) => void;
   onEditActivity: (a: Activity) => void;
   onJournal: () => void;
+  onView: (view: string) => void;
 }) {
   const { filters: f, set, reset, page, setPage } = filterState;
   const { filtered, runOf } = useFilteredGames(state, f, view);
+  const [showFilters, setShowFilters] = useState(false);
+  const activeFilters = countActiveFilters(f);
   const [selecting, setSelecting] = useState(false),
     [selectedIds, setSelectedIds] = useState<string[]>([]);
   const platforms = useMemo(
@@ -103,6 +119,33 @@ export function LibraryView({
   const visible = filtered.slice((page - 1) * PAGE, page * PAGE);
   return (
     <>
+      <div
+        className="library-views"
+        role="group"
+        aria-label="Vista de la biblioteca"
+      >
+        {["Biblioteca", "Favoritos", "Próximos"].map((name) => (
+          <button
+            key={name}
+            aria-pressed={view === name}
+            className={view === name ? "selected" : ""}
+            onClick={() => onView(name)}
+          >
+            {name === "Biblioteca" ? "Todos" : name}
+          </button>
+        ))}
+      </div>
+      <div className="library-shortcuts">
+        <Button variant="ghost" size="sm" onClick={onSagas}>
+          <Layers3 size={15} /> Mis sagas ({state.sagas?.length ?? 0})
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onPlanning}>
+          <ListChecks size={15} /> Listas y planes
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onYear}>
+          <CalendarRange size={15} /> Mi resumen anual
+        </Button>
+      </div>
       {view === "Biblioteca" && (
         <ContinuePlaying
           state={state}
@@ -119,106 +162,135 @@ export function LibraryView({
             value={f.query}
             onChange={(e) => set("query", e.target.value)}
           />
-          <kbd>⌕</kbd>
         </div>
-        <div className="filters">
-          <select
-            aria-label="Filtrar por plataforma"
-            value={f.platform}
-            onChange={(e) => set("platform", e.target.value)}
+        <div className="library-tool-buttons">
+          <Button
+            variant="secondary"
+            aria-expanded={showFilters}
+            aria-controls="library-filters"
+            onClick={() => setShowFilters(!showFilters)}
           >
-            <option value="Todas">Todas las plataformas</option>
-            {platforms.map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-          <select
-            aria-label="Filtrar por género"
-            value={f.genre}
-            onChange={(e) => set("genre", e.target.value)}
+            <SlidersHorizontal size={16} /> Filtros
+            {activeFilters > 0 && (
+              <span className="filter-count">{activeFilters}</span>
+            )}
+          </Button>
+          <Button
+            variant="secondary"
+            aria-pressed={selecting}
+            onClick={() => {
+              setSelecting(!selecting);
+              setSelectedIds([]);
+            }}
           >
-            <option value="Todos">Todos los géneros</option>
-            {genres.map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-          <select
-            aria-label="Tipo de duración"
-            value={f.timeMode}
-            onChange={(e) => set("timeMode", e.target.value as TimeMode)}
-          >
-            {Object.entries(timeLabels).map(([value, label]) => (
-              <option value={value} key={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Duración aproximada"
-            value={f.duration}
-            onChange={(e) => set("duration", e.target.value)}
-          >
-            <option value="Cualquiera">Cualquier duración</option>
-            <option value="short">Hasta 10 h aprox.</option>
-            <option value="medium">Entre 10 y 30 h aprox.</option>
-            <option value="long">Más de 30 h aprox.</option>
-          </select>
+            {selecting ? "Terminar selección" : "Seleccionar juegos"}
+          </Button>
         </div>
       </div>
-      <div className="library-extras">
-        <Button variant="secondary" onClick={onSagas}>
-          Mis sagas ({state.sagas?.length ?? 0})
-        </Button>
-        <Button
-          variant="secondary"
-          aria-pressed={selecting}
-          onClick={() => {
-            setSelecting(!selecting);
-            setSelectedIds([]);
-          }}
+      {showFilters && (
+        <section
+          id="library-filters"
+          className="filter-panel"
+          aria-label="Filtros de la biblioteca"
         >
-          {selecting ? "Terminar selección" : "Seleccionar juegos"}
-        </Button>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={f.searchSpoilers}
-            onChange={(e) => set("searchSpoilers", e.target.checked)}
-          />{" "}
-          Buscar también en spoilers
-        </label>
-        <select
-          aria-label="Disponibilidad de los juegos"
-          value={f.ownership}
-          onChange={(e) => set("ownership", e.target.value)}
-        >
-          <option value="owned">Mi biblioteca</option>
-          <option value="wishlist">Lista de deseos</option>
-          <option value="all">Biblioteca y deseos</option>
-        </select>
-        <Button variant="secondary" onClick={onPlanning}>
-          Listas y planes
-        </Button>
-        <select
-          aria-label="Filtrar por valoración"
-          value={f.ratingFilter}
-          onChange={(e) => set("ratingFilter", e.target.value)}
-        >
-          <option value="all">Todas las valoraciones</option>
-          <option value="unrated">Sin valorar</option>
-          <option value="unreviewed">Sin reseña</option>
-        </select>
-        <Button variant="secondary" onClick={onYear}>
-          Mi resumen anual
-        </Button>
-        <Button variant="ghost" onClick={() => reset()}>
-          Limpiar filtros
-        </Button>
-        <span className="muted text-xs" role="status">
+          <label>
+            Plataforma
+            <select
+              aria-label="Filtrar por plataforma"
+              value={f.platform}
+              onChange={(e) => set("platform", e.target.value)}
+            >
+              <option value="Todas">Todas las plataformas</option>
+              {platforms.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Género
+            <select
+              aria-label="Filtrar por género"
+              value={f.genre}
+              onChange={(e) => set("genre", e.target.value)}
+            >
+              <option value="Todos">Todos los géneros</option>
+              {genres.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Duración
+            <select
+              aria-label="Duración aproximada"
+              value={f.duration}
+              onChange={(e) => set("duration", e.target.value)}
+            >
+              <option value="Cualquiera">Cualquier duración</option>
+              <option value="short">Hasta 10 h aprox.</option>
+              <option value="medium">Entre 10 y 30 h aprox.</option>
+              <option value="long">Más de 30 h aprox.</option>
+            </select>
+          </label>
+          <label>
+            Medir duración por
+            <select
+              aria-label="Tipo de duración"
+              value={f.timeMode}
+              onChange={(e) => set("timeMode", e.target.value as TimeMode)}
+            >
+              {Object.entries(timeLabels).map(([value, label]) => (
+                <option value={value} key={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Disponibilidad
+            <select
+              aria-label="Disponibilidad de los juegos"
+              value={f.ownership}
+              onChange={(e) => set("ownership", e.target.value)}
+            >
+              <option value="owned">Mi biblioteca</option>
+              <option value="wishlist">Lista de deseos</option>
+              <option value="all">Biblioteca y deseos</option>
+            </select>
+          </label>
+          <label>
+            Valoración
+            <select
+              aria-label="Filtrar por valoración"
+              value={f.ratingFilter}
+              onChange={(e) => set("ratingFilter", e.target.value)}
+            >
+              <option value="all">Todas las valoraciones</option>
+              <option value="unrated">Sin valorar</option>
+              <option value="unreviewed">Sin reseña</option>
+            </select>
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={f.searchSpoilers}
+              onChange={(e) => set("searchSpoilers", e.target.checked)}
+            />{" "}
+            Buscar también en spoilers
+          </label>
+          <Button
+            variant="ghost"
+            onClick={() => reset()}
+            disabled={activeFilters === 0 && f.sort === "recent" && !f.query}
+          >
+            Limpiar filtros
+          </Button>
+        </section>
+      )}
+      <div className="status-row">
+        <span className="muted text-xs result-count" role="status">
           {filtered.length} juegos
         </span>
-      </div>
-      <div className="status-row">
         <div className="status-tabs">
           {["Todos", ...statuses].map((s) => (
             <button
@@ -227,7 +299,7 @@ export function LibraryView({
               className={f.status === s ? "selected" : ""}
               onClick={() => set("status", s)}
             >
-              {s === "Todos" ? "Todos" : s[0].toUpperCase() + s.slice(1)}
+              {s === "Todos" ? "Todos" : statusLabel(s)}
               {s === "Todos" && <span>{state.games.length}</span>}
             </button>
           ))}

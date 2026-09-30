@@ -14,6 +14,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { configured, clientAuth } from "@/features/account/firebase-client";
@@ -88,6 +89,8 @@ const nav = [
   { name: "Favoritos", icon: Heart },
   { name: "Próximos", icon: Sparkles },
 ];
+// En móvil, Favoritos y Próximos están como vistas dentro de la biblioteca.
+const mobileNav = ["Biblioteca", "Sagas", "Diario", "Calendario"];
 
 function Dashboard({
   user,
@@ -118,6 +121,9 @@ function Dashboard({
   const today = dateInZone(new Date(), state.profile.timezone),
     [month, setMonth] = useState(today.slice(0, 7));
   const suffix = user ? "" : "?demo=1";
+  const mobileActive = (name: string) =>
+    view === name ||
+    (name === "Biblioteca" && ["Favoritos", "Próximos"].includes(view));
 
   const openSaga = (id?: string) => {
     window.history.pushState(
@@ -183,7 +189,8 @@ function Dashboard({
   }, [gameId]);
   useEffect(() => {
     if (!notice) return;
-    const timer = setTimeout(() => setNotice(""), 4500);
+    // Tiempo suficiente para pulsar "Deshacer" sin que el aviso estorbe.
+    const timer = setTimeout(() => setNotice(""), 6500);
     return () => clearTimeout(timer);
   }, [notice]);
 
@@ -236,7 +243,7 @@ function Dashboard({
             <span>
               Sin prisa.
               <br />
-              Sin partidas pendientes.
+              Sin rachas ni fechas límite.
             </span>
             <p>Solo historias por vivir.</p>
             <Sparkles size={20} />
@@ -318,27 +325,6 @@ function Dashboard({
                 }}
               >
                 Reintentar
-              </Button>
-            </div>
-          )}
-          {api.canUndo && (
-            <div className="undo-bar">
-              <span>
-                Último cambio guardado. Puedes deshacerlo antes de otra edición
-                o de recargar.
-              </span>
-              <Button
-                variant="secondary"
-                disabled={busy}
-                onClick={async () => {
-                  try {
-                    await api.undo();
-                    setModal(null);
-                    setNotice("Último cambio deshecho.");
-                  } catch {}
-                }}
-              >
-                Deshacer último cambio
               </Button>
             </div>
           )}
@@ -444,6 +430,7 @@ function Dashboard({
                     setModal({ kind: "activity", activity: a })
                   }
                   onJournal={() => setView("Diario")}
+                  onView={goTo}
                 />
               ) : view === "Diario" ? (
                 <section className="panel">
@@ -494,22 +481,41 @@ function Dashboard({
         </main>
       </div>
       <nav className="bottom-nav">
-        {nav.map((n) => (
-          <button
-            className={view === n.name ? "active" : ""}
-            aria-current={view === n.name ? "page" : undefined}
-            key={n.name}
-            onClick={() => goTo(n.name)}
-          >
-            <n.icon size={20} />
-            {n.name}
-          </button>
-        ))}
+        {nav
+          .filter((n) => mobileNav.includes(n.name))
+          .map((n) => (
+            <button
+              className={mobileActive(n.name) ? "active" : ""}
+              aria-current={mobileActive(n.name) ? "page" : undefined}
+              key={n.name}
+              onClick={() => goTo(n.name)}
+            >
+              <n.icon size={20} />
+              {n.name}
+            </button>
+          ))}
       </nav>
       {notice && (
         <div className="toast" role="status">
           <Check size={17} />
-          {notice}
+          <span>{notice}</span>
+          {api.canUndo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              aria-label="Deshacer último cambio"
+              onClick={async () => {
+                try {
+                  await api.undo();
+                  setModal(null);
+                  setNotice("Último cambio deshecho.");
+                } catch {}
+              }}
+            >
+              <Undo2 size={15} /> Deshacer
+            </Button>
+          )}
         </div>
       )}
       {modal?.kind === "add" && (

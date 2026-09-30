@@ -1,4 +1,5 @@
 "use client";
+import { DateText, StatusOptions, statusLabel } from "./format";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Heart, Pencil, Plus, Star } from "lucide-react";
 import { GameGallery } from "./game-gallery";
@@ -7,9 +8,9 @@ import { Cover, Modal, type ApiRequest, type Execute } from "./shared";
 import { GameDetails } from "./forms";
 import { GameSeries } from "./game-series";
 import { CatalogDetails } from "./catalog-details";
+import { LinkCatalog } from "./link-catalog";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
 import {
-  statuses,
   type Game,
   type GameTimes,
   type Library,
@@ -43,6 +44,7 @@ export function GamePage({
     [retry, setRetry] = useState(0),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const linked = !!game.catalogId;
   const run = state.runs.find((r) => r.id === game.primaryRunId)!,
     runs = state.runs.filter((r) => r.gameId === game.id),
     activities = state.activities
@@ -146,7 +148,7 @@ export function GamePage({
         {[
           ["game-overview", "Información"],
           ["game-times", "Duración"],
-          ["game-series", "Saga"],
+          ...(linked ? [["game-series", "Saga"]] : []),
           ["game-runs", "Mis partidas"],
           ["game-notes", "Mi reseña"],
           ["game-journal", "Actividad"],
@@ -156,15 +158,17 @@ export function GamePage({
           </a>
         ))}
       </nav>
-      <GameGallery
-        id={game.catalogId}
-        cover={game.cover}
-        request={request}
-        demo={demo}
-      />
-      <h2 className="section-label">Información del juego</h2>
+      {linked && (
+        <GameGallery
+          id={game.catalogId}
+          cover={game.cover}
+          request={request}
+          demo={demo}
+        />
+      )}
       <div className="game-page-columns">
         <div className="game-page-content">
+          <h2 className="section-label">Información del juego</h2>
           <section className="game-section" id="game-times">
             <div className="section-header">
               <h2>¿Cuánto dura?</h2>
@@ -189,16 +193,18 @@ export function GamePage({
                           ? formatHours(game.approximateHours)
                           : loading
                             ? "…"
-                            : "Sin datos"}
+                            : "—"}
                     </strong>
                     <small>
                       {item
-                        ? "Fuente: " + item.source
+                        ? item.source === "manual"
+                          ? "Tu estimación"
+                          : "Fuente: " + item.source
                         : mode === "main" && game.approximateHours !== undefined
-                          ? "Referencia manual anterior"
+                          ? "Tu estimación"
                           : loading
                             ? "Consultando IGDB"
-                            : "No disponible"}
+                            : "Sin datos"}
                     </small>
                   </div>
                 );
@@ -222,24 +228,35 @@ export function GamePage({
               </p>
             )}
           </section>
-          <section className="game-section" id="game-overview">
-            <h2>Sobre el juego</h2>
-            <CatalogDetails
-              catalogId={game.catalogId}
+          {linked ? (
+            <>
+              <section className="game-section" id="game-overview">
+                <h2>Sobre el juego</h2>
+                <CatalogDetails
+                  catalogId={game.catalogId}
+                  request={request}
+                  demo={demo}
+                />
+              </section>
+              <section className="game-section" id="game-series">
+                <h2>Otros juegos de la saga</h2>
+                <GameSeries
+                  catalogId={game.catalogId}
+                  request={request}
+                  demo={demo}
+                  state={state}
+                  onGame={onGame}
+                />
+              </section>
+            </>
+          ) : (
+            <LinkCatalog
+              game={game}
               request={request}
+              execute={execute}
               demo={demo}
             />
-          </section>
-          <section className="game-section" id="game-series">
-            <h2>Otros juegos de la saga</h2>
-            <GameSeries
-              catalogId={game.catalogId}
-              request={request}
-              demo={demo}
-              state={state}
-              onGame={onGame}
-            />
-          </section>
+          )}
           <h2 className="section-label">Tus partidas y recuerdos</h2>
           <section className="game-section" id="game-runs">
             <div className="section-header">
@@ -256,19 +273,23 @@ export function GamePage({
                 <div>
                   <h3>{r.label}</h3>
                   <p>
-                    {r.platform} · {r.status}
+                    {r.platform} · {statusLabel(r.status)}
                     {r.id === game.primaryRunId ? " · Principal" : ""}
                   </p>
                 </div>
                 <dl>
                   <div>
                     <dt>Comienzo</dt>
-                    <dd>{r.startedOn}</dd>
+                    <dd>
+                      <DateText date={r.startedOn} />
+                    </dd>
                   </div>
                   {r.completedOn && (
                     <div>
                       <dt>Finalización</dt>
-                      <dd>{r.completedOn}</dd>
+                      <dd>
+                        <DateText date={r.completedOn} />
+                      </dd>
                     </div>
                   )}
                   <div>
@@ -321,7 +342,7 @@ export function GamePage({
             {activities.length ? (
               activities.slice(0, 20).map((a) => (
                 <div className="game-journal-row" key={a.id}>
-                  <time>{a.date}</time>
+                  <DateText date={a.date} />
                   <p>{a.note || "Un día de juego"}</p>
                 </div>
               ))
@@ -354,9 +375,7 @@ export function GamePage({
                   })
                 }
               >
-                {statuses.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
+                <StatusOptions />
               </select>
             </label>
             <h3>Dónde lo dejé</h3>

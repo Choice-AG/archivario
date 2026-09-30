@@ -29,6 +29,21 @@ export const defaultFilters: LibraryFilters = {
   sort: "recent",
 };
 
+// Filtros del panel que difieren del valor por defecto (sin búsqueda, estado ni orden).
+export function countActiveFilters(f: LibraryFilters) {
+  return (
+    [
+      "platform",
+      "genre",
+      "duration",
+      "timeMode",
+      "ownership",
+      "ratingFilter",
+      "searchSpoilers",
+    ] as const
+  ).filter((key) => f[key] !== defaultFilters[key]).length;
+}
+
 export function useLibraryFilters() {
   const [filters, setFilters] = useState(defaultFilters),
     [page, setPage] = useState(1);

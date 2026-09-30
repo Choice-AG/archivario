@@ -1,9 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { StatusOptions } from "./format";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCatalogSearch } from "./use-catalog-search";
 import { Modal, type ApiRequest, type Execute, Cover } from "./shared";
-import { statuses, type Library, type Status } from "../domain/model";
+import { type Library, type Status } from "../domain/model";
 import { useSagaGuides } from "./saga-guides";
 export function GlobalSearch({
   state,
@@ -23,6 +25,18 @@ export function GlobalSearch({
     >([]),
     [sagaError, setSagaError] = useState("");
   const [open, setOpen] = useState(false);
+  const [shortcut, setShortcut] = useState("Ctrl K");
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/.test(navigator.platform)) setShortcut("⌘ K");
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const guides = useSagaGuides(open) ?? [];
   const search = useCatalogSearch(request, open && !demo);
   const q = search.query.trim().toLocaleLowerCase("es");
@@ -57,8 +71,15 @@ export function GlobalSearch({
   ].filter((s) => s.name.toLocaleLowerCase("es").includes(q));
   return (
     <>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
-        Buscar en Archivario
+      <Button
+        variant="secondary"
+        onClick={() => setOpen(true)}
+        aria-keyshortcuts="Control+K Meta+K"
+      >
+        <Search size={15} /> Buscar en Archivario
+        <kbd className="shortcut-hint" aria-hidden="true">
+          {shortcut}
+        </kbd>
       </Button>
       {open && (
         <Modal title="Buscar juegos y sagas" onClose={() => setOpen(false)}>
@@ -189,16 +210,44 @@ export function ContinuePlaying({
   onGame: (id: string) => void;
   onActivity: (id: string) => void;
 }) {
+  const track = useRef<HTMLDivElement>(null);
   const games = state.games
     .filter((g) =>
       state.runs.some((r) => r.id === g.primaryRunId && r.status === "jugando"),
     )
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const scroll = (direction: number) =>
+    track.current?.scrollBy({
+      left: direction * track.current.clientWidth * 0.9,
+      behavior: "smooth",
+    });
   if (!games.length) return null;
   return (
     <section className="continue-section">
-      <h2>Continuar donde lo dejé</h2>
-      <div className="continue-grid">
+      <div className="section-header">
+        <h2>Continuar donde lo dejé</h2>
+        {games.length > 1 && (
+          <div className="carousel-arrows">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Anteriores"
+              onClick={() => scroll(-1)}
+            >
+              <ChevronLeft size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Siguientes"
+              onClick={() => scroll(1)}
+            >
+              <ChevronRight size={18} />
+            </Button>
+          </div>
+        )}
+      </div>
+      <div className="continue-grid" ref={track}>
         {games.map((g) => {
           const run = state.runs.find((r) => r.id === g.primaryRunId)!;
           return (
@@ -275,9 +324,7 @@ export function BatchLibrary({
           value={status}
           onChange={(e) => setStatus(e.target.value as Status)}
         >
-          {statuses.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
+          <StatusOptions />
         </select>
       </label>
       <Button disabled={busy || !ids.length} onClick={() => save("status")}>

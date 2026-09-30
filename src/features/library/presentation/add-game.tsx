@@ -1,10 +1,10 @@
 "use client";
+import { StatusOptions } from "./format";
 import { useEffect, useState } from "react";
 import { Check, LoaderCircle, Plus, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   dateInZone,
-  statuses,
   type Game,
   type GameTimes,
   type Library,
@@ -387,9 +387,7 @@ export function AddGame({
               <label>
                 Estado inicial
                 <select name="status">
-                  {statuses.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
+                  <StatusOptions />
                 </select>
               </label>
               <label>

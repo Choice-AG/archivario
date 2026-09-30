@@ -5,12 +5,37 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { ArrowUpRight, Gamepad2 } from "lucide-react";
+import { ArrowUpRight, Eye, EyeOff, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clientAuth } from "@/features/account/firebase-client";
 
+// Mensajes concretos para los códigos de error más habituales de Firebase Auth.
+export function authMessage(error: unknown, signup: boolean) {
+  const code = (error as { code?: string })?.code ?? "";
+  if (
+    code === "auth/invalid-credential" ||
+    code === "auth/wrong-password" ||
+    code === "auth/user-not-found"
+  )
+    return "El correo o la contraseña no son correctos.";
+  if (code === "auth/email-already-in-use")
+    return "Ya existe una cuenta con este correo. Prueba a entrar.";
+  if (code === "auth/weak-password")
+    return "La contraseña es demasiado débil: usa al menos 8 caracteres.";
+  if (code === "auth/invalid-email")
+    return "El correo no tiene un formato válido.";
+  if (code === "auth/too-many-requests")
+    return "Demasiados intentos. Espera unos minutos y vuelve a probar.";
+  if (code === "auth/network-request-failed")
+    return "Sin conexión. Revisa tu red e inténtalo de nuevo.";
+  return signup
+    ? "No se ha podido crear la cuenta. Inténtalo de nuevo."
+    : "No se ha podido acceder. Inténtalo de nuevo.";
+}
+
 export function Login({ onDemo }: { onDemo: () => void }) {
   const [signup, setSignup] = useState(false),
+    [showPassword, setShowPassword] = useState(false),
     [email, setEmail] = useState(""),
     [message, setMessage] = useState(""),
     [pending, setPending] = useState(false);
@@ -55,10 +80,8 @@ export function Login({ onDemo }: { onDemo: () => void }) {
                 );
               else
                 await signInWithEmailAndPassword(clientAuth(), email, password);
-            } catch {
-              setMessage(
-                "No se ha podido acceder. Revisa tus datos y la configuración de Firebase.",
-              );
+            } catch (error) {
+              setMessage(authMessage(error, signup));
             } finally {
               setPending(false);
             }
@@ -77,13 +100,26 @@ export function Login({ onDemo }: { onDemo: () => void }) {
           </label>
           <label>
             Contraseña
-            <input
-              name="password"
-              type="password"
-              minLength={8}
-              autoComplete={signup ? "new-password" : "current-password"}
-              required
-            />
+            <span className="password-field">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                minLength={8}
+                autoComplete={signup ? "new-password" : "current-password"}
+                required
+              />
+              <button
+                type="button"
+                aria-label={
+                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </span>
+            {signup && <small>Al menos 8 caracteres.</small>}
           </label>
           <Button disabled={pending} className="w-full">
             {signup ? "Crear cuenta" : "Entrar"}
@@ -107,8 +143,12 @@ export function Login({ onDemo }: { onDemo: () => void }) {
               setMessage(
                 "Si existe una cuenta, recibirás instrucciones por correo.",
               );
-            } catch {
-              setMessage("No se ha podido enviar el correo.");
+            } catch (error) {
+              setMessage(
+                (error as { code?: string })?.code === "auth/invalid-email"
+                  ? "El correo no tiene un formato válido."
+                  : "No se ha podido enviar el correo.",
+              );
             }
           }}
         >
@@ -118,6 +158,10 @@ export function Login({ onDemo }: { onDemo: () => void }) {
         <Button variant="secondary" onClick={onDemo}>
           Explorar la demostración <ArrowUpRight size={16} />
         </Button>
+        <p className="muted text-xs demo-hint">
+          Sin cuenta: prueba con juegos de ejemplo. Lo que cambies se guarda
+          solo en este navegador.
+        </p>
       </section>
     </main>
   );
