@@ -126,8 +126,8 @@ export function GameTimeForm({
       </form>
       {game.approximateHours !== undefined && (
         <p className="muted text-sm mt-3">
-          Referencia manual anterior: {formatHours(game.approximateHours)}. Se
-          usa si no hay estimación de historia principal.
+          Tu estimación anterior: {formatHours(game.approximateHours)}. Se usa
+          si no hay estimación de historia principal.
         </p>
       )}
       <h3 className="mt-5">Tu tiempo real por partida</h3>

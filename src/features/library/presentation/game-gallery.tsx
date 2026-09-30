@@ -79,7 +79,11 @@ export function GameGallery({
         </p>
       )}
       {opened && (
-        <Modal title="Imagen completa" onClose={() => setOpened(undefined)}>
+        <Modal
+          title="Imagen completa"
+          description="Imagen de IGDB a tamaño completo."
+          onClose={() => setOpened(undefined)}
+        >
           <img
             className="gallery-full"
             src={opened}

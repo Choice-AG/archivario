@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { monthlySummary, type Activity, type Library } from "../domain/model";
 import { Cover } from "./shared";
+import { monthLabel, plural } from "./format";
 
 export function shiftMonth(month: string, n: number) {
   const d = new Date(month + "-15T12:00:00");
@@ -107,24 +108,27 @@ export function MonthCard({ state, today }: { state: Library; today: string }) {
     <section className="month-card">
       <p className="eyebrow">PEQUEÑOS GRANDES VIAJES</p>
       <h2>Tu mes, a tu ritmo.</h2>
-      <p className="muted">
-        {new Intl.DateTimeFormat("es", {
-          month: "long",
-          year: "numeric",
-        }).format(new Date(today + "T12:00:00"))}
-      </p>
+      <p className="muted month-name">{monthLabel(today)}</p>
       <div className="summary-grid">
         <div>
           <strong>{summary.games}</strong>
-          <span>juegos disfrutados</span>
+          <span>
+            {summary.games === 1 ? "juego disfrutado" : "juegos disfrutados"}
+          </span>
         </div>
         <div>
           <strong>{summary.days}</strong>
-          <span>días con actividad</span>
+          <span>
+            {summary.days === 1 ? "día con actividad" : "días con actividad"}
+          </span>
         </div>
         <div>
           <strong>{summary.completed}</strong>
-          <span>partidas completadas</span>
+          <span>
+            {summary.completed === 1
+              ? "partida completada"
+              : "partidas completadas"}
+          </span>
         </div>
       </div>
       <p className="month-foot">
@@ -165,6 +169,9 @@ export function CalendarView({
     <section className="panel">
       <div className="section-header">
         <h2>Calendario</h2>
+        <Button variant="secondary" onClick={onBulk} className="calendar-bulk">
+          Registrar varios días
+        </Button>
         <div className="month-nav">
           <Button
             variant="ghost"
@@ -192,13 +199,15 @@ export function CalendarView({
           </Button>
         </div>
       </div>
-      <Button variant="secondary" onClick={onBulk}>
-        Registrar varios días
-      </Button>
-      <div className="calendar-summary">
-        {summary.games} juegos · {summary.days} días activos ·{" "}
-        {summary.completed} partidas completadas
-      </div>
+      <p className="calendar-summary">
+        {plural(summary.games, "juego", "juegos")} ·{" "}
+        {plural(summary.days, "día activo", "días activos")} ·{" "}
+        {plural(
+          summary.completed,
+          "partida completada",
+          "partidas completadas",
+        )}
+      </p>
       <div className="calendar-grid">
         {["L", "M", "X", "J", "V", "S", "D"].map((d, i) => (
           <span className="weekday" key={i}>

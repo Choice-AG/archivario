@@ -11,6 +11,7 @@ import {
 } from "../domain/daily";
 import { moveGame, playableGames } from "../domain/planning";
 import type { Execute } from "./shared";
+import { statusLabel } from "./format";
 export function Planning({
   state,
   execute,
@@ -509,10 +510,11 @@ function Compare({
                 ],
                 [
                   "Estado",
-                  ...games.map(
-                    (g) =>
+                  ...games.map((g) =>
+                    statusLabel(
                       state.runs.find((r) => r.id === g.primaryRunId)?.status ??
-                      "—",
+                        "—",
+                    ),
                   ),
                 ],
                 ["Plataformas", ...games.map((g) => g.platforms.join(", "))],

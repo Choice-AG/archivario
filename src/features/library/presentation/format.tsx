@@ -16,6 +16,18 @@ export function DateText({ date }: { date: string }) {
   return <time dateTime={date}>{formatDate(date)}</time>;
 }
 
+// "1 día", "2 días"…
+export function plural(n: number, one: string, many: string) {
+  return n + " " + (n === 1 ? one : many);
+}
+export function monthLabel(date: string) {
+  const text = new Intl.DateTimeFormat("es", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(date.slice(0, 7) + "-15T12:00:00Z"));
+  return text[0].toLocaleUpperCase("es") + text.slice(1);
+}
 export function statusLabel(status: string) {
   return status ? status[0].toLocaleUpperCase("es") + status.slice(1) : status;
 }

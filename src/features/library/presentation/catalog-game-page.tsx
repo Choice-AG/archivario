@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
 import { Modal, type ApiRequest, type Execute } from "./shared";
@@ -92,7 +93,7 @@ export function CatalogGamePage({
   return (
     <div className="game-page">
       <button className="game-back" onClick={onBack}>
-        ← {backLabel}
+        <ArrowLeft size={16} /> {backLabel}
       </button>
       {error && (
         <p className="form-error" role="alert">
@@ -216,13 +217,9 @@ export function CatalogGamePage({
                       ? formatHours(times[mode].hours)
                       : !demo && !times && !timeError
                         ? "…"
-                        : "Sin datos"}
+                        : "—"}
                   </strong>
-                  <small>
-                    {times?.[mode]
-                      ? "Fuente: IGDB"
-                      : "Estimación del juego completo"}
-                  </small>
+                  <small>{times?.[mode] ? "Fuente: IGDB" : "Sin datos"}</small>
                 </div>
               ))}
             </div>
@@ -251,6 +248,7 @@ export function CatalogGamePage({
           {adding && (
             <Modal
               title="Añadir a mi biblioteca"
+              description="Revisa los datos del catálogo y elige plataforma y estado."
               onClose={() => setAdding(false)}
             >
               <AddGame

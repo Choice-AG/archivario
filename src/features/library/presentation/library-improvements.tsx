@@ -74,15 +74,21 @@ export function GlobalSearch({
       <Button
         variant="secondary"
         onClick={() => setOpen(true)}
+        aria-label="Buscar en Archivario"
         aria-keyshortcuts="Control+K Meta+K"
       >
-        <Search size={15} /> Buscar en Archivario
+        <Search size={15} />
+        <span className="search-label">Buscar en Archivario</span>
         <kbd className="shortcut-hint" aria-hidden="true">
           {shortcut}
         </kbd>
       </Button>
       {open && (
-        <Modal title="Buscar juegos y sagas" onClose={() => setOpen(false)}>
+        <Modal
+          title="Buscar juegos y sagas"
+          description="En tu biblioteca, en las guías de sagas y en el catálogo."
+          onClose={() => setOpen(false)}
+        >
           <label>
             Buscar en todo
             <input
@@ -112,6 +118,9 @@ export function GlobalSearch({
                 <p className="muted">Sin coincidencias en tu biblioteca.</p>
               )}
               <h3>Sagas</h3>
+              {!sagas.length && !remoteSagas.length && (
+                <p className="muted">Ninguna saga con ese nombre.</p>
+              )}
               {sagas.map((s) => (
                 <button
                   key={s.id}

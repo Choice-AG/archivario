@@ -87,11 +87,15 @@ label small {
   font-size: 11px;
   color: var(--muted);
 }
-h1,
-h2,
-h3,
-p {
-  margin: 0;
+/* En la capa base para que las utilidades de Tailwind (mt-3, my-2…) puedan
+   sobrescribirlo; fuera de capa anulaba todos los márgenes utilitarios. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
 }
 h2 {
   font-size: 17px;
@@ -671,9 +675,8 @@ main#main-content {
   letter-spacing: -0.5px;
 }
 .month-card > .muted {
-  font-size: 10px;
+  font-size: 11px;
   margin-top: 6px;
-  text-transform: capitalize;
 }
 .summary-grid {
   display: grid;
@@ -2422,6 +2425,8 @@ main#main-content {
 }
 .saga-entry-editor summary {
   font-weight: 600;
+}
+.saga-entry-editor[open] summary {
   margin-bottom: 10px;
 }
 @media (max-width: 850px) {
@@ -3281,5 +3286,115 @@ select:focus {
   }
   .game-page-content > .section-label {
     margin-top: 8px;
+  }
+}
+
+/* ---- Correcciones del QA visual ---- */
+
+/* Descripción de los modales: separada del primer campo */
+.dialog-description {
+  margin: 6px 0 22px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+/* Buscador: un solo anillo de foco alrededor de todo el campo */
+.search-field:focus-within {
+  border-color: #b49aff80;
+  box-shadow: 0 0 0 3px #b49aff26;
+}
+.search-field input:focus-visible {
+  outline: none;
+}
+
+/* Cabeceras de sección con varias acciones */
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.calendar-bulk {
+  margin-left: auto;
+}
+.calendar-summary {
+  margin: -6px 0 20px;
+}
+
+/* Selección de varios juegos en un día: filas compactas */
+.multi-day-game {
+  padding: 10px 14px;
+  margin: 8px 0;
+}
+.multi-day-game > .checkbox-label {
+  margin: 0;
+}
+.multi-day-game label:not(.checkbox-label) {
+  margin-top: 10px;
+}
+
+/* Selector de varios días: semana alineada como el calendario */
+.bulk-days .weekday {
+  text-align: center;
+  font-size: 11px;
+  color: #8f97b0;
+  padding-bottom: 2px;
+}
+
+/* Resumen anual: barras con los colores de la app */
+.year-months progress {
+  appearance: none;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ffffff12;
+}
+.year-months progress::-webkit-progress-bar {
+  background: #ffffff12;
+  border-radius: 4px;
+}
+.year-months progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #8b5cf6, #b49cfa);
+  border-radius: 4px;
+}
+.year-months progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #8b5cf6, #b49cfa);
+  border-radius: 4px;
+}
+
+/* Comparador: cabeceras legibles */
+.compare-table th {
+  font-size: 13px;
+  font-weight: 650;
+  color: #e4e6f2;
+}
+
+@media (max-width: 640px) {
+  /* Marca en una línea y búsqueda como icono para no partir la barra superior */
+  .breadcrumbs:before {
+    white-space: nowrap;
+  }
+  .top-actions {
+    flex-wrap: nowrap;
+  }
+  .search-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .section-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  .panel > .section-header {
+    flex-wrap: wrap;
+  }
+  .calendar-bulk {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
   }
 }

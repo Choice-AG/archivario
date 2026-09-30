@@ -30,6 +30,7 @@ import { MonthCard, Recent } from "./journal";
 import {
   countActiveFilters,
   useFilteredGames,
+  viewDefaults,
   type useLibraryFilters,
 } from "./library-filters";
 import type { Execute } from "./shared";
@@ -75,7 +76,9 @@ export function LibraryView({
   const { filters: f, set, reset, page, setPage } = filterState;
   const { filtered, runOf } = useFilteredGames(state, f, view);
   const [showFilters, setShowFilters] = useState(false);
-  const activeFilters = countActiveFilters(f);
+  const activeFilters = countActiveFilters(f, view);
+  const defaults = viewDefaults(view);
+  const clearAll = () => reset({ ownership: defaults.ownership });
   const [selecting, setSelecting] = useState(false),
     [selectedIds, setSelectedIds] = useState<string[]>([]);
   const platforms = useMemo(
@@ -280,7 +283,7 @@ export function LibraryView({
           </label>
           <Button
             variant="ghost"
-            onClick={() => reset()}
+            onClick={clearAll}
             disabled={activeFilters === 0 && f.sort === "recent" && !f.query}
           >
             Limpiar filtros
@@ -381,19 +384,38 @@ export function LibraryView({
       ) : (
         <div className="empty-state">
           <BookOpen size={36} />
-          <h2>
-            {state.games.length
-              ? "Aquí todavía no hay juegos."
-              : "Tu biblioteca empieza con un juego."}
-          </h2>
-          <p>
-            {state.games.length
-              ? "Prueba otros filtros o elige juegos desde su ficha."
-              : "Busca en el catálogo o añade tu primer juego manualmente."}
-          </p>
-          <Button variant="secondary" onClick={onAdd}>
-            Añadir juego
-          </Button>
+          {state.games.length &&
+          (f.query.trim() || activeFilters > 0 || f.status !== "Todos") ? (
+            <>
+              <h2>
+                {f.query.trim()
+                  ? "Nada coincide con «" + f.query.trim() + "»."
+                  : "Ningún juego con estos filtros."}
+              </h2>
+              <p>Prueba con otras palabras o quita algún filtro.</p>
+              <Button variant="secondary" onClick={clearAll}>
+                Quitar búsqueda y filtros
+              </Button>
+            </>
+          ) : (
+            <>
+              <h2>
+                {state.games.length
+                  ? "Aquí todavía no hay juegos."
+                  : "Tu biblioteca empieza con un juego."}
+              </h2>
+              <p>
+                {state.games.length
+                  ? view === "Favoritos"
+                    ? "Marca un juego con el corazón para verlo aquí."
+                    : "Marca juegos como próximos o pendientes para verlos aquí."
+                  : "Busca en el catálogo o añade tu primer juego manualmente."}
+              </p>
+              <Button variant="secondary" onClick={onAdd}>
+                Añadir juego
+              </Button>
+            </>
+          )}
         </div>
       )}
       {filtered.length > PAGE && (

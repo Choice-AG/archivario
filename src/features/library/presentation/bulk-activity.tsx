@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { activityId, type Library } from "../domain/model";
 import type { Execute } from "./shared";
+import { plural } from "./format";
 export function BulkActivity({
   state,
   today,
@@ -84,6 +85,16 @@ export function BulkActivity({
           />
         </label>
         <div className="bulk-days">
+          {["L", "M", "X", "J", "V", "S", "D"].map((d, i) => (
+            <span className="weekday" key={"w" + i} aria-hidden="true">
+              {d}
+            </span>
+          ))}
+          {Array.from({
+            length: (new Date(month + "-01T12:00:00").getDay() + 6) % 7,
+          }).map((_, i) => (
+            <span key={"blank" + i} aria-hidden="true" />
+          ))}
           {Array.from(
             {
               length: new Date(
@@ -117,8 +128,9 @@ export function BulkActivity({
           )}
         </div>
         <p role="status">
-          {dates.length} días seleccionados · {dates.length - existing} nuevos ·{" "}
-          {existing} ya registrados
+          {plural(dates.length, "día seleccionado", "días seleccionados")} ·{" "}
+          {plural(dates.length - existing, "nuevo", "nuevos")} ·{" "}
+          {plural(existing, "ya registrado", "ya registrados")}
         </p>
         <p className="muted text-xs">
           Puedes combinar meses hasta 62 días. Los registros existentes
