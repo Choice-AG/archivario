@@ -1,0 +1,977 @@
+[
+  {
+    "id": "guide-kingdom-hearts",
+    "name": "Kingdom Hearts",
+    "description": "Guía inicial del recorrido principal. Prioriza descubrir la historia en un orden cercano al lanzamiento; no es una cronología interna ni una lista de todas las ediciones. Las recopilaciones reúnen varios de estos pasos.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.square-enix.com/kingdomhearts/collection/en-us/",
+    "entries": [
+      {
+        "catalogId": 1219,
+        "title": "Kingdom Hearts",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co30zf.jpg",
+        "releaseDate": "2002-09-17",
+        "chapter": "El comienzo",
+        "note": "Puedes elegir Final Mix como versión de esta primera aventura.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 20283,
+            "title": "Kingdom Hearts Final Mix"
+          }
+        ]
+      },
+      {
+        "catalogId": 1220,
+        "title": "Kingdom Hearts: Chain of Memories",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2wrx.jpg",
+        "releaseDate": "2004-11-11",
+        "chapter": "Entre I y II",
+        "note": "Chain of Memories o Re:Chain of Memories son alternativas: no necesitas repetir ambas.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 20286,
+            "title": "Kingdom Hearts Re:Chain of Memories"
+          }
+        ]
+      },
+      {
+        "catalogId": 1221,
+        "title": "Kingdom Hearts II",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co30t1.jpg",
+        "releaseDate": "2005-12-22",
+        "chapter": "El regreso de Sora",
+        "note": "Kingdom Hearts II / Final Mix. Continúa tras Chain of Memories.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 20284,
+            "title": "Kingdom Hearts II Final Mix"
+          }
+        ]
+      },
+      {
+        "catalogId": 1223,
+        "title": "Kingdom Hearts 358/2 Days",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co31qj.jpg",
+        "releaseDate": "2009-05-30",
+        "chapter": "Historias que amplían el viaje",
+        "note": "358/2 Days se recomienda después de II para conservar sus revelaciones. La recopilación ofrece escenas cinematográficas.",
+        "optional": false
+      },
+      {
+        "catalogId": 1224,
+        "title": "Kingdom Hearts Birth by Sleep",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2ych.jpg",
+        "releaseDate": "2010-01-09",
+        "chapter": "Mirar al pasado",
+        "note": "Birth by Sleep es una precuela; aquí se sitúa después de II y Days como recomendación de descubrimiento.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 42856,
+            "title": "Kingdom Hearts Birth by Sleep Final Mix"
+          }
+        ]
+      },
+      {
+        "catalogId": 1225,
+        "title": "Kingdom Hearts Re:coded",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tq6.jpg",
+        "releaseDate": "2010-10-07",
+        "chapter": "Un nuevo misterio",
+        "note": "Re:coded está resumido en escenas dentro de las recopilaciones.",
+        "optional": false
+      },
+      {
+        "catalogId": 1226,
+        "title": "Kingdom Hearts 3D: Dream Drop Distance",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co318g.jpg",
+        "releaseDate": "2012-03-29",
+        "chapter": "Preparando el desenlace",
+        "note": "Dream Drop Distance; también puedes usar su edición HD.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 117525,
+            "title": "Kingdom Hearts Dream Drop Distance HD"
+          }
+        ]
+      },
+      {
+        "catalogId": 27737,
+        "title": "Kingdom Hearts Union χ[Cross]",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tqb.jpg",
+        "releaseDate": "2015-09-03",
+        "chapter": "El pasado remoto",
+        "note": "Union χ: consulta su disponibilidad actual. El contenido narrativo de χ Back Cover, incluido en 2.8, complementa esta parte.",
+        "optional": false
+      },
+      {
+        "catalogId": 26676,
+        "title": "Kingdom Hearts 0.2: Birth by Sleep - A Fragmentary Passage",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8m20.jpg",
+        "releaseDate": "2017-01-12",
+        "chapter": "Camino a III",
+        "note": "0.2 es una aventura breve incluida en 2.8.",
+        "optional": false
+      },
+      {
+        "catalogId": 2933,
+        "title": "Kingdom Hearts III",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpy.jpg",
+        "releaseDate": "2019-01-25",
+        "chapter": "La tercera gran aventura",
+        "note": "Llega aquí con el contexto de los pasos anteriores.",
+        "optional": false
+      },
+      {
+        "catalogId": 117778,
+        "title": "Kingdom Hearts III: Re Mind",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1xdl.jpg",
+        "releaseDate": "2020-01-23",
+        "chapter": "Después de III",
+        "note": "Re Mind es contenido adicional para después del juego base.",
+        "optional": false
+      },
+      {
+        "catalogId": 135108,
+        "title": "Kingdom Hearts: Melody of Memory",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9o3.jpg",
+        "releaseDate": "2020-11-12",
+        "chapter": "Después del desenlace",
+        "note": "Melody of Memory combina ritmo y continuación narrativa.",
+        "optional": false
+      },
+      {
+        "catalogId": 130408,
+        "title": "Kingdom Hearts Dark Road",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2cby.jpg",
+        "releaseDate": "2020-06-22",
+        "chapter": "Historias complementarias",
+        "note": "Dark Road amplía el pasado. Revisa cómo acceder a su historia.",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "guide-fire-emblem",
+    "name": "Fire Emblem",
+    "description": "Recorrido por mundos y subseries. No existe una sola cronología que conecte todas las entregas. Cada bloque puede iniciarse por separado; el orden entre bloques es una propuesta de organización.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.nintendo.com/en-gb/Games/Nintendo-GameCube/Fire-Emblem-Path-of-Radiance-268082.html",
+    "entries": [
+      {
+        "catalogId": 1444,
+        "title": "Fire Emblem: Shadow Dragon",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co90ny.jpg",
+        "releaseDate": "2008-08-07",
+        "chapter": "Archanea y Valentia",
+        "note": "Shadow Dragon es una versión del comienzo de Marth.",
+        "optional": false
+      },
+      {
+        "catalogId": 1445,
+        "title": "Fire Emblem: Shin Monshou no Nazo - Hikari to Kage no Eiyuu",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coccg7.jpg",
+        "releaseDate": "2010-07-15",
+        "chapter": "",
+        "note": "Continúa el recorrido de Marth; comprueba idiomas y disponibilidad de esta entrega.",
+        "optional": false
+      },
+      {
+        "catalogId": 26840,
+        "title": "Fire Emblem Echoes: Shadows of Valentia",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coba3w.jpg",
+        "releaseDate": "2017-04-20",
+        "chapter": "",
+        "note": "Echoes retoma Gaiden desde otra región. No es una secuela numerada de Shadow Dragon.",
+        "optional": false
+      },
+      {
+        "catalogId": 1436,
+        "title": "Fire Emblem: Genealogy of the Holy War",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobclw.jpg",
+        "releaseDate": "1996-05-14",
+        "chapter": "Jugdral",
+        "note": "Comienza este bloque con Genealogy of the Holy War.",
+        "optional": false
+      },
+      {
+        "catalogId": 1437,
+        "title": "Fire Emblem: Thracia 776",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobafv.jpg",
+        "releaseDate": "1999-09-01",
+        "chapter": "",
+        "note": "Thracia 776 se cruza con acontecimientos de Genealogy; conviene conocer primero su contexto.",
+        "optional": false
+      },
+      {
+        "catalogId": 1439,
+        "title": "Fire Emblem: The Blazing Blade",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobbmr.jpg",
+        "releaseDate": "2003-04-25",
+        "chapter": "Elibe",
+        "note": "The Blazing Blade, conocido en Occidente como Fire Emblem. Es anterior en la historia a The Binding Blade.",
+        "optional": false
+      },
+      {
+        "catalogId": 1438,
+        "title": "Fire Emblem: The Binding Blade",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobag0.jpg",
+        "releaseDate": "2002-03-29",
+        "chapter": "",
+        "note": "The Binding Blade continúa en Elibe con otra generación.",
+        "optional": false
+      },
+      {
+        "catalogId": 1440,
+        "title": "Fire Emblem: The Sacred Stones",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co25q4.jpg",
+        "releaseDate": "2004-10-07",
+        "chapter": "Magvel",
+        "note": "The Sacred Stones puede disfrutarse de forma independiente.",
+        "optional": false
+      },
+      {
+        "catalogId": 1441,
+        "title": "Fire Emblem: Path of Radiance",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1ofh.jpg",
+        "releaseDate": "2005-04-20",
+        "chapter": "Tellius",
+        "note": "Primera parte del recorrido de Tellius.",
+        "optional": false
+      },
+      {
+        "catalogId": 1442,
+        "title": "Fire Emblem: Radiant Dawn",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobb09.jpg",
+        "releaseDate": "2007-02-22",
+        "chapter": "",
+        "note": "Radiant Dawn se juega después de Path of Radiance.",
+        "optional": false
+      },
+      {
+        "catalogId": 1443,
+        "title": "Fire Emblem Awakening",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobcko.jpg",
+        "releaseDate": "2012-04-19",
+        "chapter": "Ylisse",
+        "note": "Awakening ofrece un punto de entrada propio.",
+        "optional": false
+      },
+      {
+        "catalogId": 24220,
+        "title": "Fire Emblem Fates: Birthright",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobab2.jpg",
+        "releaseDate": "2015-06-25",
+        "chapter": "Fates · rutas alternativas",
+        "note": "Birthright y Conquest son rutas diferentes; elige una para empezar.",
+        "optional": false
+      },
+      {
+        "catalogId": 21863,
+        "title": "Fire Emblem Fates: Conquest",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobaaj.jpg",
+        "releaseDate": "2015-06-25",
+        "chapter": "",
+        "note": "Conquest es una alternativa a Birthright, no su secuela.",
+        "optional": false
+      },
+      {
+        "catalogId": 18038,
+        "title": "Fire Emblem Fates: Revelation",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coc5ho.jpg",
+        "releaseDate": "2015-07-09",
+        "chapter": "",
+        "note": "Revelation se recomienda después de conocer las otras rutas. Revisa su disponibilidad.",
+        "optional": false
+      },
+      {
+        "catalogId": 26845,
+        "title": "Fire Emblem: Three Houses",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1n8t.jpg",
+        "releaseDate": "2019-07-26",
+        "chapter": "Fódlan",
+        "note": "Three Houses tiene varias rutas internas.",
+        "optional": false
+      },
+      {
+        "catalogId": 191396,
+        "title": "Fire Emblem Warriors: Three Hopes",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob84j.jpg",
+        "releaseDate": "2022-06-24",
+        "chapter": "",
+        "note": "Three Hopes es una propuesta alternativa del mismo mundo, no una continuación directa.",
+        "optional": true
+      },
+      {
+        "catalogId": 217550,
+        "title": "Fire Emblem Engage",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coc5d3.jpg",
+        "releaseDate": "2023-01-20",
+        "chapter": "Elyos",
+        "note": "Engage puede iniciarse por separado.",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "id": "guide-final-fantasy",
+    "name": "Final Fantasy",
+    "description": "Los números principales suelen presentar mundos independientes. Esta selección recorre las entregas principales y después agrupa continuaciones directas. No representa una cronología compartida.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.square-enix.com/ffvii/en-us/games/rebirth/",
+    "entries": [
+      {
+        "catalogId": 385,
+        "title": "Final Fantasy",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2xv8.jpg",
+        "releaseDate": "1987-12-18",
+        "chapter": "Mundos independientes · I–VI",
+        "note": "Puedes usar las ediciones Pixel Remaster para las seis primeras entregas.",
+        "optional": false
+      },
+      {
+        "catalogId": 16474,
+        "title": "Final Fantasy II",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2xx4.jpg",
+        "releaseDate": "1988-12-17",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 77234,
+        "title": "Final Fantasy III",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2127.jpg",
+        "releaseDate": "1990-04-27",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 16587,
+        "title": "Final Fantasy IV",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co31c0.jpg",
+        "releaseDate": "1991-07-19",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 419,
+        "title": "Final Fantasy V",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co9p6d.jpg",
+        "releaseDate": "1992-12-06",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 426,
+        "title": "Final Fantasy VI",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coaq5k.jpg",
+        "releaseDate": "1994-04-02",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 427,
+        "title": "Final Fantasy VII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2kx2.jpg",
+        "releaseDate": "1997-09-07",
+        "chapter": "Mundos independientes · VII–X",
+        "note": "VII original aporta el contexto de su universo; sus derivados aparecen en un bloque aparte.",
+        "optional": false
+      },
+      {
+        "catalogId": 425,
+        "title": "Final Fantasy VIII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2z7d.jpg",
+        "releaseDate": "1999-02-11",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 421,
+        "title": "Final Fantasy IX",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2unc.jpg",
+        "releaseDate": "2000-07-07",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 418,
+        "title": "Final Fantasy X",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tr1.jpg",
+        "releaseDate": "2001-07-19",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 411,
+        "title": "Final Fantasy XI Online",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coaxxr.jpg",
+        "releaseDate": "2002-05-16",
+        "chapter": "Mundos independientes · XI–XVI",
+        "note": "XI es un MMORPG: disponibilidad y suscripción aparte.",
+        "optional": false
+      },
+      {
+        "catalogId": 398,
+        "title": "Final Fantasy XII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3rhx.jpg",
+        "releaseDate": "2006-03-16",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 389,
+        "title": "Final Fantasy XIII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coboys.jpg",
+        "releaseDate": "2009-12-17",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 386,
+        "title": "Final Fantasy XIV Online",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobl9m.jpg",
+        "releaseDate": "2013-08-27",
+        "chapter": "",
+        "note": "XIV es un MMORPG con expansiones propias; no requiere jugar XI.",
+        "optional": false
+      },
+      {
+        "catalogId": 359,
+        "title": "Final Fantasy XV",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co6nz1.jpg",
+        "releaseDate": "2016-11-29",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 31551,
+        "title": "Final Fantasy XVI",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobd9i.jpg",
+        "releaseDate": "2023-06-22",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 388,
+        "title": "Final Fantasy IV: The After Years",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7ndr.jpg",
+        "releaseDate": "2008-02-18",
+        "chapter": "Continuaciones · IV",
+        "note": "The After Years se reserva para después de IV.",
+        "optional": true
+      },
+      {
+        "catalogId": 413,
+        "title": "Final Fantasy X-2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2x4s.jpg",
+        "releaseDate": "2003-03-13",
+        "chapter": "Continuaciones · X",
+        "note": "X-2 va después de X.",
+        "optional": false
+      },
+      {
+        "catalogId": 384,
+        "title": "Final Fantasy XIII-2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tr9.jpg",
+        "releaseDate": "2011-12-15",
+        "chapter": "Continuaciones · XIII",
+        "note": "Después de XIII.",
+        "optional": false
+      },
+      {
+        "catalogId": 2449,
+        "title": "Lightning Returns: Final Fantasy XIII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobwcs.jpg",
+        "releaseDate": "2013-11-21",
+        "chapter": "",
+        "note": "Después de XIII-2.",
+        "optional": false
+      },
+      {
+        "catalogId": 2407,
+        "title": "Crisis Core: Final Fantasy VII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1trb.jpg",
+        "releaseDate": "2007-09-13",
+        "chapter": "Universo VII",
+        "note": "Crisis Core es una precuela, pero se recomienda conocer VII original antes por sus revelaciones.",
+        "optional": true
+      },
+      {
+        "catalogId": 11169,
+        "title": "Final Fantasy VII Remake",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobcwt.jpg",
+        "releaseDate": "2020-04-10",
+        "chapter": "Proyecto VII Remake",
+        "note": "Inicio del proyecto de nuevas versiones.",
+        "optional": false
+      },
+      {
+        "catalogId": 133236,
+        "title": "Final Fantasy VII Rebirth",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob9k6.jpg",
+        "releaseDate": "2024-02-29",
+        "chapter": "",
+        "note": "Rebirth sigue a Remake. No hace falta jugar los demás Final Fantasy numerados.",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "id": "guide-dragon-quest",
+    "name": "Dragon Quest",
+    "description": "Guía por bloques. Erdrick permite un recorrido III → I → II; el resto no debe interpretarse como una única línea temporal. Se selecciona una ficha por aventura para evitar duplicar remakes.",
+    "order": "recommended",
+    "source": "Selección editorial · https://blog.playstation.com/?p=409278",
+    "entries": [
+      {
+        "catalogId": 205589,
+        "title": "Dragon Warrior III",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co6s7a.jpg",
+        "releaseDate": "1988-02-10",
+        "chapter": "Erdrick · III → I → II",
+        "note": "Puedes elegir III HD-2D Remake como versión moderna.",
+        "optional": false
+      },
+      {
+        "catalogId": 205229,
+        "title": "Dragon Warrior",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co55p3.jpg",
+        "releaseDate": "1986-05-27",
+        "chapter": "",
+        "note": "Después de III en este recorrido narrativo. I HD-2D es una alternativa.",
+        "optional": false
+      },
+      {
+        "catalogId": 205592,
+        "title": "Dragon Warrior II",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8003.jpg",
+        "releaseDate": "1987-01-26",
+        "chapter": "",
+        "note": "Cierra el bloque de Erdrick. II HD-2D es una alternativa.",
+        "optional": false
+      },
+      {
+        "catalogId": 16584,
+        "title": "Dragon Warrior IV",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7trb.jpg",
+        "releaseDate": "1990-02-11",
+        "chapter": "Zenithia · recorrido de descubrimiento",
+        "note": "IV, V y VI comparten elementos, pero aquí se usa su orden de publicación, no una cronología estricta.",
+        "optional": false
+      },
+      {
+        "catalogId": 205595,
+        "title": "Dragon Quest V: Tenkuu no Hanayome",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co4vsl.jpg",
+        "releaseDate": "1992-09-27",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 145497,
+        "title": "Dragon Quest VI: Maboroshi no Daichi",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2x9i.jpg",
+        "releaseDate": "1995-12-09",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 1818,
+        "title": "Dragon Warrior VII",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7wq9.jpg",
+        "releaseDate": "2000-08-26",
+        "chapter": "Otras aventuras",
+        "note": "VII tiene versiones posteriores; elige una, no es necesario jugarlas todas.",
+        "optional": false
+      },
+      {
+        "catalogId": 1819,
+        "title": "Dragon Quest VIII: Journey of the Cursed King",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7vf2.jpg",
+        "releaseDate": "2004-11-27",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 1820,
+        "title": "Dragon Quest IX: Sentinels of the Starry Skies",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7wt9.jpg",
+        "releaseDate": "2009-07-11",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 80597,
+        "title": "Dragon Quest X: Mezameshi Itsutsu no Shuzoku Online",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7nds.jpg",
+        "releaseDate": "2012-08-02",
+        "chapter": "",
+        "note": "X es un juego en línea: revisa región, idioma y requisitos.",
+        "optional": true
+      },
+      {
+        "catalogId": 11667,
+        "title": "Dragon Quest XI: Echoes of an Elusive Age",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1x9d.jpg",
+        "releaseDate": "2017-07-29",
+        "chapter": "",
+        "note": "XI es un buen punto de entrada propio. XI S es una versión ampliada.",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "id": "guide-yakuza",
+    "name": "Yakuza / Like a Dragon",
+    "description": "Recorrido recomendado por la historia principal: desde los comienzos de Kiryu hasta Ichiban. Se elige una versión por episodio; las historias derivadas se separan del hilo principal.",
+    "order": "recommended",
+    "source": "Selección editorial · https://games.sega.com/yakuza0/story.html · https://games.sega.com/kiwami2/story.html",
+    "entries": [
+      {
+        "catalogId": 11397,
+        "title": "Yakuza 0",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co252x.jpg",
+        "releaseDate": "2015-03-12",
+        "chapter": "Los comienzos de Kiryu",
+        "note": "Yakuza 0 transcurre en 1988 y sirve como entrada a este recorrido.",
+        "optional": false
+      },
+      {
+        "catalogId": 12595,
+        "title": "Yakuza Kiwami",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob1qh.jpg",
+        "releaseDate": "2016-01-21",
+        "chapter": "",
+        "note": "Kiwami es una versión de Yakuza 1; no necesitas jugar ambas.",
+        "optional": false
+      },
+      {
+        "catalogId": 55090,
+        "title": "Yakuza Kiwami 2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob1qc.jpg",
+        "releaseDate": "2017-12-07",
+        "chapter": "",
+        "note": "Kiwami 2 es una versión de Yakuza 2.",
+        "optional": false
+      },
+      {
+        "catalogId": 2061,
+        "title": "Yakuza 3",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3rej.jpg",
+        "releaseDate": "2009-02-26",
+        "chapter": "El recorrido de Kiryu",
+        "note": "Puedes escoger el original o una edición posterior de este episodio.",
+        "optional": false
+      },
+      {
+        "catalogId": 2062,
+        "title": "Yakuza 4",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1w7p.jpg",
+        "releaseDate": "2010-03-08",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 2063,
+        "title": "Yakuza 5",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1n1g.jpg",
+        "releaseDate": "2012-12-06",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 12527,
+        "title": "Yakuza 6: The Song of Life",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co492w.jpg",
+        "releaseDate": "2016-12-08",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 36550,
+        "title": "Yakuza: Like a Dragon",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2em9.jpg",
+        "releaseDate": "2020-01-16",
+        "chapter": "Una nueva etapa",
+        "note": "Presentación de Ichiban. El combate cambia a turnos.",
+        "optional": false
+      },
+      {
+        "catalogId": 217624,
+        "title": "Like a Dragon Gaiden: The Man Who Erased His Name",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co6ln4.jpg",
+        "releaseDate": "2023-11-09",
+        "chapter": "",
+        "note": "Gaiden acompaña la transición. Se recomienda después de Like a Dragon por sus revelaciones.",
+        "optional": false
+      },
+      {
+        "catalogId": 217623,
+        "title": "Like a Dragon: Infinite Wealth",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8356.jpg",
+        "releaseDate": "2024-01-26",
+        "chapter": "",
+        "note": "Continúa la nueva etapa y recoge el recorrido anterior.",
+        "optional": false
+      },
+      {
+        "catalogId": 317317,
+        "title": "Like a Dragon: Pirate Yakuza in Hawaii",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8u8o.jpg",
+        "releaseDate": "2025-02-21",
+        "chapter": "Historias posteriores",
+        "note": "Pirate Yakuza in Hawaii se reserva para después de Infinite Wealth.",
+        "optional": true
+      },
+      {
+        "catalogId": 109274,
+        "title": "Judgment",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rqt.jpg",
+        "releaseDate": "2018-12-13",
+        "chapter": "Historias paralelas",
+        "note": "Judgment inicia su propia rama de investigación.",
+        "optional": true
+      },
+      {
+        "catalogId": 217597,
+        "title": "Like a Dragon: Ishin!",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co59yh.jpg",
+        "releaseDate": "2023-02-21",
+        "chapter": "Otra época",
+        "note": "Ishin! es una historia histórica separada: no la insertes entre episodios modernos.",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "guide-xenoblade",
+    "name": "Xenoblade Chronicles",
+    "description": "Recorrido recomendado de la trilogía y sus historias adicionales, seguido de X como rama aparte. Xenogears y Xenosaga son series diferentes y no se presentan como capítulos de Xenoblade.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.nintendo.com/en-gb/Games/Explore-Games/Characters-hub/Xenoblade-Chronicles-hub-2727373.html",
+    "entries": [
+      {
+        "catalogId": 122238,
+        "title": "Xenoblade Chronicles: Definitive Edition",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8r4.jpg",
+        "releaseDate": "2020-05-29",
+        "chapter": "Primer mundo",
+        "note": "Definitive Edition es la versión elegida de Xenoblade Chronicles; no hace falta jugar también la original.",
+        "optional": false
+      },
+      {
+        "catalogId": 134328,
+        "title": "Xenoblade Chronicles: Future Connected",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8w0.jpg",
+        "releaseDate": "2020-05-29",
+        "chapter": "",
+        "note": "Future Connected va después de la historia principal de Xenoblade Chronicles.",
+        "optional": false
+      },
+      {
+        "catalogId": 26766,
+        "title": "Xenoblade Chronicles 2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8r2.jpg",
+        "releaseDate": "2017-12-01",
+        "chapter": "Segundo mundo",
+        "note": "Comienza con la aventura principal de Xenoblade Chronicles 2.",
+        "optional": false
+      },
+      {
+        "catalogId": 103340,
+        "title": "Xenoblade Chronicles 2: Torna - The Golden Country",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8r1.jpg",
+        "releaseDate": "2018-09-14",
+        "chapter": "",
+        "note": "Torna es una precuela: aquí se recomienda después de 2 por el contexto que revela.",
+        "optional": false
+      },
+      {
+        "catalogId": 191411,
+        "title": "Xenoblade Chronicles 3",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co4ocq.jpg",
+        "releaseDate": "2022-07-29",
+        "chapter": "Tercer mundo",
+        "note": "Continúa después de conocer 1 y 2.",
+        "optional": false
+      },
+      {
+        "catalogId": 236669,
+        "title": "Xenoblade Chronicles 3: Future Redeemed",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8r0.jpg",
+        "releaseDate": "2023-04-25",
+        "chapter": "",
+        "note": "Future Redeemed cierra este recorrido; se recomienda después de los tres juegos principales.",
+        "optional": false
+      },
+      {
+        "catalogId": 321048,
+        "title": "Xenoblade Chronicles X: Definitive Edition",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8r3.jpg",
+        "releaseDate": "2025-03-20",
+        "chapter": "Rama X",
+        "note": "X es una aventura aparte. Se selecciona su Definitive Edition.",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "guide-legend-of-heroes",
+    "name": "The Legend of Heroes · Trails",
+    "description": "Ruta inicial por los arcos de Trails: Liberl, Crossbell, Erebonia y Calvard. Es un orden recomendado para seguir las revelaciones; algunos arcos se solapan en el tiempo. No incluye las anteriores subseries de The Legend of Heroes.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.nisamerica.com/tocs4/ · https://gametimeline.org/trails",
+    "entries": [
+      {
+        "catalogId": 8986,
+        "title": "The Legend of Heroes: Trails in the Sky",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co7ybm.jpg",
+        "releaseDate": "2004-06-24",
+        "chapter": "Liberl · Trails in the Sky",
+        "note": "Empieza por Sky. 1st Chapter es una alternativa moderna de este primer episodio.",
+        "optional": false
+      },
+      {
+        "catalogId": 16665,
+        "title": "The Legend of Heroes: Trails in the Sky SC",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co74em.jpg",
+        "releaseDate": "2006-03-09",
+        "chapter": "",
+        "note": "SC continúa directamente el primer Sky.",
+        "optional": false
+      },
+      {
+        "catalogId": 28101,
+        "title": "The Legend of Heroes: Trails in the Sky the 3rd",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co23da.jpg",
+        "releaseDate": "2007-06-28",
+        "chapter": "",
+        "note": "The 3rd amplía el contexto antes de pasar al siguiente arco.",
+        "optional": false
+      },
+      {
+        "catalogId": 23322,
+        "title": "The Legend of Heroes: Trails from Zero",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8gm.jpg",
+        "releaseDate": "2020-04-23",
+        "chapter": "Crossbell",
+        "note": "Zero inicia este arco. Las localizaciones pueden tener fechas posteriores a otros arcos.",
+        "optional": false
+      },
+      {
+        "catalogId": 23323,
+        "title": "The Legend of Heroes: Trails to Azure",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cob8gl.jpg",
+        "releaseDate": "2020-05-28",
+        "chapter": "",
+        "note": "Azure continúa Zero.",
+        "optional": false
+      },
+      {
+        "catalogId": 13557,
+        "title": "The Legend of Heroes: Trails of Cold Steel",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co44ma.jpg",
+        "releaseDate": "2013-09-26",
+        "chapter": "Erebonia",
+        "note": "Cold Steel I y II se solapan con parte de Crossbell; no es necesario alternar capítulos.",
+        "optional": false
+      },
+      {
+        "catalogId": 13558,
+        "title": "The Legend of Heroes: Trails of Cold Steel II",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co44mb.jpg",
+        "releaseDate": "2014-09-25",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 26564,
+        "title": "The Legend of Heroes: Trails of Cold Steel III",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobb5w.jpg",
+        "releaseDate": "2017-09-28",
+        "chapter": "",
+        "note": "Para III conviene haber recorrido Sky y Crossbell además de I y II.",
+        "optional": false
+      },
+      {
+        "catalogId": 78115,
+        "title": "The Legend of Heroes: Trails of Cold Steel IV",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co31wc.jpg",
+        "releaseDate": "2018-09-27",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 136673,
+        "title": "The Legend of Heroes: Trails into Reverie",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3bb2.jpg",
+        "releaseDate": "2020-08-27",
+        "chapter": "Convergencia",
+        "note": "Reverie se reserva para después de Azure y Cold Steel IV.",
+        "optional": false
+      },
+      {
+        "catalogId": 141833,
+        "title": "The Legend of Heroes: Trails Through Daybreak",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobjpy.jpg",
+        "releaseDate": "2021-09-30",
+        "chapter": "Calvard",
+        "note": "Comienzo del arco de Calvard.",
+        "optional": false
+      },
+      {
+        "catalogId": 185864,
+        "title": "The Legend of Heroes: Trails Through Daybreak II",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8l3f.jpg",
+        "releaseDate": "2022-09-29",
+        "chapter": "",
+        "note": "",
+        "optional": false
+      },
+      {
+        "catalogId": 280573,
+        "title": "The Legend of Heroes: Trails Beyond the Horizon",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobjgs.jpg",
+        "releaseDate": "2024-09-26",
+        "chapter": "",
+        "note": "Beyond the Horizon continúa el recorrido de Calvard.",
+        "optional": false
+      },
+      {
+        "catalogId": 42722,
+        "title": "The Legend of Nayuta: Boundless Trails",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3bb1.jpg",
+        "releaseDate": "2021-12-10",
+        "chapter": "Aventura independiente",
+        "note": "Nayuta es una rama aparte de este recorrido de Zemuria.",
+        "optional": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,11 @@
+.env*
+node_modules/
+.next/
+.git/
+test-results/
+playwright-report/
+work/
+*.zip
+firebase-debug.log*
+**/*service-account*.json
+**/*firebase-adminsdk*.json

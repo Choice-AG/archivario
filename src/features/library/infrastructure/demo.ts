@@ -1,0 +1,148 @@
+import {
+  activityId,
+  dateInZone,
+  type Library,
+} from "../domain/model";
+export function demoLibrary(): Library {
+  const today = dateInZone(new Date(), "Europe/Madrid"),
+    month = today.slice(0, 7),
+    stamp = new Date().toISOString();
+  const games = [
+    {
+      id: "hollow",
+      title: "Hollow Knight",
+      steam: 367520,
+      genres: ["Metroidvania", "Aventura"],
+      platforms: ["PC"],
+      stores: ["Steam"],
+      status: "jugando",
+      rating: 9.5,
+      hours: 27,
+      where:
+        "Explorando Ciudad de Lágrimas. Me falta abrir el camino al este.",
+    },
+    {
+      id: "stardew",
+      title: "Stardew Valley",
+      steam: 413150,
+      genres: ["Simulación", "RPG"],
+      platforms: ["PC", "Switch"],
+      stores: ["Steam", "Nintendo eShop"],
+      status: "jugando",
+      rating: 9,
+      hours: undefined,
+      where:
+        "Primer otoño. Preparar el invernadero y visitar a Robin.",
+    },
+    {
+      id: "hades",
+      title: "Hades",
+      steam: 1145360,
+      genres: ["Roguelike", "Acción"],
+      platforms: ["Switch"],
+      stores: ["Nintendo eShop"],
+      status: "jugando",
+      rating: 9.5,
+      hours: 22,
+      where: "Probar el escudo en la próxima escapada.",
+    },
+    {
+      id: "celeste",
+      title: "Celeste",
+      steam: 504230,
+      genres: ["Plataformas"],
+      platforms: ["PC"],
+      stores: ["Steam"],
+      status: "pendiente",
+      rating: undefined,
+      hours: 8,
+      where: "",
+    },
+    {
+      id: "disco",
+      title: "Disco Elysium",
+      steam: 632470,
+      genres: ["RPG", "Narrativa"],
+      platforms: ["PC"],
+      stores: ["GOG"],
+      status: "pendiente",
+      rating: undefined,
+      hours: 23,
+      where: "",
+    },
+    {
+      id: "outer",
+      title: "Outer Wilds",
+      steam: 753640,
+      genres: ["Exploración", "Aventura"],
+      platforms: ["PC"],
+      stores: ["Steam"],
+      status: "completado",
+      rating: 10,
+      hours: 16,
+      where: "",
+    },
+  ];
+  return {
+    revision: 0,
+    profile: {
+      name: "Alex",
+      bio: "Un mundo más por descubrir.",
+      timezone: "Europe/Madrid",
+    },
+    games: games.map((g, i) => ({
+      id: g.id,
+      title: g.title,
+      cover:
+        "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
+        g.steam +
+        "/library_600x900.jpg",
+      genres: g.genres,
+      platforms: g.platforms,
+      stores: g.stores,
+      favorite: i === 0 || i === 5,
+      next: i === 3 || i === 4,
+      ...(g.rating ? { rating: g.rating } : {}),
+      ...(g.hours ? { approximateHours: g.hours } : {}),
+      review: "",
+      spoilerNote: "",
+      primaryRunId: g.id + "-run",
+      updatedAt: stamp,
+    })),
+    runs: games.map((g) => ({
+      id: g.id + "-run",
+      gameId: g.id,
+      label: "Primera partida",
+      platform: g.platforms[0],
+      status: g.status as "jugando" | "pendiente" | "completado",
+      completion:
+        g.status === "completado" ? "historia" : "sin especificar",
+      startedOn: month + "-01",
+      ...(g.status === "completado"
+        ? { completedOn: month + "-02", completionMinutes: 960 }
+        : {}),
+      whereLeft: g.where,
+    })),
+    activities: [
+      {
+        gameId: "hollow",
+        date: today,
+        note: "Un nuevo rincón de Hallownest.",
+      },
+      {
+        gameId: "stardew",
+        date: month + "-01",
+        note: "Un rato tranquilo en la granja.",
+      },
+      {
+        gameId: "outer",
+        date: month + "-02",
+        note: "Un viaje para recordar.",
+      },
+    ].map((a) => ({
+      ...a,
+      id: activityId(a.gameId, a.date),
+      runId: a.gameId + "-run",
+    })),
+  };
+}
