@@ -1,3 +1,4 @@
+import { changeRunStatus } from "./daily";
 export const statuses = [
   "pendiente",
   "jugando",
@@ -125,6 +126,9 @@ export type Command =
   | { type: "profile"; profile: Profile }
   | { type: "import"; data: Library; policy: "skip" | "replace" };
 export class DomainError extends Error {}
+const validRating = (rating: number | undefined) =>
+  rating === undefined ||
+  (rating >= 1 && rating <= 10 && (rating * 2) % 1 === 0);
 export function emptyLibrary(): Library {
   return {
     revision: 0,
@@ -204,19 +208,13 @@ export function assertLibrary(s: Library) {
       throw new DomainError(
         "Cada juego necesita una partida principal propia.",
       );
-    if (
-      g.rating !== undefined &&
-      (g.rating < 1 || g.rating > 10 || (g.rating * 2) % 1 !== 0)
-    )
+    if (!validRating(g.rating))
       throw new DomainError(
         "La valoración debe estar entre 1 y 10, en pasos de 0,5.",
       );
   }
   for (const r of s.runs) {
-    if (
-      r.rating !== undefined &&
-      (r.rating < 1 || r.rating > 10 || (r.rating * 2) % 1 !== 0)
-    )
+    if (!validRating(r.rating))
       throw new DomainError(
         "La valoración debe estar entre 1 y 10, en pasos de 0,5.",
       );
@@ -282,10 +280,12 @@ export function applyCommand(
       for (const id of new Set(command.gameIds)) {
         touch(id);
         const g = s.games.find((g) => g.id === id)!;
-        const r = s.runs.find((r) => r.id === g.primaryRunId)!;
-        r.status = command.status;
-        if (command.status === "completado") r.completedOn = command.date;
-        else delete r.completedOn;
+        const index = s.runs.findIndex((r) => r.id === g.primaryRunId);
+        s.runs[index] = changeRunStatus(
+          s.runs[index],
+          command.status,
+          command.date,
+        );
       }
       break;
     }
@@ -388,6 +388,12 @@ export function applyCommand(
           ...l,
           gameIds: l.gameIds.filter((id) => id !== command.id),
         })) ?? [];
+      s.sagas = s.sagas?.map((saga) => ({
+        ...saga,
+        entries: saga.entries.map(({ gameId, ...e }) =>
+          gameId === command.id ? e : { ...e, ...(gameId ? { gameId } : {}) },
+        ),
+      }));
       s.runs = s.runs.filter((r) => r.gameId !== command.id);
       s.activities = s.activities.filter((a) => a.gameId !== command.id);
       break;
@@ -405,23 +411,23 @@ export function applyCommand(
     }
     case "save-activity": {
       touch(command.activity.gameId);
+      const a = {
+        ...command.activity,
+        id: activityId(command.activity.gameId, command.activity.date),
+      };
       if (command.previousId) {
         const old = s.activities.find((a) => a.id === command.previousId);
         if (!old || old.gameId !== command.activity.gameId)
           throw new DomainError("Actividad original no válida.");
         if (
-          command.previousId !== command.activity.id &&
-          s.activities.some((a) => a.id === command.activity.id)
+          command.previousId !== a.id &&
+          s.activities.some((x) => x.id === a.id)
         )
           throw new DomainError(
             "Ya hay actividad ese día. Edita ese registro o elige otra fecha.",
           );
-        s.activities = s.activities.filter((a) => a.id !== command.previousId);
+        s.activities = s.activities.filter((x) => x.id !== command.previousId);
       }
-      const a = {
-        ...command.activity,
-        id: activityId(command.activity.gameId, command.activity.date),
-      };
       s.activities = s.activities.filter((old) => old.id !== a.id);
       s.activities.push(a);
       break;

@@ -46,7 +46,7 @@ import {
   type Run,
   type Command,
 } from "../domain/model";
-import { sortGames } from "../domain/insights";
+import { sortGames, type GameSort } from "../domain/insights";
 import { CatalogGamePage } from "./catalog-game-page";
 import {
   GlobalSearch,
@@ -347,7 +347,7 @@ function Dashboard({
     [searchSpoilers, setSearchSpoilers] = useState(false),
     [ownership, setOwnership] = useState("owned"),
     [ratingFilter, setRatingFilter] = useState("all"),
-    [sort, setSort] = useState("recent"),
+    [sort, setSort] = useState<GameSort>("recent"),
     [page, setPage] = useState(1);
   const [modal, setModal] = useState<{
     kind:
@@ -859,7 +859,7 @@ function Dashboard({
                     <select
                       aria-label="Ordenar biblioteca"
                       value={sort}
-                      onChange={(e) => setSort(e.target.value)}
+                      onChange={(e) => setSort(e.target.value as GameSort)}
                     >
                       <option value="recent">Última actividad</option>
                       <option value="title">Título A–Z</option>

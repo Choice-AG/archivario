@@ -143,11 +143,11 @@ it("picker excludes wishlist and non-pending games and unknown durations under a
   s.games[0].wishlist = true;
   s.games[1].approximateHours = 5;
   delete s.games[2].approximateHours;
-  expect(playableGames(s, "", "", "").some((g) => g.id === s.games[0].id)).toBe(
-    false,
-  );
-  const pool = playableGames(s, "", "", "10");
+  expect(
+    playableGames(s, "", "", undefined).some((g) => g.id === s.games[0].id),
+  ).toBe(false);
+  const pool = playableGames(s, "", "", 10);
   expect(pool.some((g) => g.id === s.games[1].id)).toBe(true);
   expect(pool.some((g) => g.id === s.games[2].id)).toBe(false);
-  expect(playableGames(s, "No existe", "", "")).toEqual([]);
+  expect(playableGames(s, "No existe", "", undefined)).toEqual([]);
 });

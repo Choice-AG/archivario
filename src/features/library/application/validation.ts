@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { assertLibrary, statuses } from "../domain/model";
+import { activityId, assertLibrary, statuses } from "../domain/model";
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
 export const localDate = z
   .string()
@@ -75,7 +75,11 @@ export const activitySchema = z
     runId: id.optional(),
     note: text(1000),
   })
-  .strict();
+  .strict()
+  .refine(
+    (a) => a.id === activityId(a.gameId, a.date),
+    "La actividad no coincide con su juego y fecha.",
+  );
 export const profileSchema = z
   .object({
     name: text(80),

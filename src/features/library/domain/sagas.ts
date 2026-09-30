@@ -7,10 +7,11 @@ export function sagaGames(state: Library, e: SagaEntry) {
   );
 }
 export function sagaGame(state: Library, e: SagaEntry) {
+  const games = sagaGames(state, e);
   return (
-    sagaGames(state, e).find((g) =>
+    games.find((g) =>
       state.runs.some((r) => r.gameId === g.id && r.status === "completado"),
-    ) ?? sagaGames(state, e)[0]
+    ) ?? games[0]
   );
 }
 export function sagaCompleted(state: Library, e: SagaEntry) {
@@ -25,7 +26,7 @@ export function sagaOrder(saga: Saga) {
     ? [...saga.entries].sort(
         (a, b) =>
           (a.releaseDate || "9999").localeCompare(b.releaseDate || "9999") ||
-          a.title.localeCompare(b.title),
+          a.title.localeCompare(b.title, "es"),
       )
     : saga.entries;
 }

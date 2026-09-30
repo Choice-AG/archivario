@@ -1,9 +1,10 @@
 import { estimatedHours, type TimeMode } from "./daily";
 import type { Game, Library } from "./model";
+export type GameSort = "recent" | "title" | "rating" | "shortest";
 export function sortGames(
   games: Game[],
   state: Library,
-  sort: string,
+  sort: GameSort,
   mode: TimeMode = "main",
 ) {
   const last = new Map<string, string>();

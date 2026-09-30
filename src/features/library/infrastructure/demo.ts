@@ -2,6 +2,8 @@ import { activityId, dateInZone, type Library } from "../domain/model";
 export function demoLibrary(): Library {
   const today = dateInZone(new Date(), "Europe/Madrid"),
     month = today.slice(0, 7),
+    // El día 1 del mes, "día 2" estaría en el futuro.
+    second = month + "-02" < today ? month + "-02" : today,
     stamp = new Date().toISOString();
   const games = [
     {
@@ -112,7 +114,7 @@ export function demoLibrary(): Library {
       completion: g.status === "completado" ? "historia" : "sin especificar",
       startedOn: month + "-01",
       ...(g.status === "completado"
-        ? { completedOn: month + "-02", completionMinutes: 960 }
+        ? { completedOn: second, completionMinutes: 960 }
         : {}),
       whereLeft: g.where,
     })),
@@ -129,7 +131,7 @@ export function demoLibrary(): Library {
       },
       {
         gameId: "outer",
-        date: month + "-02",
+        date: second,
         note: "Un viaje para recordar.",
       },
     ].map((a) => ({

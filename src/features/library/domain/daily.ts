@@ -30,10 +30,12 @@ export function igdbTimes(row?: {
     if (
       seconds !== undefined &&
       Number.isFinite(seconds) &&
-      seconds > 0 &&
       seconds <= 36000000
-    )
-      out[key] = { hours: Math.round(seconds / 360) / 10, source: "IGDB" };
+    ) {
+      // Cero significa "sin datos": se descartan los valores que redondean a 0 h.
+      const hours = Math.round(seconds / 360) / 10;
+      if (hours > 0) out[key] = { hours, source: "IGDB" };
+    }
   return out;
 }
 const normalize = (s: string) =>
@@ -56,9 +58,8 @@ export function matchesGame(
     ...state.activities.filter((a) => a.gameId === game.id).map((a) => a.note),
     ...(spoilers ? [game.spoilerNote] : []),
   ];
-  return texts.some((text) =>
-    normalize(text).includes(normalize(query.trim())),
-  );
+  const needle = normalize(query.trim());
+  return texts.some((text) => normalize(text).includes(needle));
 }
 export function changeRunStatus(run: Run, status: Status, today: string): Run {
   const { completedOn: old, ...base } = run;

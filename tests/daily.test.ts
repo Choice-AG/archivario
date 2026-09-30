@@ -148,10 +148,10 @@ it("converts IGDB seconds, treats missing and zero values as unknown, and retain
       .times,
   ).toEqual(g.times);
   s.runs.find((r) => r.id === g.primaryRunId)!.status = "pendiente";
+  expect(playableGames(s, "", "", 10, "main").some((x) => x.id === g.id)).toBe(
+    true,
+  );
   expect(
-    playableGames(s, "", "", "10", "main").some((x) => x.id === g.id),
-  ).toBe(true);
-  expect(
-    playableGames(s, "", "", "10", "extras").some((x) => x.id === g.id),
+    playableGames(s, "", "", 10, "extras").some((x) => x.id === g.id),
   ).toBe(false);
 });

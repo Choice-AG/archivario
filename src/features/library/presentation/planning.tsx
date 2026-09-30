@@ -313,7 +313,13 @@ function Picker({
     [duration, setDuration] = useState(""),
     [mode, setMode] = useState<TimeMode>("main"),
     [chosen, setChosen] = useState("");
-  const games = playableGames(state, platform, genre, duration, mode),
+  const games = playableGames(
+      state,
+      platform,
+      genre,
+      duration ? Number(duration) : undefined,
+      mode,
+    ),
     game = games.find((g) => g.id === chosen);
   function choose() {
     const alternatives = games.filter((g) => g.id !== chosen);

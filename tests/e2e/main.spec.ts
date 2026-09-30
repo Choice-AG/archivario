@@ -19,11 +19,9 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
   await expect(
     page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
   ).toBeVisible();
-  const hades = page
-    .locator("article")
-    .filter({
-      has: page.getByRole("button", { name: "Abrir Hades", exact: true }),
-    });
+  const hades = page.locator("article").filter({
+    has: page.getByRole("button", { name: "Abrir Hades", exact: true }),
+  });
   await hades
     .getByRole("button", { name: "He jugado hoy", exact: true })
     .click();
@@ -303,14 +301,12 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
     .first()
     .waitFor();
   if (await demo.isVisible()) await demo.click();
-  const card = page
-    .locator("article")
-    .filter({
-      has: page.getByRole("button", {
-        name: "Abrir Hollow Knight",
-        exact: true,
-      }),
-    });
+  const card = page.locator("article").filter({
+    has: page.getByRole("button", {
+      name: "Abrir Hollow Knight",
+      exact: true,
+    }),
+  });
   await card.getByText("Retomar partida", { exact: true }).click();
   await expect(card.getByText(/Explorando Ciudad/)).toBeVisible();
   await page
@@ -554,11 +550,9 @@ test("desglose diario completo, edición de una nota y pendientes en Próximos",
 }) => {
   await page.goto("/?demo=1");
   for (const name of ["Hades", "Hollow Knight"]) {
-    const card = page
-      .locator(".game-card")
-      .filter({
-        has: page.getByRole("button", { name: "Abrir " + name, exact: true }),
-      });
+    const card = page.locator(".game-card").filter({
+      has: page.getByRole("button", { name: "Abrir " + name, exact: true }),
+    });
     await card
       .getByRole("button", { name: "He jugado hoy", exact: true })
       .or(card.getByRole("button", { name: "Registrado hoy", exact: true }))

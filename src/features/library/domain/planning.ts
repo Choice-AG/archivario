@@ -4,7 +4,7 @@ export function playableGames(
   state: Library,
   platform: string,
   genre: string,
-  maxHours: string,
+  maxHours: number | undefined,
   mode: TimeMode = "main",
 ) {
   return state.games.filter(
@@ -15,9 +15,8 @@ export function playableGames(
       ) &&
       (!platform || g.platforms.includes(platform)) &&
       (!genre || g.genres.includes(genre)) &&
-      (!maxHours ||
-        (estimatedHours(g, mode) !== undefined &&
-          estimatedHours(g, mode)! <= Number(maxHours))),
+      (maxHours === undefined ||
+        (estimatedHours(g, mode) ?? Infinity) <= maxHours),
   );
 }
 export function moveGame(ids: string[], index: number, offset: number) {
