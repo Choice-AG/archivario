@@ -29,7 +29,7 @@ POST compara revision en una transacción Firestore. Ante un conflicto, responde
 
 No se importa Firestore/Storage en cliente. Sus reglas deniegan lecturas/escrituras. Todas las rutas privadas se marcan dinámicas y devuelven no-store + Vary Authorization. La pantalla de usuario se desmonta al cambiar la identidad. El único almacenamiento local de biblioteca es el de demostración; Firebase Auth gestiona su propia sesión.
 
-Solo catálogo IGDB es caché compartida. Se consulta la caché antes de aplicar límites: solo las consultas a IGDB cuentan (20/min por usuario, 150/min global). El token de catálogo es exclusivo del servidor, se renueva una sola vez ante peticiones simultáneas y se descarta si IGDB responde 401. Los documentos de caché llevan `expireAt` para la TTL de Firestore. Los avatares con iniciales se generan en la interfaz sin almacenamiento de imágenes.
+Solo catálogo IGDB es caché compartida. Se consulta la caché antes de aplicar límites: solo las consultas a IGDB cuentan (20/min por usuario, 150/min global). El token de catálogo es exclusivo del servidor, se renueva una sola vez ante peticiones simultáneas y se descarta si IGDB responde 401. La TTL de Firestore exige Blaze; en Spark, las consultas a IGDB borran ocasionalmente unos pocos documentos caducados de la caché. Los avatares con iniciales se generan en la interfaz sin almacenamiento de imágenes.
 
 Las respuestas llevan CSP, HSTS, Permissions-Policy, nosniff y X-Frame-Options (next.config.ts). Las portadas se sirven con `<img>` desde IGDB/Steam para no consumir la optimización de imágenes de Vercel Hobby.
 
