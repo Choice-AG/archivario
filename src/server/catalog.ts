@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { Timestamp, type DocumentData } from "firebase-admin/firestore";
+import type { DocumentData } from "firebase-admin/firestore";
 import { db } from "./firebase";
 import { deletionRef } from "./lifecycle";
 import { HttpError } from "./http";
@@ -149,9 +149,34 @@ async function cached<T>(
   if (hit && hit.expires > Date.now()) return hit.value as T;
   await checkCatalogLimit(uid);
   const value = await load();
-  const expires = Date.now() + DAY;
-  await ref.set({ value, expires, expireAt: Timestamp.fromMillis(expires) });
+  await ref.set({ value, expires: Date.now() + DAY });
+  if (Math.random() < CLEANUP_RATE) await cleanupCache();
   return value;
+}
+
+// La TTL de Firestore exige facturación (Blaze). En Spark se borran de vez en
+// cuando unos pocos documentos caducados, con un coste acotado.
+const CLEANUP_RATE = 0.05;
+export async function cleanupCache(limit = 20) {
+  try {
+    const expired = await db()
+      .collection("catalogCache")
+      .where("expires", "<", Date.now())
+      .limit(limit)
+      .get();
+    if (expired.empty) return 0;
+    const batch = db().batch();
+    for (const doc of expired.docs) batch.delete(doc.ref);
+    await batch.commit();
+    return expired.size;
+  } catch (e) {
+    // La limpieza es opcional: nunca debe romper una consulta del catálogo.
+    console.error(
+      "Limpieza de caché",
+      e instanceof Error ? e.message : "Error",
+    );
+    return 0;
+  }
 }
 
 export async function searchCatalog(

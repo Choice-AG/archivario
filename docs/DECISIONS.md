@@ -20,5 +20,6 @@
 - Publicada en Vercel Hobby con Firebase Spark (ver FREE-HOSTING.md).
 
 - Avatares con iniciales para evitar depender de Cloud Storage. Credenciales de Vercel solo en variables privadas del servidor.
+- Sin TTL de Firestore (requiere facturación): limpieza ocasional de la caché desde el servidor.
 - Portadas con `<img>` en lugar de next/image para no gastar la cuota de optimización de Vercel Hobby.
 - El dominio no depende de Zod; validation.ts comprueba en compilación que esquemas y tipos coinciden.

@@ -11,7 +11,28 @@ vi.mock("@/server/firebase", () => {
     db: () => ({
       collection: (name: string) => ({
         doc: (id: string) => ref(name + "/" + id),
+        where: (_field: string, _op: string, now: number) => ({
+          limit: (n: number) => ({
+            get: async () => {
+              const docs = [...store.entries()]
+                .filter(
+                  ([k, v]) =>
+                    k.startsWith(name + "/") && (v.expires as number) < now,
+                )
+                .slice(0, n)
+                .map(([key]) => ({ ref: { key } }));
+              return { empty: !docs.length, size: docs.length, docs };
+            },
+          }),
+        }),
       }),
+      batch: () => {
+        const keys: string[] = [];
+        return {
+          delete: (r: { key: string }) => void keys.push(r.key),
+          commit: async () => keys.forEach((k) => store.delete(k)),
+        };
+      },
       runTransaction: async (fn: (tx: unknown) => unknown) =>
         fn({
           getAll: async (...refs: { key: string }[]) =>
@@ -28,7 +49,11 @@ vi.mock("@/server/firebase", () => {
 vi.mock("@/server/lifecycle", () => ({
   deletionRef: (uid: string) => ({ key: "locks/" + uid }),
 }));
-import { catalogDetails, searchCatalog } from "../src/server/catalog";
+import {
+  catalogDetails,
+  cleanupCache,
+  searchCatalog,
+} from "../src/server/catalog";
 
 const ok = (data: unknown) =>
   new Response(JSON.stringify(data), { status: 200 });
@@ -63,7 +88,17 @@ it("sirve la caché sin gastar el límite y descarta image_id no válidos", asyn
   const cacheDoc = [...store.entries()].find(([k]) =>
     k.startsWith("catalogCache/"),
   )![1];
-  expect(cacheDoc.expireAt).toBeDefined();
+  expect(cacheDoc.expires).toBeGreaterThan(Date.now());
+});
+
+it("borra documentos de caché caducados sin tocar los vigentes", async () => {
+  store.set("catalogCache/old", { value: [], expires: Date.now() - 1 });
+  store.set("catalogCache/fresh", { value: [], expires: Date.now() + 60000 });
+  store.set("catalogLimits/alice", { start: 0, count: 0 });
+  expect(await cleanupCache()).toBe(1);
+  expect(store.has("catalogCache/old")).toBe(false);
+  expect(store.has("catalogCache/fresh")).toBe(true);
+  expect(store.has("catalogLimits/alice")).toBe(true);
 });
 
 it("aplica el límite por usuario solo a los fallos de caché", async () => {
