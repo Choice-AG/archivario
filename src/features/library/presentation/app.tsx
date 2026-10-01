@@ -35,7 +35,13 @@ import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Avatar, Modal, type Execute } from "./shared";
 import { Onboarding, showOnboarding } from "./onboarding";
-import { gamePath, parsePath, sagaPath, viewPaths } from "./routes";
+import {
+  gamePath,
+  parsePath,
+  sagaPath,
+  settingsPath,
+  viewPaths,
+} from "./routes";
 
 // Lo que solo se usa al abrir una vista o un modal se descarga bajo demanda,
 // para que la primera carga sea más ligera.
@@ -66,6 +72,9 @@ const ImportGames = load(() =>
 const AddGame = load(() => import("./add-game").then((m) => m.AddGame));
 const ProfilePage = load(() =>
   import("./profile-page").then((m) => m.ProfilePage),
+);
+const SettingsPage = load(() =>
+  import("./settings-page").then((m) => m.SettingsPage),
 );
 
 export function ArchivarioApp() {
@@ -137,7 +146,7 @@ function Dashboard({
 }) {
   const pathname = usePathname(),
     router = useRouter();
-  const { view, gameId, sagaId } = parsePath(pathname);
+  const { view, gameId, sagaId, settings } = parsePath(pathname);
   const [modal, setModal] = useState<ModalState>(null),
     [notice, setNotice] = useState("");
   // Vista desde la que se abrió una ficha del catálogo, para volver a ella.
@@ -184,9 +193,7 @@ function Dashboard({
   }
   useEffect(() => {
     if (gameId) document.querySelector<HTMLElement>(".game-hero h1")?.focus();
-    else if (view === "Perfil")
-      document.querySelector<HTMLElement>(".profile-hero h1")?.focus();
-  }, [gameId, view]);
+  }, [gameId]);
   useEffect(() => {
     if (!notice) return;
     // Tiempo suficiente para pulsar "Deshacer" sin que el aviso estorbe.
@@ -287,6 +294,12 @@ function Dashboard({
         <header className="topbar">
           <span className="breadcrumbs">
             Mi espacio <span>/</span> <strong>{view}</strong>
+            {settings && (
+              <>
+                {" "}
+                <span>/</span> <strong>Ajustes</strong>
+              </>
+            )}
           </span>
           <div className="top-actions">
             <GlobalSearch
@@ -365,17 +378,25 @@ function Dashboard({
               </Button>
             </div>
           )}
-          {view === "Perfil" && !gameId ? (
-            <ProfilePage
+          {view === "Perfil" && settings ? (
+            <SettingsPage
               state={state}
               execute={safeExecute}
               request={api.request}
               demo={!user}
+              onBack={() => goTo("Perfil")}
+              onLibrary={backToLibrary}
+            />
+          ) : view === "Perfil" && !gameId ? (
+            <ProfilePage
+              state={state}
+              execute={safeExecute}
               today={today}
               onGame={openGame}
               onDay={(date) => setModal({ kind: "activity", date })}
               onYear={() => setModal({ kind: "year" })}
               onLibrary={backToLibrary}
+              onSettings={() => navigate(settingsPath)}
             />
           ) : view === "Sagas" && !gameId ? (
             <Sagas

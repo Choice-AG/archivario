@@ -31,13 +31,19 @@ async function chooseStatus(
     })
     .click();
 }
-// El perfil (con los ajustes) se abre desde el avatar.
+// El perfil se abre desde el avatar y los ajustes, desde el perfil.
 async function openProfile(page: Page) {
   const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
   if (mobile)
     await page.getByRole("button", { name: "Perfil", exact: true }).click();
   else await page.locator(".profile-button").click();
   await expect(page).toHaveURL(/\/perfil/);
+  return mobile;
+}
+async function openSettings(page: Page) {
+  const mobile = await openProfile(page);
+  await page.getByRole("button", { name: "Ajustes", exact: true }).click();
+  await expect(page).toHaveURL(/\/perfil\/ajustes/);
   return mobile;
 }
 function demoData(page: Page) {
@@ -120,7 +126,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem("partida-demo-v1")))
     .toBeNull();
-  await openProfile(page);
+  await openSettings(page);
   const backup = await page.evaluate(() =>
     JSON.stringify({
       version: 1,
@@ -796,7 +802,7 @@ test("importa juegos desde un CSV sin duplicar los existentes", async ({
   page,
 }) => {
   await openDemo(page);
-  const mobile = await openProfile(page);
+  const mobile = await openSettings(page);
   await page
     .locator('input[type="file"][accept=".csv,text/csv"]')
     .setInputFiles({
@@ -901,6 +907,8 @@ test("el perfil muestra tu resumen, tu escaparate y tu año", async ({
   await expect(page.locator(".heatmap [role=status]")).toContainText(
     /\d+ días? jugados?/,
   );
+  // Los ajustes no se muestran en el perfil.
+  await expect(page.getByLabel("Nombre", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Elegir destacados" }).click();
   const picker = page.locator(".showcase-picker");
   const checked = picker.getByRole("checkbox", { checked: true });
@@ -911,13 +919,20 @@ test("el perfil muestra tu resumen, tu escaparate y tu año", async ({
   await expect
     .poll(async () => (await demoData(page)).profile.showcase)
     .toEqual(["outer"]);
+  await page.getByRole("button", { name: "Ajustes", exact: true }).click();
+  await expect(page).toHaveURL(/\/perfil\/ajustes/);
+  await expect(
+    page.getByRole("heading", { name: "Ajustes", level: 1 }),
+  ).toBeFocused();
   await page.getByRole("radio", { name: "Verde" }).click();
-  await expect(page.locator(".profile-hero .avatar")).toHaveClass(
-    /avatar-verde/,
-  );
   await expect
     .poll(async () => (await demoData(page)).profile.avatarColor)
     .toBe("verde");
+  await page.getByRole("button", { name: "Volver al perfil" }).click();
+  await expect(page).toHaveURL(/\/perfil(\?|$)/);
+  await expect(page.locator(".profile-hero .avatar")).toHaveClass(
+    /avatar-verde/,
+  );
 });
 
 test("la ficha permite registrar hoy con una nota y cambiar el estado", async ({
