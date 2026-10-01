@@ -9,6 +9,13 @@ import {
 } from "../domain/model";
 import { commandSchema, librarySchema } from "../application/validation";
 import { demoLibrary } from "../infrastructure/demo";
+import {
+  loadCachedLibrary,
+  loadQueue,
+  OfflineError,
+  saveCachedLibrary,
+  saveQueue,
+} from "./offline-store";
 const key = "archivario-demo-v1";
 // Compatibility with local demo data saved before the application was renamed.
 const legacyKey = "partida-demo-v1";
@@ -16,7 +23,9 @@ export function useLibrary(user: User | null) {
   const [state, setState] = useState<Library>(emptyLibrary),
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [offline, setOffline] = useState(false),
+    [pendingSync, setPendingSync] = useState(0);
   const [undoEntry, setUndoEntry] = useState<{
     before: Library;
     revision: number;
@@ -24,21 +33,38 @@ export function useLibrary(user: User | null) {
   const current = useRef(state),
     locked = useRef(false),
     mounted = useRef(true);
-  const update = useCallback((s: Library) => {
-    if (mounted.current) {
-      current.current = s;
-      setState(s);
-    }
-  }, []);
+  const uid = user?.uid;
+  const update = useCallback(
+    (s: Library) => {
+      if (mounted.current) {
+        current.current = s;
+        setState(s);
+      }
+      if (uid) saveCachedLibrary(uid, s);
+    },
+    [uid],
+  );
   const request = useCallback(
     async (url: string, init: RequestInit = {}) => {
       if (!user) throw new Error("Esta función necesita una cuenta conectada.");
-      const token = await user.getIdToken();
-      const response = await fetch(url, {
-        ...init,
-        cache: "no-store",
-        headers: { ...init.headers, Authorization: "Bearer " + token },
-      });
+      let response: Response;
+      try {
+        const token = await user.getIdToken();
+        response = await fetch(url, {
+          ...init,
+          cache: "no-store",
+          headers: { ...init.headers, Authorization: "Bearer " + token },
+        });
+      } catch (e) {
+        // fetch solo lanza TypeError cuando no hay red; el resto se propaga.
+        if (
+          e instanceof TypeError ||
+          (e as { code?: string }).code === "auth/network-request-failed" ||
+          !navigator.onLine
+        )
+          throw new OfflineError();
+        throw e;
+      }
       if (!response.ok) {
         // Un 502 de la plataforma puede devolver HTML en lugar de JSON.
         const data = await response.json().catch(() => ({}));
@@ -48,21 +74,95 @@ export function useLibrary(user: User | null) {
     },
     [user],
   );
+  const post = useCallback(
+    async (revision: number, command: Command) =>
+      (await (
+        await request("/api/library", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ revision, command }),
+        })
+      ).json()) as Library,
+    [request],
+  );
+  // Envía en orden los cambios hechos sin conexión. Cada uno se aplica sobre
+  // el estado actual del servidor; si otro dispositivo cambió algo entre
+  // medias, se vuelve a aplicar sobre la versión nueva.
+  const flush = useCallback(async () => {
+    if (!uid || locked.current) return;
+    const queue = loadQueue(uid);
+    if (!queue.length) return;
+    locked.current = true;
+    const dropped: string[] = [];
+    try {
+      let server = (await (await request("/api/library")).json()) as Library;
+      while (queue.length) {
+        const command = queue[0];
+        try {
+          server = await post(server.revision, command);
+        } catch (e) {
+          if (e instanceof OfflineError) throw e;
+          const latest = (await (
+            await request("/api/library")
+          ).json()) as Library;
+          try {
+            server = await post(latest.revision, command);
+          } catch (again) {
+            if (again instanceof OfflineError) throw again;
+            // El cambio ya no encaja (por ejemplo, el juego se borró en otro
+            // dispositivo): se descarta y se avisa.
+            dropped.push((again as Error).message);
+            server = latest;
+          }
+        }
+        queue.shift();
+        saveQueue(uid, queue);
+        setPendingSync(queue.length);
+      }
+      update(server);
+      setOffline(false);
+      setError(
+        dropped.length
+          ? "Algunos cambios hechos sin conexión no se pudieron aplicar: " +
+              dropped.join(" ")
+          : "",
+      );
+    } catch (e) {
+      if (!(e instanceof OfflineError)) setError((e as Error).message);
+      else setOffline(true);
+    } finally {
+      locked.current = false;
+    }
+  }, [uid, request, post, update]);
   const reload = useCallback(async () => {
     if (locked.current) return;
-    const s = await (await request("/api/library")).json();
-    if (!locked.current && s.revision >= current.current.revision) update(s);
-  }, [request, update]);
+    if (uid && loadQueue(uid).length) return flush();
+    try {
+      const s = await (await request("/api/library")).json();
+      setOffline(false);
+      if (!locked.current && s.revision >= current.current.revision) update(s);
+    } catch (e) {
+      if (e instanceof OfflineError) setOffline(true);
+      throw e;
+    }
+  }, [uid, request, update, flush]);
   useEffect(() => {
     mounted.current = true;
-    if (user)
+    if (user) {
+      setPendingSync(loadQueue(user.uid).length);
       reload()
         .then(() => setReady(true))
         .catch((e) => {
-          setError(e.message);
+          const cached = loadCachedLibrary(user.uid);
+          if (e instanceof OfflineError && cached) {
+            // Sin conexión: se muestra la última copia y se guarda en cola.
+            current.current = cached;
+            setState(cached);
+            setError("");
+          } else setError(e.message);
           setReady(true);
         });
-    else {
+    } else {
       try {
         const saved =
           localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
@@ -83,9 +183,15 @@ export function useLibrary(user: User | null) {
       setReady(true);
     }
     const focus = () => {
-      if (user) reload().catch((e) => setError(e.message));
+      if (user)
+        reload().catch((e) => {
+          if (!(e instanceof OfflineError)) setError(e.message);
+        });
     };
+    const goOffline = () => setOffline(true);
     window.addEventListener("focus", focus);
+    window.addEventListener("online", focus);
+    window.addEventListener("offline", goOffline);
     // Solo se sincroniza en segundo plano con la pestaña visible (ahorra cuota).
     const timer = user
       ? window.setInterval(() => {
@@ -95,9 +201,23 @@ export function useLibrary(user: User | null) {
     return () => {
       mounted.current = false;
       window.removeEventListener("focus", focus);
+      window.removeEventListener("online", focus);
+      window.removeEventListener("offline", goOffline);
       clearInterval(timer);
     };
   }, [user, reload, update]);
+  function saveLocally(uid: string, command: Command) {
+    const next = applyCommand(
+      current.current,
+      command,
+      new Date().toISOString(),
+    );
+    const queue = [...loadQueue(uid), command];
+    saveQueue(uid, queue);
+    setPendingSync(queue.length);
+    setOffline(true);
+    update(next);
+  }
   async function execute(command: Command) {
     if (locked.current) throw new Error("Espera a que termine el guardado.");
     locked.current = true;
@@ -107,15 +227,15 @@ export function useLibrary(user: User | null) {
       const before = structuredClone(current.current);
       const valid = commandSchema.parse(command);
       if (user) {
-        const response = await request("/api/library", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            revision: current.current.revision,
-            command: valid,
-          }),
-        });
-        update(await response.json());
+        if (offline || !navigator.onLine || loadQueue(user.uid).length)
+          saveLocally(user.uid, valid);
+        else
+          try {
+            update(await post(current.current.revision, valid));
+          } catch (e) {
+            if (!(e instanceof OfflineError)) throw e;
+            saveLocally(user.uid, valid);
+          }
       } else {
         const next = applyCommand(
           current.current,
@@ -168,6 +288,8 @@ export function useLibrary(user: User | null) {
     request,
     reload,
     undo,
+    offline,
+    pendingSync,
     canUndo: !!undoEntry && undoEntry.revision === state.revision,
   };
 }

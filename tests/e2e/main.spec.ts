@@ -814,3 +814,24 @@ test("importa juegos desde un CSV sin duplicar los existentes", async ({
     page.getByRole("button", { name: "Abrir Pentiment", exact: true }),
   ).toBeVisible();
 });
+
+test("se puede instalar y abrir sin conexión", async ({ page, context }) => {
+  const manifest = await (
+    await page.request.get("/manifest.webmanifest")
+  ).json();
+  expect(manifest.short_name).toBe("Archivario");
+  expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
+  await openDemo(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  // Segunda visita con el service worker activo para que guarde la página.
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
+  ).toBeVisible();
+  await context.setOffline(true);
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura empieza aquí." }),
+  ).toBeVisible();
+  await context.setOffline(false);
+});

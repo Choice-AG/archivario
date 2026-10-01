@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Sparkles,
   Undo2,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { configured, clientAuth } from "@/features/account/firebase-client";
@@ -32,6 +33,7 @@ import { YearReview } from "./year-review";
 import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
+import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
@@ -244,7 +246,11 @@ function Dashboard({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => signOut(clientAuth())}
+                onClick={() => {
+                  // La copia local es privada: no se deja en el dispositivo.
+                  clearOfflineData(user.uid);
+                  signOut(clientAuth());
+                }}
               >
                 <LogOut size={16} />
                 <span>Salir</span>
@@ -260,6 +266,19 @@ function Dashboard({
         </header>
         <main id="main-content">
           {user && <VerifyEmailBanner user={user} />}
+          {user && (api.offline || api.pendingSync > 0) && (
+            <div className="offline-banner" role="status">
+              <WifiOff size={16} aria-hidden="true" />
+              {api.offline
+                ? "Sin conexión. Puedes seguir usando Archivario: los cambios se guardan en este dispositivo"
+                : "Enviando los cambios hechos sin conexión"}
+              {api.pendingSync > 0 &&
+                " (" +
+                  api.pendingSync +
+                  (api.pendingSync === 1 ? " pendiente)" : " pendientes)")}
+              .
+            </div>
+          )}
           {!user && (
             <div className="demo-banner">
               <span className="demo-dot" /> Estás explorando una demostración.
