@@ -6,6 +6,7 @@ import type { Game, Run } from "../domain/model";
 import { formatHours, timeLabels, type TimeMode } from "../domain/daily";
 import { Cover } from "./shared";
 import { CriticScore } from "./critic-score";
+import { Stars } from "./rating-input";
 
 export function GameCard({
   game: g,
@@ -69,12 +70,6 @@ export function GameCard({
         >
           <Heart size={17} fill={g.favorite ? "currentColor" : "none"} />
         </button>
-        {g.rating && (
-          <span className="rating">
-            {g.rating.toLocaleString("es")}
-            <small>/10</small>
-          </span>
-        )}
         {showCritic && g.critic && (
           <span className="card-critic">
             <CriticScore critic={g.critic} compact />
@@ -90,6 +85,9 @@ export function GameCard({
         <button className="game-title" onClick={onOpen}>
           {g.title}
         </button>
+        {g.rating !== undefined && (
+          <Stars value={g.rating} size={11} className="rating" />
+        )}
         {g.wishlist && (
           <small className="wish-label">En tu lista de deseos</small>
         )}
@@ -141,5 +139,96 @@ export function GameCard({
         </Button>
       </div>
     </article>
+  );
+}
+
+// La misma información en una fila: para bibliotecas grandes.
+export function GameRow({
+  game: g,
+  run,
+  hours,
+  showCritic,
+  playedToday,
+  busy,
+  selecting,
+  selected,
+  onSelect,
+  onOpen,
+  onFavorite,
+  onStatus,
+  onToday,
+}: Omit<Parameters<typeof GameCard>[0], "timeMode">) {
+  return (
+    <li className="game-row">
+      {selecting && (
+        <input
+          type="checkbox"
+          aria-label={"Seleccionar " + g.title}
+          checked={selected}
+          onChange={(e) => onSelect(e.target.checked)}
+        />
+      )}
+      <button
+        className="game-row-cover cover-wrap"
+        aria-label={"Abrir " + g.title}
+        onClick={onOpen}
+        tabIndex={-1}
+      >
+        <Cover game={g} />
+      </button>
+      <div className="game-row-main">
+        <button className="game-title" onClick={onOpen}>
+          {g.title}
+        </button>
+        <small>
+          {[...g.platforms, ...(g.wishlist ? ["Lista de deseos"] : [])].join(
+            " · ",
+          )}
+        </small>
+      </div>
+      <StatusMenu
+        label={"Estado de " + g.title}
+        status={run.status}
+        disabled={busy}
+        onChange={onStatus}
+      />
+      <span className="game-row-rating">
+        {g.rating !== undefined ? (
+          <Stars value={g.rating} size={11} className="rating" />
+        ) : (
+          <span className="muted">Sin valorar</span>
+        )}
+      </span>
+      {showCritic && (
+        <span className="game-row-critic">
+          {g.critic && <CriticScore critic={g.critic} compact />}
+        </span>
+      )}
+      <span className="game-row-hours">{formatHours(hours)}</span>
+      <span className="game-row-actions">
+        <button
+          className={"favorite-button " + (g.favorite ? "is-favorite" : "")}
+          aria-label={
+            (g.favorite ? "Quitar de" : "Añadir a") + " favoritos: " + g.title
+          }
+          aria-pressed={g.favorite}
+          onClick={onFavorite}
+        >
+          <Heart size={16} fill={g.favorite ? "currentColor" : "none"} />
+        </button>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={busy}
+          aria-label={
+            (playedToday ? "Registrado hoy: " : "He jugado hoy: ") + g.title
+          }
+          onClick={onToday}
+        >
+          {playedToday ? <Check size={15} /> : <Plus size={15} />}
+          <span className="game-row-today">Hoy</span>
+        </Button>
+      </span>
+    </li>
   );
 }

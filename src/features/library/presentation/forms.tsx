@@ -1,5 +1,6 @@
 "use client";
-import { formatDate, StatusOptions, statusLabel } from "./format";
+import { formatDate, statusLabel } from "./format";
+import { StatusMenu } from "./status-menu";
 import { GameTimeForm } from "./game-times";
 import { CatalogDetails } from "./catalog-details";
 import { useState } from "react";
@@ -21,6 +22,7 @@ import { avatarColors, type AvatarColor } from "../domain/profile";
 
 import { list, value } from "./form-utils";
 import { RatingInput } from "./rating-input";
+import { TimezoneField } from "./timezone-field";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
 import { markdownHint } from "./markdown";
@@ -436,15 +438,14 @@ function RunForm({
         </label>
       </div>
       <div className="form-grid">
-        <label>
-          Estado
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Run["status"])}
-          >
-            <StatusOptions />
-          </select>
-        </label>
+        <div className="rating-field">
+          <span className="rating-label">Estado</span>
+          <StatusMenu
+            label="Estado de esta partida"
+            status={status}
+            onChange={setStatus}
+          />
+        </div>
         <label>
           Grado de finalización
           <select
@@ -815,29 +816,7 @@ export function SettingsPanel({
             maxLength={300}
           />
         </label>
-        <label>
-          Zona horaria
-          <input
-            name="timezone"
-            list="timezones"
-            defaultValue={state.profile.timezone}
-            required
-          />
-          <datalist id="timezones">
-            {[
-              "Europe/Madrid",
-              "Atlantic/Canary",
-              "America/Mexico_City",
-              "America/Argentina/Buenos_Aires",
-              "America/Bogota",
-              "America/Lima",
-              "America/Santiago",
-              "UTC",
-            ].map((z) => (
-              <option key={z}>{z}</option>
-            ))}
-          </datalist>
-        </label>
+        <TimezoneField name="timezone" defaultValue={state.profile.timezone} />
         <p className="info-note">
           Cambiar la zona horaria afecta a «hoy». Las fechas ya registradas no
           se desplazan.

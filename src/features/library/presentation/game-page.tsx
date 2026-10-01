@@ -9,8 +9,8 @@ import {
   Link2,
   Pencil,
   Plus,
-  Star,
 } from "lucide-react";
+import { RatingInput } from "./rating-input";
 import { StatusMenu } from "./status-menu";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
@@ -152,6 +152,16 @@ export function GamePage({
         <ArrowLeft size={16} /> Volver a la biblioteca
       </button>
       <header className="game-hero">
+        {/* El ambiente de la cabecera sale de la propia portada, difuminada. */}
+        {game.cover && (
+          <img
+            className="game-hero-backdrop"
+            src={game.cover}
+            alt=""
+            aria-hidden="true"
+            referrerPolicy="no-referrer"
+          />
+        )}
         <div className="game-hero-cover">
           <Cover game={game} />
         </div>
@@ -180,15 +190,14 @@ export function GamePage({
             {meta.join(" · ") || "Tu próxima aventura"}
           </p>
           <div className="game-hero-score">
-            <span className="my-score">
-              <Star size={17} aria-hidden="true" />
-              <strong>
-                {game.rating
-                  ? game.rating.toLocaleString("es") + "/10"
-                  : "Sin valorar"}
-              </strong>
-              <span>Tu valoración</span>
-            </span>
+            <RatingInput
+              label="Tu valoración"
+              value={game.rating}
+              size={18}
+              onChange={(rating) =>
+                mutate({ type: "save-game", game: { ...game, rating } })
+              }
+            />
             <CriticScore critic={critic} />
             <StatusMenu
               label="Estado de la partida principal"
