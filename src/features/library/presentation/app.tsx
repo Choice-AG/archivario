@@ -1,11 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import * as Menu from "@radix-ui/react-dropdown-menu";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   BookOpen,
   CalendarDays,
+  CalendarRange,
   Check,
   Gamepad2,
   Heart,
@@ -31,7 +33,8 @@ import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
-import { Modal, type Execute } from "./shared";
+import { Avatar, Modal, type Execute } from "./shared";
+import { Onboarding, showOnboarding } from "./onboarding";
 import { gamePath, parsePath, sagaPath, viewPaths } from "./routes";
 
 // Lo que solo se usa al abrir una vista o un modal se descarga bajo demanda,
@@ -61,8 +64,8 @@ const ImportGames = load(() =>
   import("./import-games").then((m) => m.ImportGames),
 );
 const AddGame = load(() => import("./add-game").then((m) => m.AddGame));
-const SettingsPanel = load(() =>
-  import("./forms").then((m) => m.SettingsPanel),
+const ProfilePage = load(() =>
+  import("./profile-page").then((m) => m.ProfilePage),
 );
 
 export function ArchivarioApp() {
@@ -99,7 +102,6 @@ type ModalState = {
   kind:
     | "add"
     | "activity"
-    | "settings"
     | "year"
     | "planning"
     | "bulk"
@@ -120,8 +122,11 @@ const nav = [
   { name: "Favoritos", icon: Heart },
   { name: "Próximos", icon: Sparkles },
 ];
-// En móvil, Favoritos y Próximos están como vistas dentro de la biblioteca.
-const mobileNav = ["Biblioteca", "Sagas", "Diario", "Calendario"];
+// En móvil, Favoritos y Próximos están como vistas dentro de la biblioteca;
+// el perfil se abre desde el avatar de arriba. En medio va el botón de añadir.
+const mobileNav = nav.filter((n) =>
+  ["Biblioteca", "Sagas", "Diario", "Calendario"].includes(n.name),
+);
 
 function Dashboard({
   user,
@@ -179,7 +184,9 @@ function Dashboard({
   }
   useEffect(() => {
     if (gameId) document.querySelector<HTMLElement>(".game-hero h1")?.focus();
-  }, [gameId]);
+    else if (view === "Perfil")
+      document.querySelector<HTMLElement>(".profile-hero h1")?.focus();
+  }, [gameId, view]);
   useEffect(() => {
     if (!notice) return;
     // Tiempo suficiente para pulsar "Deshacer" sin que el aviso estorbe.
@@ -261,12 +268,11 @@ function Dashboard({
             <Sparkles size={20} />
           </div>
           <button
-            className="profile-button"
-            onClick={() => setModal({ kind: "settings" })}
+            className={"profile-button " + (view === "Perfil" ? "active" : "")}
+            aria-current={view === "Perfil" ? "page" : undefined}
+            onClick={() => goTo("Perfil")}
           >
-            <span className="avatar" aria-hidden="true">
-              {(state.profile.name || "A").slice(0, 1).toLocaleUpperCase("es")}
-            </span>
+            <Avatar profile={state.profile} />
             <span>
               <strong>{state.profile.name || "Mi perfil"}</strong>
               <small>
@@ -294,11 +300,12 @@ function Dashboard({
               <ShieldCheck size={14} /> Privado
             </span>
             <button
-              className="mobile-settings"
-              aria-label="Ajustes"
-              onClick={() => setModal({ kind: "settings" })}
+              className="mobile-settings mobile-profile"
+              aria-label="Perfil"
+              aria-current={view === "Perfil" ? "page" : undefined}
+              onClick={() => goTo("Perfil")}
             >
-              <Settings size={20} />
+              <Avatar profile={state.profile} />
             </button>
             {user ? (
               <Button
@@ -358,7 +365,19 @@ function Dashboard({
               </Button>
             </div>
           )}
-          {view === "Sagas" && !gameId ? (
+          {view === "Perfil" && !gameId ? (
+            <ProfilePage
+              state={state}
+              execute={safeExecute}
+              request={api.request}
+              demo={!user}
+              today={today}
+              onGame={openGame}
+              onDay={(date) => setModal({ kind: "activity", date })}
+              onYear={() => setModal({ kind: "year" })}
+              onLibrary={backToLibrary}
+            />
+          ) : view === "Sagas" && !gameId ? (
             <Sagas
               state={state}
               request={api.request}
@@ -467,6 +486,15 @@ function Dashboard({
                   <Plus size={18} /> Añadir juego
                 </Button>
               </section>
+              {view === "Biblioteca" && showOnboarding(state) && (
+                <Onboarding
+                  state={state}
+                  execute={safeExecute}
+                  onAdd={() => setModal({ kind: "add" })}
+                  onDay={() => setModal({ kind: "activity", date: today })}
+                  onGame={openGame}
+                />
+              )}
               {["Biblioteca", "Favoritos", "Próximos"].includes(view) ? (
                 <LibraryView
                   state={state}
@@ -499,6 +527,12 @@ function Dashboard({
                     <h2>Tu diario</h2>
                     <div className="section-actions">
                       <Button
+                        variant="ghost"
+                        onClick={() => goTo("Calendario")}
+                      >
+                        <CalendarRange size={16} /> Ver calendario
+                      </Button>
+                      <Button
                         variant="secondary"
                         onClick={() => setModal({ kind: "bulk" })}
                       >
@@ -528,6 +562,7 @@ function Dashboard({
                   onMonth={setMonth}
                   onDay={(date) => setModal({ kind: "activity", date })}
                   onBulk={() => setModal({ kind: "bulk" })}
+                  onJournal={() => goTo("Diario")}
                 />
               )}
             </>
@@ -549,20 +584,55 @@ function Dashboard({
           </footer>
         </main>
       </div>
-      <nav className="bottom-nav">
-        {nav
-          .filter((n) => mobileNav.includes(n.name))
-          .map((n) => (
+      <nav className="bottom-nav" aria-label="Navegación principal">
+        {mobileNav.map((n, i) => (
+          <Fragment key={n.name}>
+            {i === 2 && (
+              <Menu.Root modal={false}>
+                <Menu.Trigger className="bottom-add" aria-label="Añadir">
+                  <Plus size={24} />
+                </Menu.Trigger>
+                <Menu.Portal>
+                  <Menu.Content
+                    className="status-menu add-menu"
+                    side="top"
+                    align="center"
+                    sideOffset={10}
+                  >
+                    <Menu.Item
+                      className="status-menu-item"
+                      onSelect={() => setModal({ kind: "add" })}
+                    >
+                      <Plus size={16} /> Añadir juego
+                    </Menu.Item>
+                    <Menu.Item
+                      className="status-menu-item"
+                      onSelect={() =>
+                        setModal({ kind: "activity", date: today })
+                      }
+                    >
+                      <NotebookPen size={16} /> Registrar hoy
+                    </Menu.Item>
+                    <Menu.Item
+                      className="status-menu-item"
+                      onSelect={() => setModal({ kind: "bulk" })}
+                    >
+                      <CalendarDays size={16} /> Registrar varios días
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Portal>
+              </Menu.Root>
+            )}
             <button
               className={mobileActive(n.name) ? "active" : ""}
               aria-current={mobileActive(n.name) ? "page" : undefined}
-              key={n.name}
               onClick={() => goTo(n.name)}
             >
               <n.icon size={20} />
               {n.name}
             </button>
-          ))}
+          </Fragment>
+        ))}
       </nav>
       {notice && (
         <div className="toast" role="status">
@@ -686,21 +756,6 @@ function Dashboard({
           onClose={() => setModal(null)}
         >
           <YearReview state={state} today={today} onGame={openGame} />
-        </Modal>
-      )}
-      {modal?.kind === "settings" && (
-        <Modal
-          title="Tu espacio personal"
-          description="Tu perfil y tus notas son privados."
-          onClose={() => setModal(null)}
-        >
-          <SettingsPanel
-            state={state}
-            execute={safeExecute}
-            request={api.request}
-            demo={!user}
-            onClose={() => setModal(null)}
-          />
         </Modal>
       )}
     </div>

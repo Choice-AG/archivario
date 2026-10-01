@@ -4915,3 +4915,526 @@ select:focus {
   font-size: 11px;
   color: var(--muted);
 }
+
+/* Avatar con color elegido */
+.avatar-violeta {
+  background: linear-gradient(135deg, #7160a4, #ac7d83);
+}
+.avatar-rosa {
+  background: linear-gradient(135deg, #b0487a, #d98a6c);
+}
+.avatar-ambar {
+  background: linear-gradient(135deg, #b9741c, #d6a23a);
+}
+.avatar-verde {
+  background: linear-gradient(135deg, #2f7d5b, #6aa56b);
+}
+.avatar-azul {
+  background: linear-gradient(135deg, #2f5fa8, #4aa0c4);
+}
+.avatar-gris {
+  background: linear-gradient(135deg, #4d5468, #7b8296);
+}
+.avatar-xl {
+  width: 88px;
+  height: 88px;
+  font-size: 36px;
+}
+.profile-button.active strong {
+  color: var(--c-b49cfa);
+}
+.avatar-picker {
+  margin: 18px 0 0;
+}
+.avatar-picker legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.profile-avatar-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.avatar-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.avatar-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+.avatar-swatch[aria-checked="true"] {
+  border-color: var(--c-e9e9f6);
+  box-shadow: 0 0 0 2px var(--c-8b5cf6);
+}
+
+/* Página de perfil */
+.profile-page {
+  display: grid;
+  gap: 20px;
+}
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.profile-hero h1 {
+  font-size: 30px;
+  font-weight: 700;
+  outline: none;
+}
+.profile-bio {
+  margin: 4px 0 6px;
+  color: var(--c-c5c8d8);
+}
+.profile-hero-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+.profile-stats div {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--c-11141e);
+}
+.profile-stats strong {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+}
+.profile-stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.profile-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.profile-page h2 {
+  font-size: 17px;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+.profile-page .section-header h2 {
+  margin-bottom: 0;
+}
+.showcase-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.showcase-game {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  font-size: 12px;
+}
+.showcase-game .cover-wrap {
+  display: block;
+  aspect-ratio: 264 / 374;
+  overflow: hidden;
+  border-radius: 9px;
+}
+.showcase-game img,
+.showcase-game .cover-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.showcase-game:hover span:last-child {
+  color: var(--c-b49cfa);
+}
+.showcase-picker {
+  margin-top: 14px;
+}
+.showcase-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 10px 0 14px;
+}
+.taste-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.taste-compare div {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--c-ffffff0d);
+}
+.taste-compare span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.taste-compare strong {
+  font-size: 20px;
+}
+.taste-compare p {
+  grid-column: 1 / -1;
+}
+.taste-list + .taste-list {
+  margin-top: 14px;
+}
+.taste-list h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.taste-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.taste-list small {
+  color: var(--muted);
+}
+.last-completed {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  text-align: left;
+}
+.last-completed .cover-wrap {
+  display: block;
+  width: 70px;
+  aspect-ratio: 264 / 374;
+  overflow: hidden;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.last-completed img,
+.last-completed .cover-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.last-completed strong,
+.last-completed small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.last-completed small {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.profile-reviews {
+  display: grid;
+  gap: 14px;
+}
+.profile-reviews .text-link {
+  font-weight: 600;
+}
+.game-prose.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  margin-top: 4px;
+}
+#profile-settings {
+  scroll-margin-top: 90px;
+}
+@media (max-width: 1100px) {
+  .profile-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .profile-columns {
+    grid-template-columns: 1fr;
+  }
+  .profile-hero-actions {
+    margin-left: 0;
+  }
+}
+@media (max-width: 640px) {
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .showcase-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .showcase-options {
+    grid-template-columns: 1fr;
+  }
+  .avatar-xl {
+    width: 64px;
+    height: 64px;
+    font-size: 26px;
+  }
+  .profile-hero h1 {
+    font-size: 24px;
+  }
+}
+
+/* Mapa de calor del año */
+.heatmap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.heatmap-head select {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.heatmap-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: 14px repeat(7, 1fr);
+  gap: 3px;
+  min-width: 640px;
+}
+.heatmap-month {
+  font-size: 10px;
+  color: var(--muted);
+}
+.heat {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--c-ffffff0d);
+}
+.heat-1 {
+  background: #8b5cf640;
+}
+.heat-2 {
+  background: #8b5cf673;
+}
+.heat-3 {
+  background: #8b5cf6b3;
+}
+.heat-4 {
+  background: #8b5cf6;
+}
+button.heat:hover,
+button.heat:focus-visible {
+  outline: 2px solid var(--c-e9e9f6);
+  outline-offset: 1px;
+}
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.heatmap-legend .heat {
+  width: 11px;
+}
+.calendar-year-title {
+  margin: 26px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Bienvenida guiada */
+.onboarding {
+  margin-bottom: 20px;
+  padding: 20px 22px;
+  border: 1px solid var(--c-b49aff80);
+  border-radius: 16px;
+  background: linear-gradient(120deg, var(--c-8570ee20), var(--c-11141e));
+}
+.onboarding-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.onboarding h2 {
+  font-size: 18px;
+  font-weight: 650;
+}
+.onboarding-progress {
+  width: 100%;
+  height: 6px;
+  margin: 14px 0;
+  accent-color: var(--c-8b5cf6);
+}
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+}
+.onboarding-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.onboarding-steps li.done > span:nth-child(2) {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.onboarding-steps .text-link {
+  margin-left: auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.onboarding-check {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-ffffff14);
+  flex-shrink: 0;
+}
+.onboarding-steps li.done .onboarding-check {
+  background: var(--c-8b5cf6);
+  border-color: var(--c-8b5cf6);
+  color: var(--on-accent);
+}
+@media (max-width: 640px) {
+  .onboarding-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ficha: estado y He jugado hoy */
+.game-hero-status {
+  margin: -6px 0 16px;
+}
+.played-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--c-8570ee20);
+  color: var(--c-c4b3ff);
+  font-size: 14px;
+  font-weight: 600;
+}
+.today-note {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+.today-note label {
+  flex: 1;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .today-note {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Botón de añadir en la barra inferior */
+.bottom-add {
+  display: none;
+}
+.add-menu {
+  min-width: 210px;
+}
+.add-menu svg {
+  color: var(--c-b49cfa);
+}
+@media (max-width: 640px) {
+  .bottom-nav {
+    align-items: center;
+  }
+  .bottom-nav .bottom-add {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 50px;
+    height: 50px;
+    margin-top: -22px;
+    border-radius: 50%;
+    background: var(--c-7c3aed);
+    color: var(--on-accent);
+    box-shadow: 0 8px 22px #7c3aed66;
+  }
+}
+.mobile-profile .avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+.mobile-profile[aria-current="page"] .avatar {
+  box-shadow: 0 0 0 2px var(--c-b49cfa);
+}
+@media (max-width: 640px) {
+  .top-actions > button.mobile-profile span {
+    display: flex;
+  }
+}
+
+/* Ajustes de la página de perfil y los primeros pasos */
+.profile-page,
+.profile-columns {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 761px) {
+  .profile-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.profile-page > *,
+.profile-columns > * {
+  min-width: 0;
+}
+.onboarding-progress {
+  appearance: none;
+  border: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--c-ffffff14);
+}
+.onboarding-progress::-webkit-progress-bar {
+  background: var(--c-ffffff14);
+}
+.onboarding-progress::-webkit-progress-value {
+  background: var(--c-8b5cf6);
+  border-radius: 99px;
+}
+.onboarding-progress::-moz-progress-bar {
+  background: var(--c-8b5cf6);
+}
+.onboarding-steps li {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--c-ffffff04);
+}
+@media (min-width: 641px) {
+  .calendar-journal + .calendar-bulk {
+    margin-left: 8px;
+  }
+}

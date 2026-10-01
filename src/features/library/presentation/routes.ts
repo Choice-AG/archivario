@@ -7,6 +7,7 @@ export const viewPaths: Record<string, string> = {
   Calendario: "/calendario",
   Favoritos: "/favoritos",
   Próximos: "/proximos",
+  Perfil: "/perfil",
 };
 
 export type Route = { view: string; gameId?: string; sagaId?: string };

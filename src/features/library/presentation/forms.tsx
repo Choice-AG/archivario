@@ -16,12 +16,23 @@ import {
   type Library,
   type Run,
 } from "../domain/model";
-import type { ApiRequest, Execute } from "./shared";
+import { Avatar, type ApiRequest, type Execute } from "./shared";
+import { avatarColors, type AvatarColor } from "../domain/profile";
+
 import { list, RatingOptions, value } from "./form-utils";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
 import { markdownHint } from "./markdown";
 import { libraryToCsv } from "../domain/import-sources";
+
+const avatarColorLabels: Record<AvatarColor, string> = {
+  violeta: "Violeta",
+  rosa: "Rosa",
+  ambar: "Ámbar",
+  verde: "Verde",
+  azul: "Azul",
+  gris: "Gris",
+};
 function FormError({ message }: { message: string }) {
   return message ? (
     <p className="form-error" role="alert">
@@ -832,15 +843,50 @@ export function SettingsPanel({
       </form>
       <ThemePicker />
       <div className="divider" />
-      <div className="profile-avatar-preview">
-        <span className="avatar" aria-hidden="true">
-          {(state.profile.name || "A").slice(0, 1).toLocaleUpperCase("es")}
-        </span>
+      <fieldset className="avatar-picker">
+        <legend>Color del avatar</legend>
+        <div className="profile-avatar-preview">
+          <Avatar profile={state.profile} />
+          <div
+            className="avatar-swatches"
+            role="radiogroup"
+            aria-label="Color del avatar"
+          >
+            {avatarColors.map((c) => {
+              const selected = (state.profile.avatarColor ?? "violeta") === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={avatarColorLabels[c]}
+                  className={"avatar-swatch avatar-" + c}
+                  disabled={pending}
+                  onClick={async () => {
+                    if (selected) return;
+                    setPending(true);
+                    setError("");
+                    try {
+                      await execute({
+                        type: "profile",
+                        profile: { ...state.profile, avatarColor: c },
+                      });
+                    } catch (e) {
+                      setError(message(e));
+                    } finally {
+                      setPending(false);
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
         <p className="muted text-sm">
-          Tu avatar usa la inicial de tu nombre y se actualiza al guardar el
-          perfil.
+          Tu avatar usa la inicial de tu nombre sobre este color.
         </p>
-      </div>
+      </fieldset>
       <div className="divider" />
       <h3>Tu biblioteca te pertenece.</h3>
       <p className="muted text-sm my-2">
