@@ -37,7 +37,11 @@ export function Onboarding({
       : id === "day"
         ? { label: "Registrar hoy", run: onDay }
         : first
-          ? { label: "Abrir " + first.title, run: () => onGame(first.id) }
+          ? {
+              // Lleva a la ficha del primer juego, donde se hace el paso.
+              label: id === "playing" ? "Marcar como jugando" : "Valorar",
+              run: () => onGame(first.id),
+            }
           : undefined;
   const close = () =>
     execute({
