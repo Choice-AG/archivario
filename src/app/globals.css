@@ -6958,3 +6958,127 @@ button.heat:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Tarjetas en el móvil: póster limpio con el estado y «He jugado hoy»
+   sobre la portada. En escritorio esas acciones van bajo el título. */
+.card-overlay-status,
+.card-overlay-today {
+  display: none;
+}
+@media (max-width: 640px) {
+  .game-grid {
+    gap: 16px 10px;
+  }
+  .game-card {
+    border: 0;
+    background: none;
+  }
+  .game-card:hover {
+    transform: none;
+  }
+  .game-card .cover-wrap {
+    border-radius: 9px;
+  }
+  .game-card .game-body {
+    padding: 7px 2px 0;
+  }
+  .game-card .game-title {
+    min-height: 0;
+    font-size: 12.5px;
+  }
+  .game-card .platform-line {
+    font-size: 10.5px;
+  }
+  .game-card .card-bottom {
+    display: none;
+  }
+  /* Solo se ve el corazón de los favoritos; se cambia desde la ficha. */
+  .game-card .favorite-button {
+    display: none;
+  }
+  .game-card .favorite-button.is-favorite {
+    display: grid;
+    opacity: 1;
+    top: 5px;
+    left: 5px;
+    padding: 4px;
+  }
+  .game-card .card-overlay-status {
+    position: absolute;
+    left: 5px;
+    bottom: 5px;
+    z-index: 2;
+    display: block;
+    max-width: calc(100% - 40px);
+  }
+  .game-card .card-overlay-status .status-trigger {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: #0b0e17d9;
+    font-size: 9.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+  }
+  .game-card .card-overlay-status .status-trigger svg {
+    display: none;
+  }
+  .game-card .card-overlay-today {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #0b0e17cc;
+    color: #e9e9f6;
+    backdrop-filter: blur(8px);
+  }
+  .game-card .card-overlay-today.is-today {
+    background: #7c3aed;
+    color: #fff;
+  }
+  .game-card .next-badge {
+    display: none;
+  }
+  .game-card .card-critic {
+    right: 5px;
+    bottom: 5px;
+  }
+  .game-card .card-critic .critic-badge {
+    height: 20px;
+    min-width: 24px;
+    padding: 0 4px;
+    font-size: 10px;
+  }
+  /* Tu nota en corto: «★ 9,5». */
+  .game-card .game-body .stars {
+    margin-top: 3px;
+    gap: 3px;
+  }
+  .game-card .stars .stars-row {
+    display: none;
+  }
+  .game-card .stars::before {
+    content: "★";
+    color: #f5b942;
+    font-size: 11px;
+  }
+  .game-card .stars-number {
+    font-size: 11px;
+  }
+}
+@media (max-width: 640px) {
+  /* Sin nota de la crítica, la etiqueta de estado puede usar todo el ancho. */
+  .game-card .cover-wrap:not(:has(.card-critic)) .card-overlay-status {
+    max-width: calc(100% - 10px);
+  }
+  .game-card .card-overlay-status .status-trigger i {
+    flex-shrink: 0;
+  }
+}
