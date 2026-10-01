@@ -17,5 +17,9 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      # Todas las actions en una sola PR al mes.
+      actions:
+        patterns: ["*"]
     commit-message:
       prefix: ci
