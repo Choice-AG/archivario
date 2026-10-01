@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Archivario · Tus juegos, a tu ritmo",
+  title: {
+    default: "Archivario · Tus juegos, a tu ritmo",
+    template: "%s · Archivario",
+  },
   description:
     "Tu biblioteca de videojuegos y un diario de pequeños grandes viajes. Privado, sin prisas.",
 };

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,10 @@ import { Modal, type ApiRequest, type Execute } from "./shared";
 import { AddGame } from "./add-game";
 import { GameSeries } from "./game-series";
 import { formatHours, timeLabels } from "../domain/daily";
-import type { Library, GameTimes } from "../domain/model";
+import type { Library } from "../domain/model";
 import type { CatalogGame } from "./use-catalog-search";
 import { useSagaGuides } from "./saga-guides";
-import { fetchCatalogDetails } from "./catalog-details-cache";
+import { useCatalogDetails, useCatalogTimes } from "./use-api";
 type Details = CatalogGame & {
   summary: string;
   releaseDate: string;
@@ -40,38 +40,13 @@ export function CatalogGamePage({
   const entry = [...(state.sagas ?? []), ...(guides ?? [])]
     .flatMap((s) => s.entries)
     .find((e) => e.catalogId === id);
-  const [data, setData] = useState<Details>(),
-    [times, setTimes] = useState<GameTimes>(),
-    [error, setError] = useState(""),
-    [timeError, setTimeError] = useState(""),
-    [retry, setRetry] = useState(0),
-    [adding, setAdding] = useState(false);
-  useEffect(() => {
-    if (demo) return;
-    const c = new AbortController();
-    let active = true;
-    setError("");
-    setTimeError("");
-    fetchCatalogDetails(request, id)
-      .then((d) => {
-        if (active) setData(d as Details);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    request("/api/catalog/times?id=" + id, { signal: c.signal })
-      .then((r) => r.json())
-      .then((d) => {
-        if (active) setTimes(d);
-      })
-      .catch((e) => {
-        if (active) setTimeError(e.message);
-      });
-    return () => {
-      active = false;
-      c.abort();
-    };
-  }, [id, request, demo, retry]);
+  const [adding, setAdding] = useState(false);
+  const details = useCatalogDetails(request, id, !demo),
+    timesQuery = useCatalogTimes(request, id, !demo);
+  const data = details.data as Details | undefined,
+    error = details.error,
+    times = timesQuery.data,
+    timeError = timesQuery.error;
   const game: CatalogGame | undefined = data
     ? {
         catalogId: id,
@@ -98,7 +73,12 @@ export function CatalogGamePage({
       {error && (
         <p className="form-error" role="alert">
           {error}{" "}
-          <button onClick={() => setRetry((n) => n + 1)}>
+          <button
+            onClick={() => {
+              details.retry();
+              timesQuery.retry();
+            }}
+          >
             Reintentar ficha
           </button>
         </p>
@@ -228,7 +208,10 @@ export function CatalogGamePage({
                 {timeError}{" "}
                 <button
                   className="text-link"
-                  onClick={() => setRetry((n) => n + 1)}
+                  onClick={() => {
+                    details.retry();
+                    timesQuery.retry();
+                  }}
                 >
                   Reintentar
                 </button>

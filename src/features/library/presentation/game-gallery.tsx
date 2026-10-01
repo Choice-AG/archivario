@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Modal, type ApiRequest } from "./shared";
-import { fetchCatalogDetails } from "./catalog-details-cache";
+import { useCatalogDetails } from "./use-api";
 export function GameGallery({
   id,
   request,
@@ -14,25 +14,10 @@ export function GameGallery({
   demo: boolean;
   cover?: string;
 }) {
-  const [images, setImages] = useState<string[]>([]),
-    [opened, setOpened] = useState<string>(),
-    [error, setError] = useState(""),
-    [retry, setRetry] = useState(0);
-  useEffect(() => {
-    if (!id || demo) return;
-    let active = true;
-    setError("");
-    fetchCatalogDetails(request, id)
-      .then((d) => {
-        if (active) setImages(d.screenshots ?? []);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [id, demo, request, retry]);
+  const [opened, setOpened] = useState<string>();
+  const details = useCatalogDetails(request, id, !demo);
+  const images = details.data?.screenshots ?? [],
+    error = details.error;
   return (
     <section className="game-section game-gallery">
       <h2>Imágenes del juego</h2>
@@ -67,15 +52,12 @@ export function GameGallery({
           Inicia sesión para consultar las capturas de IGDB.
         </p>
       )}
-      {!demo && !error && !images.length && (
+      {!demo && !error && !details.loading && !images.length && (
         <p className="muted">No hay capturas disponibles.</p>
       )}
       {error && (
         <p role="alert">
-          {error}{" "}
-          <button onClick={() => setRetry((n) => n + 1)}>
-            Reintentar imágenes
-          </button>
+          {error} <button onClick={details.retry}>Reintentar imágenes</button>
         </p>
       )}
       {opened && (
