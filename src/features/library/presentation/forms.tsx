@@ -20,6 +20,7 @@ import type { ApiRequest, Execute } from "./shared";
 import { list, RatingOptions, value } from "./form-utils";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
+import { markdownHint } from "./markdown";
 import { libraryToCsv } from "../domain/import-sources";
 function FormError({ message }: { message: string }) {
   return message ? (
@@ -264,8 +265,12 @@ export function GameDetails({
               maxLength={5000}
               defaultValue={game.review}
               placeholder="¿Qué te está haciendo sentir este juego?"
+              aria-describedby="review-format"
             />
           </label>
+          <p id="review-format" className="field-hint">
+            {markdownHint}
+          </p>
           <details className="spoiler">
             <summary>Mostrar notas con spoilers</summary>
             <label className="mt-4">
@@ -485,8 +490,12 @@ function RunForm({
           rows={4}
           maxLength={5000}
           defaultValue={run?.review}
+          aria-describedby={"run-review-format-" + (run?.id ?? "new")}
         />
       </label>
+      <p id={"run-review-format-" + (run?.id ?? "new")} className="field-hint">
+        {markdownHint}
+      </p>
       <fieldset className="time-field">
         <legend>Tiempo de finalización, opcional</legend>
         <p>

@@ -11,6 +11,7 @@ import { CatalogDetails } from "./catalog-details";
 import { LinkCatalog } from "./link-catalog";
 import { useCatalogDetails, useCatalogTimes } from "./use-api";
 import { CriticScore } from "./critic-score";
+import { Markdown } from "./markdown";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
 import { type Game, type Library, type Run } from "../domain/model";
 export function GamePage({
@@ -293,7 +294,9 @@ export function GamePage({
                     </div>
                   )}
                 </dl>
-                {r.review && <p className="game-prose">{r.review}</p>}
+                {r.review && (
+                  <Markdown className="game-prose" text={r.review} />
+                )}
               </article>
             ))}
           </section>
@@ -304,14 +307,18 @@ export function GamePage({
                 Editar notas
               </button>
             </div>
-            <p className="game-prose">
-              {game.review ||
-                "Todavía no has escrito una reseña. Guarda aquí lo que te ha hecho sentir este juego."}
-            </p>
+            {game.review ? (
+              <Markdown className="game-prose" text={game.review} />
+            ) : (
+              <p className="game-prose">
+                Todavía no has escrito una reseña. Guarda aquí lo que te ha
+                hecho sentir este juego.
+              </p>
+            )}
             {game.spoilerNote && (
               <details className="spoiler">
                 <summary>Mostrar notas con spoilers</summary>
-                <p className="game-prose">{game.spoilerNote}</p>
+                <Markdown className="game-prose" text={game.spoilerNote} />
               </details>
             )}
           </section>

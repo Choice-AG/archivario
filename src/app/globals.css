@@ -4889,3 +4889,29 @@ select:focus {
     margin-left: 0;
   }
 }
+
+/* Reseñas con formato */
+.game-prose p + p,
+.game-prose ul,
+.game-prose ol {
+  margin-top: 10px;
+}
+.game-prose ul,
+.game-prose ol {
+  padding-left: 20px;
+}
+.game-prose ul {
+  list-style: disc;
+}
+.game-prose ol {
+  list-style: decimal;
+}
+.game-prose a {
+  color: var(--c-b49cfa);
+  text-decoration: underline;
+}
+.field-hint {
+  margin: -10px 0 16px;
+  font-size: 11px;
+  color: var(--muted);
+}
