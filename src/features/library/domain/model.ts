@@ -67,6 +67,8 @@ export type Profile = {
   showcase?: string[];
   // La bienvenida guiada se ha cerrado.
   onboardingDone?: boolean;
+  // false: no celebrar al completar un juego.
+  celebrate?: boolean;
 };
 export type GameList = {
   id: string;

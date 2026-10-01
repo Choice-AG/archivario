@@ -24,10 +24,14 @@ async function addGame(page: Page, title: string) {
     .getByRole("button", { name: "Añadir juego", exact: true })
     .first()
     .click();
-  await page.getByRole("button", { name: "Añadir manualmente" }).click();
+  await page.getByRole("button", { name: "Añádelo a mano" }).click();
   await page.getByLabel("Título", { exact: true }).fill(title);
-  await page.getByLabel("Plataformas", { exact: false }).fill("PC");
+  const pc = page
+    .getByRole("dialog")
+    .getByRole("button", { name: "PC", exact: true });
+  if ((await pc.getAttribute("aria-pressed")) !== "true") await pc.click();
   await page.getByRole("button", { name: "Añadir a mi biblioteca" }).click();
+  await page.getByRole("button", { name: "Listo", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Abrir " + title, exact: true }),
   ).toBeVisible();
@@ -106,15 +110,19 @@ test("dos pestañas se sincronizan y un cambio antiguo no pisa uno nuevo", async
     .getByRole("button", { name: "Añadir juego", exact: true })
     .first()
     .click();
-  await second.getByRole("button", { name: "Añadir manualmente" }).click();
+  await second.getByRole("button", { name: "Añádelo a mano" }).click();
   await second.getByLabel("Título", { exact: true }).fill("Desde la segunda");
-  await second.getByLabel("Plataformas", { exact: false }).fill("PC");
+  const pc = second
+    .getByRole("dialog")
+    .getByRole("button", { name: "PC", exact: true });
+  if ((await pc.getAttribute("aria-pressed")) !== "true") await pc.click();
   await second.getByRole("button", { name: "Añadir a mi biblioteca" }).click();
   await expect(
     second.getByText(/cambió en otro dispositivo/).first(),
   ).toBeVisible();
   // Al volver a guardar sobre la versión nueva, se conservan los dos.
   await second.getByRole("button", { name: "Añadir a mi biblioteca" }).click();
+  await second.getByRole("button", { name: "Listo", exact: true }).click();
   for (const title of ["Desde la primera", "Desde la segunda"])
     await expect(
       second.getByRole("button", { name: "Abrir " + title, exact: true }),

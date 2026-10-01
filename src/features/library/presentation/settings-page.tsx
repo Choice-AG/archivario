@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Library } from "../domain/model";
 import type { ApiRequest, Execute } from "./shared";
-import { SettingsPanel } from "./forms";
+import { SettingsPanel } from "./settings-panel";
 
 // Los ajustes tienen su propia página: se llega desde el perfil y no ocupan
 // sitio en él.
@@ -37,7 +37,7 @@ export function SettingsPage({
         </h1>
         <p className="muted">Tu perfil y tus notas son privados.</p>
       </header>
-      <section className="panel">
+      <div>
         <SettingsPanel
           state={state}
           execute={execute}
@@ -45,7 +45,7 @@ export function SettingsPage({
           demo={demo}
           onClose={onLibrary}
         />
-      </section>
+      </div>
     </div>
   );
 }

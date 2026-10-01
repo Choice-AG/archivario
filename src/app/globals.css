@@ -6061,3 +6061,434 @@ button.heat:focus-visible {
     height: 22px;
   }
 }
+
+/* Ajustes por secciones */
+.settings-sections {
+  display: grid;
+  gap: 18px;
+}
+.settings-index {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 0;
+  background: linear-gradient(var(--background), var(--background)), #fff;
+  scrollbar-width: none;
+}
+.settings-index a {
+  padding: 7px 14px;
+  border: 1px solid var(--c-ffffff12);
+  border-radius: 99px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--c-c5c8d8);
+}
+.settings-index a:hover {
+  border-color: var(--c-b49aff80);
+  color: var(--c-e9e9f6);
+}
+.settings-section {
+  padding: 22px 24px;
+  border: 1px solid var(--c-ffffff0c);
+  border-radius: 14px;
+  background: linear-gradient(120deg, var(--c-141823), var(--c-10141e));
+  scroll-margin-top: 64px;
+}
+.settings-section > h2 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 650;
+}
+.settings-section .theme-picker legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.settings-section .theme-picker .segmented {
+  margin-bottom: 0;
+}
+.settings-section .danger-area {
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .settings-section {
+    padding: 18px;
+  }
+}
+
+/* Celebración al completar un juego */
+.confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.confetti i {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 420px;
+    rotate: 540deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+}
+.celebration-body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0 20px;
+}
+.celebration-cover {
+  flex-shrink: 0;
+  width: 72px;
+  aspect-ratio: 264 / 374;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px var(--c-0007);
+}
+.celebration-cover img,
+.celebration-cover .cover-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.celebration-cover .cover-fallback span {
+  display: none;
+}
+
+/* Celebración: resumen, fecha y nota */
+.celebration-trip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+.celebration-trip dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.celebration-trip dd {
+  font-size: 15px;
+  font-weight: 600;
+}
+.celebration-fields {
+  position: relative;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.celebration-fields .rating-field {
+  margin-bottom: 17px;
+}
+.celebration-undo {
+  margin-left: auto;
+}
+.celebration-mute {
+  position: relative;
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+@media (max-width: 640px) {
+  .celebration-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .celebration-undo {
+    margin-left: 0;
+  }
+}
+
+/* Ajustes: guardar perfil y cambios pendientes */
+.settings-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 18px;
+}
+.unsaved {
+  font-size: 13px;
+  color: #d9a441;
+}
+
+/* Añadir juego: búsqueda */
+.add-search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--c-ffffff18);
+  border-radius: 12px;
+  background: var(--c-ffffff05);
+}
+.add-search-field:focus-within {
+  border-color: var(--c-b49aff80);
+}
+.add-search-field svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.add-search-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 0;
+  border: 0;
+  background: transparent;
+  font-size: 15px;
+  outline: none;
+  box-shadow: none;
+}
+.add-search-status {
+  min-height: 18px;
+  margin: 8px 2px 4px;
+}
+.add-results {
+  display: grid;
+  gap: 6px;
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  margin: 4px -4px 0;
+  padding: 4px;
+}
+.add-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  text-align: left;
+}
+.add-result:hover,
+.add-result:focus-visible {
+  border-color: var(--c-ffffff12);
+  background: var(--c-ffffff08);
+}
+.add-result > svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.add-result-cover {
+  display: block;
+  flex-shrink: 0;
+  width: 40px;
+  aspect-ratio: 264 / 374;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--c-ffffff0d);
+}
+.add-result-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.add-result-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.add-result-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.add-result-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+.add-owned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--c-8570ee20);
+  color: var(--c-c4b3ff);
+  font-size: 11px;
+  font-weight: 600;
+}
+.add-pages {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.add-pages button:disabled {
+  opacity: 0.4;
+}
+.add-manual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--c-c5c8d8);
+}
+
+/* Añadir juego: dos preguntas */
+.add-back {
+  margin-bottom: 14px;
+}
+.add-chosen {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.add-chosen .add-result-cover {
+  width: 54px;
+}
+.add-chosen div {
+  display: grid;
+}
+.add-chosen strong {
+  font-size: 17px;
+}
+.add-chosen small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.add-question {
+  margin: 0 0 20px;
+  border: 0;
+}
+.add-question legend {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 650;
+}
+.choice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.choice-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid var(--c-ffffff18);
+  border-radius: 99px;
+  background: var(--c-ffffff05);
+  font-size: 13px;
+  color: var(--c-c5c8d8);
+}
+.choice-chips button[aria-pressed="true"] {
+  border-color: var(--c-a58add88);
+  background: var(--c-a58add22);
+  color: var(--c-e4d6ff);
+  font-weight: 600;
+}
+.add-other {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  max-width: 320px;
+}
+.add-other input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.progress-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.progress-choices button {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-ffffff14);
+  border-radius: 12px;
+  background: var(--c-ffffff04);
+  text-align: left;
+}
+.progress-choices strong {
+  font-size: 14px;
+}
+.progress-choices small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.progress-choices button[aria-checked="true"] {
+  border-color: var(--c-b49aff);
+  background: var(--c-a58add22);
+  box-shadow: 0 0 0 1px var(--c-b49aff) inset;
+}
+.add-more {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.add-more summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--c-c5c8d8);
+}
+.add-more[open] summary {
+  margin-bottom: 14px;
+}
+@media (max-width: 640px) {
+  .progress-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Añadir juego: hecho */
+.add-done {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+.add-done-check {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2f8a5b;
+  color: #fff;
+}
+.add-done p {
+  font-size: 15px;
+}

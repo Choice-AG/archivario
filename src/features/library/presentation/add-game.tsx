@@ -1,8 +1,14 @@
 "use client";
-import { StatusOptions } from "./format";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCatalogTimes } from "./use-api";
-import { Check, LoaderCircle, Plus, Search, ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  LoaderCircle,
+  Plus,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   dateInZone,
@@ -12,9 +18,27 @@ import {
   type Run,
 } from "../domain/model";
 import type { ApiRequest, Execute } from "./shared";
-import { platformChoices, preferredPlatforms } from "./catalog-data";
+import {
+  platformChoices,
+  platformLabel,
+  preferredPlatforms,
+} from "./catalog-data";
 import { useCatalogSearch, type CatalogGame } from "./use-catalog-search";
-import { list, value } from "./form-utils";
+import { list } from "./form-utils";
+import { CriticScore } from "./critic-score";
+
+// «¿Cómo lo llevas?»: el estado inicial, con la lista de deseos como una
+// opción más (aún no lo tienes).
+const progress = [
+  { id: "deseo", label: "Lo quiero", hint: "Aún no lo tengo" },
+  { id: "pendiente", label: "Pendiente", hint: "Lo tengo sin empezar" },
+  { id: "jugando", label: "Jugando", hint: "Ahora mismo" },
+  { id: "completado", label: "Completado", hint: "Ya lo terminé" },
+  { id: "en pausa", label: "En pausa", hint: "Lo dejé un tiempo" },
+  { id: "abandonado", label: "Abandonado", hint: "No era para mí" },
+] as const;
+type Progress = (typeof progress)[number]["id"];
+const commonPlatforms = ["PC", "PS5", "Switch", "Xbox Series X/S"];
 
 export function AddGame({
   state,
@@ -24,6 +48,7 @@ export function AddGame({
   demo,
   initialGame,
   onAdded,
+  onOpen,
 }: {
   state: Library;
   execute: Execute;
@@ -31,368 +56,484 @@ export function AddGame({
   onClose: () => void;
   demo: boolean;
   initialGame?: CatalogGame;
+  // Tras añadir, ir directamente a la ficha (desde la ficha del catálogo).
   onAdded?: (id: string) => void;
+  // Abrir un juego de la biblioteca (el recién añadido o uno que ya tenías).
+  onOpen?: (id: string) => void;
 }) {
-  const [selected, setSelected] = useState<CatalogGame | undefined>(
-    initialGame,
+  const [step, setStep] = useState<"search" | "details" | "done">(
+    initialGame ? "details" : "search",
   );
-  const [manual, setManual] = useState(false);
-  const [platforms, setPlatforms] = useState(
-    initialGame
-      ? preferredPlatforms(
-          initialGame.platforms,
-          state.games.flatMap((g) => g.platforms),
-        ).join(", ")
-      : "",
+  const [selected, setSelected] = useState(initialGame);
+  const [added, setAdded] = useState<Game>();
+  const search = useCatalogSearch(request, !demo && step === "search");
+  const owned = useMemo(
+    () =>
+      new Map(
+        state.games.flatMap((g) => (g.catalogId ? [[g.catalogId, g]] : [])),
+      ),
+    [state.games],
   );
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const search = useCatalogSearch(request, !demo && !manual && !selected);
-  const timesQuery = useCatalogTimes(request, selected?.catalogId, !demo);
-  const times: GameTimes | undefined = timesQuery.data,
-    timeLoading = timesQuery.loading,
-    timeNotice = timesQuery.error
-      ? "No se han podido cargar los tiempos. Puedes consultarlos después desde la ficha."
-      : times
-        ? Object.keys(times).length
-          ? "Tiempos de IGDB incluidos. Podrás ajustarlos en la pestaña Tiempos."
-          : "IGDB no tiene estimaciones de tiempo para este juego."
-        : "";
-  const select = (game: CatalogGame) => {
-    setSelected(game);
-    setPlatforms(
-      preferredPlatforms(
-        game.platforms,
-        state.games.flatMap((g) => g.platforms),
-      ).join(", "),
-    );
-    setError("");
+  const reset = () => {
+    setSelected(undefined);
+    setAdded(undefined);
+    setStep("search");
   };
-  const togglePlatform = (name: string) => {
-    const current = list(platforms);
-    setPlatforms(
-      (current.includes(name)
-        ? current.filter((p) => p !== name)
-        : [...current, name]
-      ).join(", "),
+
+  if (step === "done" && added)
+    return (
+      <div className="add-done">
+        <span className="add-done-check" aria-hidden="true">
+          <Check size={22} />
+        </span>
+        <p role="status">
+          <strong>{added.title}</strong> ya está en tu biblioteca.
+        </p>
+        <div className="form-actions">
+          {onOpen && (
+            <Button onClick={() => onOpen(added.id)}>
+              Ver la ficha <ChevronRight size={16} />
+            </Button>
+          )}
+          <Button variant="secondary" onClick={reset}>
+            <Plus size={16} /> Añadir otro juego
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            Listo
+          </Button>
+        </div>
+      </div>
     );
+
+  if (step === "details")
+    return (
+      <GameSetup
+        key={selected?.catalogId ?? "manual"}
+        state={state}
+        execute={execute}
+        request={request}
+        demo={demo}
+        game={selected}
+        initialTitle={selected ? undefined : search.query.trim()}
+        onBack={initialGame ? undefined : reset}
+        onSaved={(game) => {
+          if (onAdded) {
+            onClose();
+            onAdded(game.id);
+            return;
+          }
+          setAdded(game);
+          setStep("done");
+        }}
+      />
+    );
+
+  return (
+    <div className="add-search">
+      <form
+        className="add-search-field"
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          search.searchNow();
+        }}
+      >
+        <Search size={18} aria-hidden="true" />
+        <input
+          aria-label="Buscar un juego"
+          placeholder="Escribe el nombre de un juego…"
+          minLength={2}
+          maxLength={80}
+          value={search.query}
+          onChange={(e) => search.setQuery(e.target.value)}
+          autoComplete="off"
+          autoFocus
+        />
+        {search.pending && (
+          <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />
+        )}
+      </form>
+      {demo && (
+        <p className="info-note">
+          La demostración no busca en el catálogo. Puedes añadir un juego a
+          mano; al iniciar sesión verás portadas, géneros y duración.
+        </p>
+      )}
+      <p
+        role="status"
+        aria-live="polite"
+        className="muted text-xs add-search-status"
+      >
+        {search.pending
+          ? "Buscando juegos…"
+          : search.searched
+            ? search.results.length
+              ? ""
+              : "No hay resultados con ese nombre."
+            : demo
+              ? ""
+              : "Escribe al menos dos letras para buscar en el catálogo."}
+      </p>
+      {search.results.length > 0 && (
+        <ul className="add-results" aria-busy={search.pending}>
+          {search.results.map((game) => {
+            const mine = owned.get(game.catalogId);
+            return (
+              <li key={game.catalogId}>
+                <button
+                  className="add-result"
+                  onClick={() => {
+                    if (mine) {
+                      if (onOpen) onOpen(mine.id);
+                      return;
+                    }
+                    setSelected(game);
+                    setStep("details");
+                  }}
+                  aria-label={
+                    mine
+                      ? game.title + ": ya lo tienes, abrir su ficha"
+                      : "Elegir " + game.title
+                  }
+                >
+                  <span className="add-result-cover">
+                    {game.cover ? <img src={game.cover} alt="" /> : null}
+                  </span>
+                  <span className="add-result-text">
+                    <strong>{game.title}</strong>
+                    <small>
+                      {platformChoices(game.platforms).slice(0, 4).join(" · ")}
+                    </small>
+                  </span>
+                  {game.critic && <CriticScore critic={game.critic} compact />}
+                  {mine ? (
+                    <span className="add-owned">
+                      <Check size={14} /> Ya lo tienes
+                    </span>
+                  ) : (
+                    <ChevronRight size={18} aria-hidden="true" />
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {search.searched && (search.page > 1 || search.results.length >= 20) && (
+        <div className="add-pages">
+          <button
+            className="text-link"
+            disabled={search.page === 1 || search.pending}
+            onClick={() => search.goToPage(search.page - 1)}
+          >
+            ← Anteriores
+          </button>
+          <button
+            className="text-link"
+            disabled={
+              search.results.length < 20 || search.page === 10 || search.pending
+            }
+            onClick={() => search.goToPage(search.page + 1)}
+          >
+            Más resultados →
+          </button>
+        </div>
+      )}
+      {search.error && (
+        <p className="form-error" role="alert">
+          {search.error}
+        </p>
+      )}
+      <div className="add-manual">
+        <span>
+          {search.searched ? "¿No aparece?" : "¿No está en el catálogo?"}
+        </span>
+        <Button variant="secondary" onClick={() => setStep("details")}>
+          Añádelo a mano
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Paso 2: lo esencial en dos preguntas; el resto, plegado y opcional.
+function GameSetup({
+  state,
+  execute,
+  request,
+  demo,
+  game,
+  initialTitle,
+  onBack,
+  onSaved,
+}: {
+  state: Library;
+  execute: Execute;
+  request: ApiRequest;
+  demo: boolean;
+  game?: CatalogGame;
+  initialTitle?: string;
+  onBack?: () => void;
+  onSaved: (game: Game) => void;
+}) {
+  const yours = state.games.flatMap((g) => g.platforms).map(platformLabel);
+  const usual = [...new Set(yours)]
+    .sort(
+      (a, b) =>
+        yours.filter((p) => p === b).length -
+        yours.filter((p) => p === a).length,
+    )
+    .slice(0, 4);
+  const [choices, setChoices] = useState(() =>
+    [
+      ...new Set([
+        ...(game ? platformChoices(game.platforms) : []),
+        ...usual,
+        ...(game ? [] : commonPlatforms),
+      ]),
+    ].slice(0, 12),
+  );
+  const [platforms, setPlatforms] = useState<string[]>(() =>
+    game ? preferredPlatforms(game.platforms, yours) : usual.slice(0, 1),
+  );
+  const [other, setOther] = useState("");
+  const [status, setStatus] = useState<Progress>("pendiente");
+  const [title, setTitle] = useState(game?.title ?? initialTitle ?? "");
+  const [error, setError] = useState(""),
+    [saving, setSaving] = useState(false);
+  const timesQuery = useCatalogTimes(request, game?.catalogId, !demo);
+  const times: GameTimes | undefined = timesQuery.data;
+  const toggle = (p: string) =>
+    setPlatforms((cur) =>
+      cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p],
+    );
+  const addOther = () => {
+    const names = list(other);
+    if (!names.length) return;
+    setChoices((cur) => [...new Set([...cur, ...names])]);
+    setPlatforms((cur) => [...new Set([...cur, ...names])]);
+    setOther("");
   };
   return (
-    <div>
-      <div className="segmented">
-        <button
-          aria-pressed={!manual}
-          className={!manual ? "selected" : ""}
-          onClick={() => {
-            setManual(false);
-            setError("");
-          }}
-        >
-          Buscar en IGDB
-        </button>
-        <button
-          aria-pressed={manual}
-          className={manual ? "selected" : ""}
-          onClick={() => {
-            setManual(true);
-            setSelected(undefined);
-            setPlatforms("");
-            setError("");
-          }}
-        >
-          Añadir manualmente
-        </button>
-      </div>
-      {!manual && !selected && (
-        <>
-          <form
-            className="catalog-search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              search.searchNow();
-            }}
-          >
-            <input
-              aria-label="Buscar en IGDB"
-              aria-describedby="catalog-search-help"
-              placeholder="Escribe el nombre de un juego…"
-              minLength={2}
-              maxLength={80}
-              value={search.query}
-              onChange={(e) => search.setQuery(e.target.value)}
-              required
-              autoComplete="off"
-            />
-            <Button
-              disabled={
-                search.pending || demo || search.query.trim().length < 2
+    <form
+      className="add-setup"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const chosen = [...new Set([...platforms, ...list(other)])];
+        if (!title.trim()) return setError("Escribe el título del juego.");
+        if (!chosen.length) return setError("Elige al menos una plataforma.");
+        setSaving(true);
+        setError("");
+        const form = new FormData(e.currentTarget),
+          id = crypto.randomUUID(),
+          runId = crypto.randomUUID(),
+          wishlist = status === "deseo",
+          runStatus: Run["status"] = wishlist ? "pendiente" : status,
+          duration = String(form.get("duration") ?? "").trim(),
+          startedOn = dateInZone(new Date(), state.profile.timezone);
+        const saved: Game = {
+          id,
+          ...(times && Object.keys(times).length ? { times } : {}),
+          title: title.trim(),
+          genres: list(
+            String(form.get("genres") ?? game?.genres.join(", ") ?? ""),
+          ),
+          platforms: chosen,
+          wishlist,
+          stores: list(String(form.get("stores") ?? "")),
+          favorite: false,
+          next: false,
+          review: "",
+          spoilerNote: "",
+          primaryRunId: runId,
+          updatedAt: new Date().toISOString(),
+          ...(game
+            ? {
+                catalogId: game.catalogId,
+                ...(game.cover ? { cover: game.cover } : {}),
+                ...(game.critic ? { critic: game.critic } : {}),
               }
-              aria-label="Buscar catálogo"
+            : {}),
+          ...(duration ? { approximateHours: Number(duration) } : {}),
+        };
+        try {
+          await execute({
+            type: "save-game",
+            game: saved,
+            run: {
+              id: runId,
+              gameId: id,
+              label: "Primera partida",
+              platform: chosen[0],
+              status: runStatus,
+              completion: "sin especificar",
+              startedOn,
+              ...(runStatus === "completado" ? { completedOn: startedOn } : {}),
+              whereLeft: "",
+            },
+          });
+          onSaved(saved);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "No se ha podido guardar.",
+          );
+        } finally {
+          setSaving(false);
+        }
+      }}
+    >
+      {onBack && (
+        <button type="button" className="game-back add-back" onClick={onBack}>
+          <ArrowLeft size={15} />{" "}
+          {game ? "Elegir otro juego" : "Volver a buscar"}
+        </button>
+      )}
+      {game ? (
+        <div className="add-chosen">
+          <span className="add-result-cover">
+            {game.cover && <img src={game.cover} alt="" />}
+          </span>
+          <div>
+            <strong>{game.title}</strong>
+            <small>{game.genres.slice(0, 3).join(" · ")}</small>
+          </div>
+        </div>
+      ) : (
+        <label>
+          Título
+          <input
+            name="title"
+            value={title}
+            maxLength={160}
+            autoFocus
+            required
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </label>
+      )}
+
+      <fieldset className="add-question">
+        <legend>¿En qué lo juegas?</legend>
+        <div className="choice-chips">
+          {choices.map((p) => (
+            <button
+              type="button"
+              key={p}
+              aria-pressed={platforms.includes(p)}
+              onClick={() => toggle(p)}
             >
-              <Search size={18} />
-            </Button>
-          </form>
-          <p id="catalog-search-help" className="muted text-xs mt-3">
-            Los resultados aparecen mientras escribes, a partir de dos
-            caracteres.
-          </p>
-          {demo && (
-            <p className="info-note">
-              La demostración no conecta con IGDB. Puedes probar «Añadir
-              manualmente». Inicia sesión para buscar en el catálogo.
-            </p>
-          )}
-          <div
-            role="status"
-            aria-live="polite"
-            className="catalog-search-status"
-          >
-            {search.pending ? (
-              <>
-                <LoaderCircle size={16} className="animate-spin" /> Buscando
-                juegos…
-              </>
-            ) : search.searched ? (
-              search.results.length ? (
-                search.results.length + " resultados en esta página."
-              ) : (
-                "No hay resultados. Prueba otro nombre o añádelo manualmente."
-              )
-            ) : null}
-          </div>
-          <div className="catalog-results" aria-busy={search.pending}>
-            {search.results.map((game) => (
-              <button key={game.catalogId} onClick={() => select(game)}>
-                {game.cover && <img src={game.cover} alt="" />}
-                <span>
-                  <strong>{game.title}</strong>
-                  <small>{platformChoices(game.platforms).join(" · ")}</small>
-                </span>
-                <Plus size={18} />
-              </button>
-            ))}
-          </div>
-          {search.searched && (
-            <div className="pagination">
-              <Button
-                variant="secondary"
-                disabled={search.page === 1 || search.pending}
-                onClick={() => search.goToPage(search.page - 1)}
-              >
-                Anterior
-              </Button>
-              <span>Página {search.page}</span>
-              <Button
-                variant="secondary"
-                disabled={
-                  search.results.length < 20 ||
-                  search.page === 10 ||
-                  search.pending
-                }
-                onClick={() => search.goToPage(search.page + 1)}
-              >
-                Siguiente
-              </Button>
-            </div>
-          )}
-          {search.error && (
-            <p className="form-error" role="alert">
-              {search.error}
-            </p>
-          )}
-        </>
-      )}
-      {(manual || selected) && (
-        <>
-          {selected && (
-            <div className="catalog-selection">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelected(undefined);
-                  setError("");
-                }}
-              >
-                <ArrowLeft size={15} /> Volver a los resultados
-              </Button>
-              <div className="catalog-selection-summary">
-                {selected.cover && (
-                  <img
-                    src={selected.cover}
-                    alt={"Portada de " + selected.title}
-                  />
-                )}
-                <div>
-                  <strong>{selected.title}</strong>
-                  <p className="muted text-xs">
-                    Título, portada y géneros del catálogo. Puedes ajustar los
-                    datos antes de guardar.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          <form
-            key={selected?.catalogId ?? "manual"}
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setSaving(true);
-              setError("");
-              const form = new FormData(e.currentTarget),
-                id = crypto.randomUUID(),
-                runId = crypto.randomUUID(),
-                chosen = list(platforms);
-              const game: Game = {
-                id,
-                ...(times ? { times } : {}),
-                title: value(form, "title"),
-                genres: list(value(form, "genres")),
-                platforms: chosen,
-                wishlist: form.has("wishlist"),
-                stores: list(value(form, "stores")),
-                favorite: false,
-                next: false,
-                review: "",
-                spoilerNote: "",
-                primaryRunId: runId,
-                updatedAt: new Date().toISOString(),
-                ...(selected
-                  ? {
-                      catalogId: selected.catalogId,
-                      ...(selected.cover ? { cover: selected.cover } : {}),
-                      ...(selected.critic ? { critic: selected.critic } : {}),
-                    }
-                  : {}),
-                ...(value(form, "duration")
-                  ? { approximateHours: Number(form.get("duration")) }
-                  : {}),
-              };
-              const status = value(form, "status") as Run["status"],
-                startedOn = dateInZone(new Date(), state.profile.timezone);
-              try {
-                await execute({
-                  type: "save-game",
-                  game,
-                  run: {
-                    id: runId,
-                    gameId: id,
-                    label: "Primera partida",
-                    platform: chosen[0] ?? "",
-                    status,
-                    completion: "sin especificar",
-                    startedOn,
-                    ...(status === "completado"
-                      ? { completedOn: startedOn }
-                      : {}),
-                    whereLeft: "",
-                  },
-                });
-                onClose();
-                onAdded?.(id);
-              } catch (e) {
-                setError(
-                  e instanceof Error ? e.message : "No se ha podido guardar.",
-                );
-              } finally {
-                setSaving(false);
+              {platforms.includes(p) && <Check size={13} />} {p}
+            </button>
+          ))}
+        </div>
+        <div className="add-other">
+          <label className="sr-only" htmlFor="add-other-platform">
+            Otra plataforma
+          </label>
+          <input
+            id="add-other-platform"
+            value={other}
+            maxLength={60}
+            placeholder="Otra plataforma…"
+            onChange={(e) => setOther(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addOther();
               }
             }}
-          >
-            <label>
-              Título
-              <input
-                name="title"
-                defaultValue={selected?.title}
-                maxLength={160}
-                required
-              />
-            </label>
-            {selected && selected.platforms.length > 0 && (
-              <fieldset className="platform-suggestions">
-                <legend>¿En qué plataformas lo juegas?</legend>
-                <div>
-                  {platformChoices(selected.platforms).map((p) => (
-                    <button
-                      type="button"
-                      key={p}
-                      aria-pressed={list(platforms).includes(p)}
-                      onClick={() => togglePlatform(p)}
-                    >
-                      {list(platforms).includes(p) && <Check size={13} />} {p}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-            )}
-            <div className="form-grid">
-              <label>
-                Plataformas{" "}
-                <small>Separadas por comas; puedes editar la selección</small>
-                <input
-                  name="platforms"
-                  value={platforms}
-                  onChange={(e) => setPlatforms(e.target.value)}
-                  placeholder="PC, Switch"
-                  maxLength={200}
-                  required
-                />
-              </label>
-              <label>
-                Tiendas <small>Opcional</small>
-                <input
-                  name="stores"
-                  placeholder="Steam, Nintendo eShop"
-                  maxLength={200}
-                />
-              </label>
-            </div>
-            <label>
-              Géneros <small>Separados por comas</small>
-              <input
-                name="genres"
-                defaultValue={selected?.genres.join(", ")}
-                placeholder="Aventura, RPG"
-                maxLength={300}
-              />
-            </label>
-            <div className="form-grid">
-              <label>
-                Estado inicial
-                <select name="status">
-                  <StatusOptions />
-                </select>
-              </label>
-              <label>
-                Duración aproximada (h){" "}
-                <small>Opcional, referencia del juego</small>
-                <input
-                  name="duration"
-                  type="number"
-                  min={0}
-                  max={10000}
-                  step={0.5}
-                />
-              </label>
-            </div>
-            <label className="checkbox-label">
-              <input type="checkbox" name="wishlist" /> Lista de deseos (aún no
-              lo tengo)
-            </label>
-            <p className="muted text-xs" role="status">
-              {timeLoading ? "Consultando tiempos de IGDB…" : timeNotice}
-            </p>
-            <Button disabled={saving || timeLoading} className="w-full mt-3">
-              <Plus size={16} /> Añadir a mi biblioteca
-            </Button>
-          </form>
-        </>
-      )}
+          />
+          <Button type="button" variant="ghost" size="sm" onClick={addOther}>
+            <Plus size={14} /> Añadir
+          </Button>
+        </div>
+      </fieldset>
+
+      <fieldset className="add-question">
+        <legend>¿Cómo lo llevas?</legend>
+        <div
+          className="progress-choices"
+          role="radiogroup"
+          aria-label="¿Cómo lo llevas?"
+        >
+          {progress.map((p) => (
+            <button
+              type="button"
+              key={p.id}
+              role="radio"
+              aria-checked={status === p.id}
+              className={"progress-" + p.id.replace(" ", "-")}
+              onClick={() => setStatus(p.id)}
+            >
+              <strong>{p.label}</strong>
+              <small>{p.hint}</small>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <details className="add-more">
+        <summary>Más detalles (opcional)</summary>
+        {game && (
+          <label>
+            Título
+            <input
+              name="title"
+              value={title}
+              maxLength={160}
+              required
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </label>
+        )}
+        <div className="form-grid">
+          <label>
+            Tiendas
+            <input
+              name="stores"
+              placeholder="Steam, Nintendo eShop"
+              maxLength={200}
+            />
+          </label>
+          <label>
+            Duración aproximada (h)
+            <input
+              name="duration"
+              type="number"
+              min={0}
+              max={10000}
+              step={0.5}
+            />
+          </label>
+        </div>
+        <label>
+          Géneros <small>Separados por comas</small>
+          <input
+            name="genres"
+            defaultValue={game?.genres.join(", ")}
+            placeholder="Aventura, RPG"
+            maxLength={300}
+          />
+        </label>
+        {game && (
+          <p className="muted text-xs" role="status">
+            {timesQuery.loading
+              ? "Consultando la duración en IGDB…"
+              : times && Object.keys(times).length
+                ? "La duración de IGDB se guardará con el juego."
+                : ""}
+          </p>
+        )}
+      </details>
+
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
-    </div>
+      <Button disabled={saving} className="w-full mt-2">
+        <Plus size={16} /> Añadir a mi biblioteca
+      </Button>
+    </form>
   );
 }

@@ -35,9 +35,11 @@ const fold = (s: string) =>
 export function TimezoneField({
   name,
   defaultValue,
+  onChange,
 }: {
   name: string;
   defaultValue: string;
+  onChange?: (zone: string) => void;
 }) {
   const id = useId();
   const zones = useMemo(() => allZones(), []);
@@ -52,6 +54,7 @@ export function TimezoneField({
   const choose = (zone: string) => {
     setValue(zone);
     setQuery(undefined);
+    onChange?.(zone);
   };
   return (
     <div className="timezone-field">

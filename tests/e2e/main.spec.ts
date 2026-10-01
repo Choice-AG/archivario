@@ -61,6 +61,14 @@ async function setRating(page: Page, label: string, value: number) {
   for (let n = 1; n < value; n += 0.5) await stars.press("ArrowRight");
   await expect(stars).toHaveAttribute("aria-valuenow", String(value));
 }
+// Marca una plataforma en «¿En qué lo juegas?» (sin desmarcarla si ya lo está).
+async function pickPlatform(page: Page, name: string) {
+  const chip = page
+    .getByRole("dialog")
+    .getByRole("button", { name, exact: true });
+  if ((await chip.getAttribute("aria-pressed")) !== "true") await chip.click();
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+}
 function demoData(page: Page) {
   return page.evaluate(() =>
     JSON.parse(localStorage.getItem("archivario-demo-v1") ?? "{}"),
@@ -118,10 +126,13 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
   await page.getByRole("button", { name: "Añadir juego", exact: true }).click();
-  await page.getByRole("button", { name: "Añadir manualmente" }).click();
+  await page.getByRole("button", { name: "Añádelo a mano" }).click();
   await page.getByLabel("Título", { exact: true }).fill("Aventura de prueba");
-  await page.getByLabel("Plataformas", { exact: false }).fill("PC, Switch");
+  await pickPlatform(page, "PC");
+  await pickPlatform(page, "Switch");
   await page.getByRole("button", { name: "Añadir a mi biblioteca" }).click();
+  await expect(page.getByText("ya está en tu biblioteca")).toBeVisible();
+  await page.getByRole("button", { name: "Listo", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Abrir Aventura de prueba" }),
   ).toBeVisible();
@@ -324,6 +335,11 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
   await card.getByText("Retomar partida", { exact: true }).click();
   await expect(card.getByText(/Explorando Ciudad/)).toBeVisible();
   await chooseStatus(page, page, "Hollow Knight", "completado");
+  // Completar un juego lo celebra e invita a la reseña.
+  await expect(
+    page.getByRole("heading", { name: "¡Has completado Hollow Knight!" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Ahora no" }).click();
   await expect(statusButton(page, "Hollow Knight")).toHaveAttribute(
     "data-status",
     "completado",
@@ -546,10 +562,10 @@ test("saga: consultar un juego sin tenerlo y añadirlo desde su ficha", async ({
   await page
     .getByRole("button", { name: "Añadir a mi biblioteca", exact: true })
     .click();
-  await expect(page.getByLabel("Título", { exact: true })).toHaveValue(
-    "Kingdom Hearts",
-  );
-  await page.getByLabel("Plataformas", { exact: false }).fill("PlayStation 2");
+  await expect(page.locator(".add-chosen")).toContainText("Kingdom Hearts");
+  await page.getByLabel("Otra plataforma").fill("PlayStation 2");
+  await page.getByLabel("Otra plataforma").press("Enter");
+  await pickPlatform(page, "PlayStation 2");
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Añadir a mi biblioteca", exact: true })
@@ -958,6 +974,7 @@ test("el perfil muestra tu resumen, tu escaparate y tu año", async ({
     page.getByRole("heading", { name: "Ajustes", level: 1 }),
   ).toBeFocused();
   await page.getByRole("radio", { name: "Verde" }).click();
+  await page.getByRole("button", { name: "Guardar perfil" }).click();
   await expect
     .poll(async () => (await demoData(page)).profile.avatarColor)
     .toBe("verde");
@@ -1187,4 +1204,138 @@ test("el calendario muestra portadas y el aviso no tapa el buscador", async ({
   await expect(toast).toBeVisible();
   const box = (await toast.boundingBox())!;
   expect(box.y).toBeGreaterThan((page.viewportSize()?.height ?? 900) / 2);
+});
+
+test("completar un juego lo celebra y lleva a la reseña", async ({ page }) => {
+  await page.goto("/juegos/disco?demo=1");
+  await page
+    .getByRole("button", { name: /^Estado de la partida principal/ })
+    .click();
+  await page.getByRole("menuitemradio", { name: "Completado" }).click();
+  await expect(
+    page.getByRole("heading", { name: "¡Has completado Disco Elysium!" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Escribir la reseña" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).toHaveURL(/#resena$/);
+  await expect(
+    page.getByRole("heading", { name: "Mi reseña", exact: true }),
+  ).toBeVisible();
+});
+
+test("los ajustes se dividen en secciones con índice", async ({ page }) => {
+  await page.goto("/perfil/ajustes?demo=1");
+  const index = page.getByRole("navigation", {
+    name: "Secciones de los ajustes",
+  });
+  for (const name of [
+    "Perfil",
+    "Apariencia",
+    "Copia de seguridad",
+    "Importar juegos",
+    "Cuenta",
+  ])
+    await expect(page.getByRole("region", { name, exact: true })).toBeVisible();
+  await index.getByRole("link", { name: "Cuenta" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Cuenta", exact: true }),
+  ).toBeInViewport();
+});
+
+test("añadir un juego a mano: dos preguntas y añadir otro", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page.getByRole("button", { name: "Añadir juego", exact: true }).click();
+  await page.getByLabel("Buscar un juego").fill("Tunic");
+  await page.getByRole("button", { name: "Añádelo a mano" }).click();
+  // El título se toma de lo que habías escrito en la búsqueda.
+  await expect(page.getByLabel("Título", { exact: true })).toHaveValue("Tunic");
+  await page.getByLabel("Otra plataforma").fill("Steam Deck");
+  await page.getByLabel("Otra plataforma").press("Enter");
+  await expect(
+    page.getByRole("button", { name: "Steam Deck", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("radio", { name: /^Lo quiero/ }).click();
+  await page.getByRole("button", { name: "Añadir a mi biblioteca" }).click();
+  await expect(page.getByText("ya está en tu biblioteca")).toBeVisible();
+  const tunic = (await demoData(page)).games.find(
+    (g: { title: string }) => g.title === "Tunic",
+  );
+  expect(tunic).toMatchObject({ wishlist: true });
+  expect(tunic.platforms).toContain("Steam Deck");
+  await page.getByRole("button", { name: "Añadir otro juego" }).click();
+  await expect(page.getByLabel("Buscar un juego")).toBeVisible();
+  await page.getByRole("button", { name: "Añádelo a mano" }).click();
+  await page.getByLabel("Título", { exact: true }).fill("Sin plataforma");
+  for (const chip of await page
+    .getByRole("dialog")
+    .locator(".choice-chips button[aria-pressed=true]")
+    .all())
+    await chip.click();
+  await page.getByRole("button", { name: "Añadir a mi biblioteca" }).click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Elige al menos una plataforma.",
+  );
+});
+
+test("la celebración deja valorar, cambiar la fecha y deshacer", async ({
+  page,
+}) => {
+  await page.goto("/juegos/disco?demo=1");
+  await page
+    .getByRole("button", { name: /^Estado de la partida principal/ })
+    .click();
+  await page.getByRole("menuitemradio", { name: "Completado" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("Lo empezaste");
+  const stars = dialog.getByRole("slider", { name: "Tu valoración" });
+  await stars.focus();
+  await stars.press("End");
+  await expect
+    .poll(
+      async () =>
+        (await demoData(page)).games?.find(
+          (g: { id: string }) => g.id === "disco",
+        )?.rating,
+    )
+    .toBe(10);
+  await dialog
+    .getByRole("button", { name: "No, aún no lo he terminado" })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await expect(
+    page.getByRole("button", {
+      name: /^Estado de la partida principal: Pendiente/,
+    }),
+  ).toBeVisible();
+  // «No volver a mostrar» la desactiva para las siguientes.
+  await page
+    .getByRole("button", { name: /^Estado de la partida principal/ })
+    .click();
+  await page.getByRole("menuitemradio", { name: "Completado" }).click();
+  await page.getByLabel("No volver a mostrar esta celebración").check();
+  await page.getByRole("button", { name: "Ahora no" }).click();
+  await expect
+    .poll(async () => (await demoData(page)).profile.celebrate)
+    .toBe(false);
+});
+
+test("los ajustes avisan de cambios sin guardar y muestran el aviso en su sección", async ({
+  page,
+}) => {
+  await page.goto("/perfil/ajustes?demo=1");
+  const perfil = page.getByRole("region", { name: "Perfil", exact: true });
+  await expect(
+    perfil.getByRole("button", { name: "Guardar perfil" }),
+  ).toBeDisabled();
+  await perfil.getByLabel("Nombre").fill("Sam");
+  await perfil.getByRole("radio", { name: "Azul" }).click();
+  await expect(perfil.getByText("Tienes cambios sin guardar.")).toBeVisible();
+  await perfil.getByRole("button", { name: "Guardar perfil" }).click();
+  await expect(perfil.getByText("Perfil guardado.")).toBeVisible();
+  await expect
+    .poll(async () => (await demoData(page)).profile)
+    .toMatchObject({ name: "Sam", avatarColor: "azul" });
+  await expect(perfil.getByText("Tienes cambios sin guardar.")).toHaveCount(0);
 });
