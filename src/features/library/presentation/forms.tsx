@@ -19,7 +19,8 @@ import {
 import { Avatar, type ApiRequest, type Execute } from "./shared";
 import { avatarColors, type AvatarColor } from "../domain/profile";
 
-import { list, RatingOptions, value } from "./form-utils";
+import { list, value } from "./form-utils";
+import { RatingInput } from "./rating-input";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
 import { markdownHint } from "./markdown";
@@ -137,12 +138,14 @@ export function GameDetails({
             <input name="genres" defaultValue={game.genres.join(", ")} />
           </label>
           <div className="form-grid">
-            <label>
-              Tu valoración
-              <select name="rating" defaultValue={game.rating ?? ""}>
-                <RatingOptions />
-              </select>
-            </label>
+            <div className="rating-field">
+              <span className="rating-label">Tu valoración</span>
+              <RatingInput
+                name="rating"
+                label="Tu valoración"
+                defaultValue={game.rating}
+              />
+            </div>
             <label>
               Duración aproximada (h)
               <input
@@ -488,12 +491,14 @@ function RunForm({
           placeholder="El siguiente paso, una misión, algo por explorar…"
         />
       </label>
-      <label>
-        Valoración de esta partida
-        <select name="runRating" defaultValue={run?.rating ?? ""}>
-          <RatingOptions />
-        </select>
-      </label>
+      <div className="rating-field">
+        <span className="rating-label">Valoración de esta partida</span>
+        <RatingInput
+          name="runRating"
+          label="Valoración de esta partida"
+          defaultValue={run?.rating}
+        />
+      </div>
       <label>
         Reseña de esta partida
         <textarea
