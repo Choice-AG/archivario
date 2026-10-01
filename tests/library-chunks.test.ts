@@ -139,3 +139,19 @@ it("lee la revisión con un solo documento en ambos formatos", async () => {
   expect(await repo.revision("alice")).toBe(8);
   expect(await repo.revision("nadie")).toBe(0);
 });
+
+it("anota la fecha de migración solo al convertir un documento antiguo", async () => {
+  const legacy = demoLibrary();
+  f.store.set("users/alice/private/library", structuredClone(legacy));
+  const next = await save(legacy, (s) => ({ ...s, revision: s.revision + 1 }));
+  const migratedAt = f.store.get("users/alice/private/library-v2")?.migratedAt;
+  expect(typeof migratedAt).toBe("string");
+  await save(next, (s) => ({ ...s, revision: s.revision + 1 }));
+  expect(f.store.get("users/alice/private/library-v2")?.migratedAt).toBe(
+    migratedAt,
+  );
+  await repo.transact("bob", 0, (s) => ({ ...s, revision: 1 }));
+  expect(
+    f.store.get("users/bob/private/library-v2")?.migratedAt,
+  ).toBeUndefined();
+});

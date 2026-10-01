@@ -91,6 +91,8 @@ Agregado transaccional privado por usuario, guardado en bloques de hasta 400 KB 
 
 Las bibliotecas del formato anterior (`users/{uid}/private/library`) se migran solas en la primera escritura; el documento antiguo se conserva intacto como copia de seguridad.
 
+Cuando hayan pasado unas semanas, `npm run cleanup:legacy` revisa esas copias antiguas y muestra cuáles se pueden borrar: solo simula salvo que se añada `--apply`. Únicamente borra la copia si la biblioteca nueva está completa, tiene una revisión igual o posterior y se migró hace más de 30 días (`--days` para cambiarlo). Las migradas antes de que se guardara la fecha necesitan `--undated-as AAAA-MM-DD`. Requiere `GOOGLE_APPLICATION_CREDENTIALS` y `FIREBASE_PROJECT_ID`.
+
 La importación omite juegos duplicados completos o reemplaza la biblioteca explícitamente. Los antiguos campos de versión de avatar se aceptan por compatibilidad con exportaciones v1, pero no se accede a Storage.
 
 Al borrar una cuenta se conserva únicamente un marcador técnico basado en un hash de su UID para impedir recreación por solicitudes en curso. Los datos personales y la cuenta Authentication se eliminan. Los antiguos objetos Storage, si se hubieran creado fuera de esta configuración gratuita, requieren limpieza independiente.
