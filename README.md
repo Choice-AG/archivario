@@ -56,6 +56,13 @@ Las consultas al catálogo (búsqueda, ficha, tiempos, saga) requieren login. Lo
 
 La TTL de Firestore requiere facturación, así que en Spark el servidor borra de vez en cuando (en ~5 % de las consultas a IGDB) hasta 20 documentos de caché caducados. `firestore.indexes.json` excluye de índices los arrays grandes de la biblioteca y el contenido de la caché; publícalo con `firebase deploy --only firestore:indexes`.
 
+## Importar juegos
+
+Ajustes → Importar juegos admite dos orígenes. Los juegos que ya tienes (mismo título) no se duplican y entran como pendientes.
+
+- **CSV:** la primera fila lleva los nombres de columna. Solo el título es obligatorio; también se reconocen plataforma, tienda, estado, nota y horas, en español o inglés, separados por coma o punto y coma.
+- **Steam:** requiere `STEAM_API_KEY` en el servidor (clave gratuita en steamcommunity.com/dev/apikey) y que el perfil y la lista de juegos sean públicos. Se acepta la URL del perfil, el nombre personalizado o el SteamID64.
+
 ## Funcionalidad
 
 Biblioteca multiplataforma; estados; favoritos y próximos tres; filtros; valoración 1–10 en pasos de 0,5; reseñas y spoilers privados; partidas y rejugadas con una principal; calendario de juego por fecha local; registro idempotente por juego/día; notas y resumen mensual.

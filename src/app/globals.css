@@ -4561,3 +4561,27 @@ select:focus {
   display: block;
   color: var(--muted);
 }
+
+/* Importar desde Steam o CSV */
+.import-games .segmented {
+  margin-top: 10px;
+}
+.steam-form {
+  margin-top: 14px;
+}
+.import-sample {
+  margin: 10px 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.import-sample li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--c-ffffff0d);
+}
+.import-sample small {
+  color: var(--muted);
+}
