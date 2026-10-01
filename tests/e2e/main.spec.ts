@@ -373,14 +373,14 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
   await expect(
-    card.getByText("Historia principal: 12,5 h", { exact: true }),
+    card.getByTitle("Historia principal").getByText("12,5 h", { exact: true }),
   ).toBeVisible();
   await openFilters(page);
   await page
     .getByLabel("Tipo de duración", { exact: true })
     .selectOption("extras");
   await expect(
-    card.getByText("Historia + extras: 25 h", { exact: true }),
+    card.getByTitle("Historia + extras").getByText("25 h", { exact: true }),
   ).toBeVisible();
   await page
     .getByLabel("Buscar en mi biblioteca", { exact: true })
@@ -1084,7 +1084,9 @@ test("en el resumen se edita dónde lo dejaste", async ({ page }) => {
   await page.getByRole("button", { name: "Editar dónde lo dejé" }).click();
   await page.getByLabel("Dónde lo dejé").fill("Frente a la puerta del Rey");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page.getByText("Frente a la puerta del Rey")).toBeVisible();
+  await expect(
+    page.locator(".game-summary").getByText("Frente a la puerta del Rey"),
+  ).toBeVisible();
   await expect
     .poll(async () =>
       (await demoData(page)).runs
@@ -1395,4 +1397,52 @@ test("una saga guardada se pausa, se abandona y se quita", async ({ page }) => {
   await expect
     .poll(async () => (await demoData(page)).sagas ?? [])
     .toHaveLength(0);
+});
+
+test("el menú lateral muestra un carrusel con lo que estás jugando", async ({
+  page,
+}) => {
+  test.skip((page.viewportSize()?.width ?? 1440) <= 640, "Solo en escritorio");
+  await openDemo(page);
+  const side = page.getByRole("region", { name: "Ahora jugando" }).filter({
+    has: page.locator(".side-playing-head"),
+  });
+  await expect(side.getByRole("group")).toHaveCount(1);
+  await expect(side.getByRole("group")).toHaveAccessibleName(/^1 de \d+: /);
+  await side.getByRole("button", { name: "Pausar el carrusel" }).click();
+  await expect(
+    side.getByRole("button", { name: "Reanudar el carrusel" }),
+  ).toBeVisible();
+  await side.getByRole("button", { name: "Ver Hades" }).click();
+  await expect(side.getByRole("group")).toHaveAccessibleName(/: Hades$/);
+  await side.getByRole("button", { name: "He jugado hoy: Hades" }).click();
+  await expect(
+    side.getByRole("button", { name: "Registrado hoy: Hades" }),
+  ).toBeDisabled();
+  await side.getByRole("button", { name: "Abrir la ficha de Hades" }).click();
+  await expect(page).toHaveURL(/\/juegos\/hades/);
+});
+
+test("la ficha de un juego del catálogo también va por pestañas", async ({
+  page,
+}) => {
+  await page.goto("/juegos/igdb-1219?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Kingdom Hearts", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Resumen" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Sobre el juego", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Saga" }).click();
+  await expect(page).toHaveURL(/#saga$/);
+  await expect(
+    page.getByRole("heading", { name: "Otros juegos de la saga" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Sobre el juego", exact: true }),
+  ).toHaveCount(0);
 });

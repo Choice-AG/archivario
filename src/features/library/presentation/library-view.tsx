@@ -41,7 +41,8 @@ import {
 import type { Execute } from "./shared";
 import { statusLabel } from "./format";
 
-const PAGE = 12;
+// Tres filas de ocho portadas.
+const PAGE = 24;
 const LAYOUT_KEY = "archivario-library-layout";
 type Layout = "grid" | "list";
 // Preferencia de este navegador; sin almacenamiento se usan las portadas.
