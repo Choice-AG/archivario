@@ -394,6 +394,28 @@ function Dashboard({
                 state={state}
                 request={api.request}
                 execute={safeExecute}
+                onCritic={(critic) => {
+                  if (
+                    ownedGame.catalogId &&
+                    (ownedGame.critic?.score !== critic.score ||
+                      ownedGame.critic?.count !== critic.count)
+                  )
+                    api
+                      .execute(
+                        {
+                          type: "link-catalog",
+                          items: [
+                            {
+                              gameId: ownedGame.id,
+                              catalogId: ownedGame.catalogId,
+                              critic,
+                            },
+                          ],
+                        },
+                        { silent: true },
+                      )
+                      .catch(() => {});
+                }}
                 demo={!user}
                 today={today}
                 onBack={backToLibrary}

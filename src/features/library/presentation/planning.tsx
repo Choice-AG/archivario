@@ -314,6 +314,7 @@ function Picker({
     [genre, setGenre] = useState(""),
     [duration, setDuration] = useState(""),
     [mode, setMode] = useState<TimeMode>("main"),
+    [acclaimed, setAcclaimed] = useState(false),
     [chosen, setChosen] = useState("");
   const games = playableGames(
       state,
@@ -321,6 +322,7 @@ function Picker({
       genre,
       duration ? Number(duration) : undefined,
       mode,
+      acclaimed ? 75 : undefined,
     ),
     game = games.find((g) => g.id === chosen);
   function choose() {
@@ -401,6 +403,17 @@ function Picker({
           <option value="30">Hasta 30 horas</option>
           <option value="60">Hasta 60 horas</option>
         </select>
+      </label>
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={acclaimed}
+          onChange={(e) => {
+            setAcclaimed(e.target.checked);
+            setChosen("");
+          }}
+        />{" "}
+        Solo los bien valorados por la crítica (75 o más)
       </label>
       <p role="status">{games.length} juegos compatibles</p>
       {duration && (
@@ -521,6 +534,14 @@ function Compare({
                 [
                   "Géneros",
                   ...games.map((g) => g.genres.join(", ") || "Sin especificar"),
+                ],
+                [
+                  "Crítica (IGDB)",
+                  ...games.map((g) =>
+                    g.critic
+                      ? g.critic.score + "/100 · " + g.critic.count + " reseñas"
+                      : "Sin datos",
+                  ),
                 ],
                 ...(["main", "extras", "complete"] as const).map((mode) => [
                   timeLabels[mode],

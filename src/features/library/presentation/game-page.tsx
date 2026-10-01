@@ -1,6 +1,6 @@
 "use client";
 import { DateText, StatusOptions, statusLabel } from "./format";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Heart, Pencil, Plus, Star } from "lucide-react";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { GameDetails } from "./forms";
 import { GameSeries } from "./game-series";
 import { CatalogDetails } from "./catalog-details";
 import { LinkCatalog } from "./link-catalog";
-import { useCatalogTimes } from "./use-api";
+import { useCatalogDetails, useCatalogTimes } from "./use-api";
+import { CriticScore } from "./critic-score";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
 import { type Game, type Library, type Run } from "../domain/model";
 export function GamePage({
@@ -21,6 +22,7 @@ export function GamePage({
   today,
   onBack,
   onActivity,
+  onCritic,
   onGame,
 }: {
   onGame: (id: string) => void;
@@ -32,6 +34,7 @@ export function GamePage({
   today: string;
   onBack: () => void;
   onActivity: () => void;
+  onCritic?: (critic: { score: number; count: number }) => void;
 }) {
   const [editor, setEditor] = useState<string>(),
     [busy, setBusy] = useState(false),
@@ -43,6 +46,14 @@ export function GamePage({
       .filter((a) => a.gameId === game.id)
       .sort((a, b) => b.date.localeCompare(a.date));
   const timesQuery = useCatalogTimes(request, game.catalogId, !demo);
+  const details = useCatalogDetails(request, game.catalogId, !demo);
+  const critic = details.data?.critic ?? game.critic;
+  // Guarda la nota más reciente de IGDB para usarla en tarjetas y orden.
+  const latest = details.data?.critic;
+  useEffect(() => {
+    if (latest) onCritic?.(latest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latest?.score, latest?.count]);
   const remoteTimes = timesQuery.data,
     loading = timesQuery.loading,
     timeError = timesQuery.error;
@@ -87,6 +98,7 @@ export function GamePage({
                 : "Sin valorar"}
             </strong>
             <span>Tu valoración</span>
+            <CriticScore critic={critic} />
           </div>
           <div className="game-hero-actions">
             <Button onClick={onActivity}>

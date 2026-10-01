@@ -4793,3 +4793,54 @@ select:focus {
   color: var(--muted);
   font-size: 13px;
 }
+
+/* Nota de la crítica (IGDB) */
+.critic-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--on-accent);
+}
+.critic-good {
+  background: #2f8a5b;
+}
+.critic-mixed {
+  background: #a3741c;
+}
+.critic-bad {
+  background: #b23b3b;
+}
+.critic-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 14px;
+}
+.critic-score span:last-child {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.critic-score strong {
+  font-size: 13px;
+}
+.critic-score small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.card-critic {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+.card-critic .critic-badge {
+  height: 24px;
+  min-width: 30px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px #0006;
+}

@@ -75,6 +75,7 @@ export function LinkCatalog({
                       game: {
                         ...game,
                         catalogId: item.catalogId,
+                        ...(item.critic ? { critic: item.critic } : {}),
                         ...(!game.cover && item.cover
                           ? { cover: item.cover }
                           : {}),

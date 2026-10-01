@@ -33,9 +33,16 @@ export const timesSchema = z
     complete: timeEstimate.optional(),
   })
   .strict();
+export const criticSchema = z
+  .object({
+    score: z.number().int().min(0).max(100),
+    count: z.number().int().min(1).max(100000),
+  })
+  .strict();
 export const gameSchema = z
   .object({
     times: timesSchema.optional(),
+    critic: criticSchema.optional(),
     id,
     title: text(160).min(1),
     catalogId: z.number().int().positive().optional(),
@@ -245,6 +252,7 @@ export const commandSchema = z.discriminatedUnion("type", [
               catalogId: z.number().int().positive(),
               cover: gameSchema.shape.cover,
               genres: z.array(text(60)).max(12).optional(),
+              critic: criticSchema.optional(),
             })
             .strict(),
         )

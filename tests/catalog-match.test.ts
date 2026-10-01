@@ -62,3 +62,26 @@ it("vincula en bloque sin pisar portada ni géneros existentes", () => {
     ),
   ).toThrow();
 });
+
+it("refrescar la nota de la crítica no mueve el juego en «última actividad»", () => {
+  let state = demoLibrary();
+  const game = state.games[0];
+  state = applyCommand(
+    state,
+    { type: "link-catalog", items: [{ gameId: game.id, catalogId: 4242 }] },
+    "2026-10-02T12:00:00.000Z",
+  );
+  const linkedAt = state.games[0].updatedAt;
+  state = applyCommand(
+    state,
+    {
+      type: "link-catalog",
+      items: [
+        { gameId: game.id, catalogId: 4242, critic: { score: 91, count: 40 } },
+      ],
+    },
+    "2026-10-09T12:00:00.000Z",
+  );
+  expect(state.games[0].critic).toEqual({ score: 91, count: 40 });
+  expect(state.games[0].updatedAt).toBe(linkedAt);
+});

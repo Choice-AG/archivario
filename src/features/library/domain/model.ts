@@ -16,6 +16,8 @@ export type GameTimes = {
 };
 export type Game = {
   times?: GameTimes;
+  // Nota de la crítica profesional de IGDB (0-100) y número de reseñas.
+  critic?: { score: number; count: number };
   id: string;
   title: string;
   catalogId?: number;
@@ -127,6 +129,7 @@ export type Command =
         catalogId: number;
         cover?: string;
         genres?: string[];
+        critic?: { score: number; count: number };
       }[];
     }
   | { type: "save-run"; run: Run; primary: boolean }
@@ -403,11 +406,19 @@ export function applyCommand(
       for (const item of command.items) {
         const game = s.games.find((g) => g.id === item.gameId);
         if (!game) throw new DomainError("Juego no encontrado.");
+        // Solo cuenta como actividad del juego si cambia la vinculación, la
+        // portada o los géneros; refrescar la nota de la crítica no lo mueve.
+        const linked =
+          game.catalogId !== item.catalogId ||
+          (!game.cover && !!item.cover) ||
+          (!game.genres.length && !!item.genres?.length);
         game.catalogId = item.catalogId;
         if (!game.cover && item.cover) game.cover = item.cover;
         if (!game.genres.length && item.genres?.length)
           game.genres = item.genres.slice(0, 12);
-        touch(game.id);
+        // La nota de la crítica siempre se actualiza con la última de IGDB.
+        if (item.critic) game.critic = item.critic;
+        if (linked) touch(game.id);
       }
       break;
     case "delete-game":

@@ -5,6 +5,7 @@ export type CatalogOption = {
   cover?: string;
   genres: string[];
   platforms: string[];
+  critic?: { score: number; count: number };
 };
 
 export const normalizeTitle = (s: string) =>

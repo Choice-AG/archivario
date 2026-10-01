@@ -15,6 +15,7 @@ export type LibraryFilters = {
   ownership: string;
   ratingFilter: string;
   sort: GameSort;
+  showCritic: boolean;
 };
 export const defaultFilters: LibraryFilters = {
   status: "Todos",
@@ -27,6 +28,7 @@ export const defaultFilters: LibraryFilters = {
   ownership: "owned",
   ratingFilter: "all",
   sort: "recent",
+  showCritic: true,
 };
 
 export function viewDefaults(view: string): LibraryFilters {

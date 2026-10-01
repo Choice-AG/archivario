@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import type { Game, Run } from "../domain/model";
 import { formatHours, timeLabels, type TimeMode } from "../domain/daily";
 import { Cover } from "./shared";
+import { CriticScore } from "./critic-score";
 
 export function GameCard({
   game: g,
   run,
   hours,
   timeMode,
+  showCritic,
   playedToday,
   busy,
   selecting,
@@ -25,6 +27,7 @@ export function GameCard({
   run: Run;
   hours: number | undefined;
   timeMode: TimeMode;
+  showCritic: boolean;
   playedToday: boolean;
   busy: boolean;
   selecting: boolean;
@@ -70,6 +73,11 @@ export function GameCard({
           <span className="rating">
             {g.rating.toLocaleString("es")}
             <small>/10</small>
+          </span>
+        )}
+        {showCritic && g.critic && (
+          <span className="card-critic">
+            <CriticScore critic={g.critic} compact />
           </span>
         )}
         {g.next && (

@@ -10,6 +10,7 @@ import { formatHours, timeLabels } from "../domain/daily";
 import type { Library } from "../domain/model";
 import type { CatalogGame } from "./use-catalog-search";
 import { useSagaGuides } from "./saga-guides";
+import { CriticScore } from "./critic-score";
 import { useCatalogDetails, useCatalogTimes } from "./use-api";
 type Details = CatalogGame & {
   summary: string;
@@ -54,6 +55,7 @@ export function CatalogGamePage({
         genres: data.genres,
         platforms: data.platforms,
         ...(data.cover ? { cover: data.cover } : {}),
+        ...(data.critic ? { critic: data.critic } : {}),
       }
     : entry
       ? {
@@ -103,6 +105,7 @@ export function CatalogGamePage({
               <p className="muted">
                 {(data?.releaseDate ?? entry?.releaseDate)?.slice(0, 4)}
               </p>
+              <CriticScore critic={data?.critic} />
               <div className="game-hero-actions">
                 {owned ? (
                   <Button onClick={() => onGame(owned.id)}>

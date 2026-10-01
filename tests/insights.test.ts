@@ -123,3 +123,16 @@ it("reparte el año por plataforma y género, y marca el mes más activo", () =>
   expect(s.last?.date).toBe("2026-07-01");
   expect(annualSummary(emptyLibrary(), "2026").busiestMonth).toBeUndefined();
 });
+it("ordena por la nota de la crítica, con los que no tienen nota al final", () => {
+  const state = emptyLibrary();
+  state.games = [
+    game("sin"),
+    game("media", { critic: { score: 70, count: 5 } }),
+    game("alta", { critic: { score: 92, count: 50 } }),
+  ];
+  expect(sortGames(state.games, state, "critic").map((g) => g.id)).toEqual([
+    "alta",
+    "media",
+    "sin",
+  ]);
+});

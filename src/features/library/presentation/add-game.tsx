@@ -261,6 +261,7 @@ export function AddGame({
                   ? {
                       catalogId: selected.catalogId,
                       ...(selected.cover ? { cover: selected.cover } : {}),
+                      ...(selected.critic ? { critic: selected.critic } : {}),
                     }
                   : {}),
                 ...(value(form, "duration")
