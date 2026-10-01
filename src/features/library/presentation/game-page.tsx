@@ -1,6 +1,6 @@
 "use client";
 import { DateText, StatusOptions, statusLabel } from "./format";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Heart, Pencil, Plus, Star } from "lucide-react";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,9 @@ import { GameDetails } from "./forms";
 import { GameSeries } from "./game-series";
 import { CatalogDetails } from "./catalog-details";
 import { LinkCatalog } from "./link-catalog";
+import { useCatalogTimes } from "./use-api";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
-import {
-  type Game,
-  type GameTimes,
-  type Library,
-  type Run,
-} from "../domain/model";
+import { type Game, type Library, type Run } from "../domain/model";
 export function GamePage({
   game,
   state,
@@ -38,10 +34,6 @@ export function GamePage({
   onActivity: () => void;
 }) {
   const [editor, setEditor] = useState<string>(),
-    [remoteTimes, setRemoteTimes] = useState<GameTimes>(),
-    [loading, setLoading] = useState(false),
-    [timeError, setTimeError] = useState(""),
-    [retry, setRetry] = useState(0),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const linked = !!game.catalogId;
@@ -50,28 +42,10 @@ export function GamePage({
     activities = state.activities
       .filter((a) => a.gameId === game.id)
       .sort((a, b) => b.date.localeCompare(a.date));
-  useEffect(() => {
-    if (!game.catalogId || demo) return;
-    const c = new AbortController();
-    let active = true;
-    setLoading(true);
-    setTimeError("");
-    request("/api/catalog/times?id=" + game.catalogId, { signal: c.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        if (active) setRemoteTimes(data);
-      })
-      .catch((e) => {
-        if (active) setTimeError(e.message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-      c.abort();
-    };
-  }, [game.catalogId, demo, request, retry]);
+  const timesQuery = useCatalogTimes(request, game.catalogId, !demo);
+  const remoteTimes = timesQuery.data,
+    loading = timesQuery.loading,
+    timeError = timesQuery.error;
   const mutate = async (command: Parameters<Execute>[0]) => {
     setBusy(true);
     setError("");
@@ -213,10 +187,7 @@ export function GamePage({
             {timeError && (
               <p className="muted" role="status">
                 {timeError}{" "}
-                <button
-                  className="text-link"
-                  onClick={() => setRetry((n) => n + 1)}
-                >
+                <button className="text-link" onClick={timesQuery.retry}>
                   Reintentar consulta
                 </button>
               </p>

@@ -35,7 +35,9 @@ Las respuestas llevan CSP, HSTS, Permissions-Policy, nosniff y X-Frame-Options (
 
 ## Presentación
 
-`app.tsx` gestiona la navegación y los modales; la biblioteca (`library-view.tsx`, `library-filters.ts`, `game-card.tsx`), el diario y el calendario (`journal.tsx`) y el acceso (`login.tsx`) viven en módulos propios. `shared.tsx` contiene Modal, Cover y los tipos Execute/ApiRequest. Las guías de sagas se cargan bajo demanda (`saga-guides.ts`) y los detalles del catálogo se piden una sola vez por juego (`catalog-details-cache.ts`).
+Cada vista tiene su URL (`/`, `/diario`, `/calendario`, `/favoritos`, `/proximos`, `/sagas`, `/juegos/[id]`). Las páginas viven en el grupo de rutas `app/(app)`, cuyo layout monta `ArchivarioApp` una sola vez: navegar con el router de Next no vuelve a cargar la biblioteca, y la vista se deduce de la ruta (`routes.ts`). Las consultas al catálogo usan SWR (`use-api.ts`), que comparte y reutiliza las respuestas entre componentes.
+
+`app.tsx` gestiona la estructura y los modales; la biblioteca (`library-view.tsx`, `library-filters.ts`, `game-card.tsx`), el diario y el calendario (`journal.tsx`) y el acceso (`login.tsx`) viven en módulos propios. `shared.tsx` contiene Modal, Cover y los tipos Execute/ApiRequest. Las guías de sagas se cargan bajo demanda (`saga-guides.ts`).
 
 ## Evolución
 

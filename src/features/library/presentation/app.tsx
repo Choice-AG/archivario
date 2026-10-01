@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   BookOpen,
@@ -34,16 +35,9 @@ import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Modal, type Execute } from "./shared";
+import { gamePath, parsePath, sagaPath, viewPaths } from "./routes";
 
-export function ArchivarioApp({
-  initialGameId,
-  initialSagaId,
-  initialView,
-}: {
-  initialGameId?: string;
-  initialSagaId?: string;
-  initialView?: string;
-} = {}) {
+export function ArchivarioApp() {
   const [user, setUser] = useState<User | null>(null),
     [authReady, setAuthReady] = useState(!configured),
     [demo, setDemo] = useState(!configured);
@@ -64,9 +58,6 @@ export function ArchivarioApp({
   if (!user && !demo) return <Login onDemo={() => setDemo(true)} />;
   return (
     <Dashboard
-      initialSagaId={initialSagaId}
-      initialView={initialView}
-      initialGameId={initialGameId}
       key={user?.uid ?? "demo"}
       user={user}
       onLogin={() => setDemo(false)}
@@ -95,25 +86,19 @@ const mobileNav = ["Biblioteca", "Sagas", "Diario", "Calendario"];
 function Dashboard({
   user,
   onLogin,
-  initialGameId,
-  initialSagaId,
-  initialView,
 }: {
   user: User | null;
   onLogin: () => void;
-  initialGameId?: string;
-  initialSagaId?: string;
-  initialView?: string;
 }) {
-  const [gameId, setGameId] = useState(initialGameId),
-    [sagaId, setSagaId] = useState(initialSagaId),
-    [view, setView] = useState(initialView ?? "Biblioteca"),
-    [modal, setModal] = useState<ModalState>(null),
+  const pathname = usePathname(),
+    router = useRouter();
+  const { view, gameId, sagaId } = parsePath(pathname);
+  const [modal, setModal] = useState<ModalState>(null),
     [notice, setNotice] = useState("");
   // Vista desde la que se abrió una ficha del catálogo, para volver a ella.
   const [origin, setOrigin] = useState<{ view: string; sagaId?: string }>({
-    view: initialSagaId !== undefined ? "Sagas" : "Biblioteca",
-    sagaId: initialSagaId,
+    view: sagaId !== undefined ? "Sagas" : "Biblioteca",
+    sagaId,
   });
   const filterState = useLibraryFilters();
   const api = useLibrary(user),
@@ -125,65 +110,31 @@ function Dashboard({
     view === name ||
     (name === "Biblioteca" && ["Favoritos", "Próximos"].includes(view));
 
-  const openSaga = (id?: string) => {
-    window.history.pushState(
-      {},
-      "",
-      "/sagas" + (id ? "/" + encodeURIComponent(id) : "") + suffix,
-    );
-    setSagaId(id);
-    setGameId(undefined);
-    setView("Sagas");
+  const navigate = (path: string) => {
     setModal(null);
-    window.scrollTo(0, 0);
+    router.push(path + suffix);
   };
+  const openSaga = (id?: string) => navigate(sagaPath(id));
   const openGame = (id: string) => {
     if (!gameId) setOrigin({ view, sagaId });
-    window.history.pushState(
-      {},
-      "",
-      "/juegos/" + encodeURIComponent(id) + suffix,
+    navigate(gamePath(id));
+  };
+  const backToLibrary = () => navigate("/");
+  const backFromGame = () =>
+    navigate(
+      origin.view === "Sagas"
+        ? sagaPath(origin.sagaId)
+        : (viewPaths[origin.view] ?? "/"),
     );
-    setGameId(id);
-    setModal(null);
-    window.scrollTo(0, 0);
-  };
-  const backToLibrary = () => {
-    window.history.pushState({}, "", "/" + suffix);
-    setGameId(undefined);
-    setView("Biblioteca");
-    setSagaId(undefined);
-    setModal(null);
-  };
-  const backFromGame = () => {
-    if (origin.view === "Sagas") openSaga(origin.sagaId);
-    else {
-      backToLibrary();
-      setView(origin.view);
-    }
-  };
   const goTo = (name: string) => {
-    if (name === "Sagas") {
-      openSaga();
-      return;
-    }
-    if (gameId || view === "Sagas") backToLibrary();
-    setView(name);
     filterState.setPage(1);
     if (name === "Próximos") filterState.reset(viewDefaults("Próximos"));
+    navigate(viewPaths[name] ?? "/");
   };
+  // Atrás/adelante del navegador también cierra los modales abiertos.
   useEffect(() => {
-    const read = () => {
-      const match = window.location.pathname.match(/^\/juegos\/([^/]+)\/?$/);
-      setGameId(match ? decodeURIComponent(match[1]) : undefined);
-      const saga = window.location.pathname.match(/^\/sagas(?:\/([^/]+))?\/?$/);
-      setSagaId(saga?.[1] ? decodeURIComponent(saga[1]) : undefined);
-      setView(saga ? "Sagas" : "Biblioteca");
-      setModal(null);
-    };
-    window.addEventListener("popstate", read);
-    return () => window.removeEventListener("popstate", read);
-  }, []);
+    setModal(null);
+  }, [pathname]);
   useEffect(() => {
     if (gameId) document.querySelector<HTMLElement>(".game-hero h1")?.focus();
   }, [gameId]);
@@ -435,7 +386,7 @@ function Dashboard({
                   onEditActivity={(a) =>
                     setModal({ kind: "activity", activity: a })
                   }
-                  onJournal={() => setView("Diario")}
+                  onJournal={() => goTo("Diario")}
                   onView={goTo}
                 />
               ) : view === "Diario" ? (

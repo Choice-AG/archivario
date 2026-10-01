@@ -7,6 +7,7 @@ import { useCatalogSearch } from "./use-catalog-search";
 import { Modal, type ApiRequest, type Execute, Cover } from "./shared";
 import { type Library, type Status } from "../domain/model";
 import { useSagaGuides } from "./saga-guides";
+import { useSagaSearch } from "./use-api";
 export function GlobalSearch({
   state,
   request,
@@ -20,10 +21,6 @@ export function GlobalSearch({
   onGame: (id: string) => void;
   onSaga: (id: string) => void;
 }) {
-  const [remoteSagas, setRemoteSagas] = useState<
-      { id: number; name: string }[]
-    >([]),
-    [sagaError, setSagaError] = useState("");
   const [open, setOpen] = useState(false);
   const [shortcut, setShortcut] = useState("Ctrl K");
   useEffect(() => {
@@ -40,28 +37,9 @@ export function GlobalSearch({
   const guides = useSagaGuides(open) ?? [];
   const search = useCatalogSearch(request, open && !demo);
   const q = search.query.trim().toLocaleLowerCase("es");
-  useEffect(() => {
-    setRemoteSagas([]);
-    setSagaError("");
-    if (!open || demo || q.length < 2) return;
-    const c = new AbortController();
-    const timer = setTimeout(() => {
-      request("/api/catalog/sagas?q=" + encodeURIComponent(q), {
-        signal: c.signal,
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          if (!c.signal.aborted) setRemoteSagas(d.items);
-        })
-        .catch((e) => {
-          if (!c.signal.aborted) setSagaError(e.message);
-        });
-    }, 200);
-    return () => {
-      clearTimeout(timer);
-      c.abort();
-    };
-  }, [open, demo, q, request]);
+  const sagaSearch = useSagaSearch(request, q, open && !demo);
+  const remoteSagas = sagaSearch.items,
+    sagaError = sagaSearch.error;
   const games = state.games.filter((g) =>
     g.title.toLocaleLowerCase("es").includes(q),
   );

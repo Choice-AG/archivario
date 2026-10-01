@@ -1,13 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
 import type { ApiRequest } from "./shared";
-import { fetchCatalogDetails } from "./catalog-details-cache";
-type Details = {
-  summary: string;
-  releaseDate: string;
-  developers: string[];
-  videos: { name: string; url: string }[];
-};
+import { useCatalogDetails } from "./use-api";
 export function CatalogDetails({
   catalogId,
   request,
@@ -17,25 +10,7 @@ export function CatalogDetails({
   request: ApiRequest;
   demo: boolean;
 }) {
-  const [data, setData] = useState<Details>(),
-    [error, setError] = useState(""),
-    [retry, setRetry] = useState(0);
-  useEffect(() => {
-    if (!catalogId || demo) return;
-    let active = true;
-    setError("");
-    setData(undefined);
-    fetchCatalogDetails(request, catalogId)
-      .then((d) => {
-        if (active) setData(d);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [catalogId, demo, request, retry]);
+  const { data, error, retry } = useCatalogDetails(request, catalogId, !demo);
   if (!catalogId)
     return (
       <p className="info-note">
@@ -52,7 +27,7 @@ export function CatalogDetails({
     return (
       <div role="alert">
         {error}
-        <button className="text-link" onClick={() => setRetry((n) => n + 1)}>
+        <button className="text-link" onClick={retry}>
           Reintentar
         </button>
       </div>

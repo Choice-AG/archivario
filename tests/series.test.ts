@@ -8,7 +8,11 @@ import {
   fireEvent,
 } from "@testing-library/react";
 import { afterEach, it, expect, vi } from "vitest";
+import { SWRConfig } from "swr";
 import { GameSeries } from "../src/features/library/presentation/game-series";
+// Caché de SWR aislada por test para que no se compartan respuestas.
+const isolated = (element: React.ReactElement) =>
+  createElement(SWRConfig, { value: { provider: () => new Map() } }, element);
 import { demoLibrary } from "../src/features/library/infrastructure/demo";
 afterEach(cleanup);
 it("separates release order without claiming narrative sequels and links owned games", async () => {
@@ -37,13 +41,15 @@ it("separates release order without claiming narrative sequels and links owned g
     }),
   });
   render(
-    createElement(GameSeries, {
-      catalogId: 1,
-      request,
-      demo: false,
-      state,
-      onGame,
-    }),
+    isolated(
+      createElement(GameSeries, {
+        catalogId: 1,
+        request,
+        demo: false,
+        state,
+        onGame,
+      }),
+    ),
   );
   await waitFor(() =>
     expect(screen.getByText("Lanzamientos anteriores")).toBeTruthy(),
@@ -63,13 +69,15 @@ it("shows missing data honestly and allows retry after failure", async () => {
       json: async () => ({ names: [], items: [], limited: false }),
     });
   render(
-    createElement(GameSeries, {
-      catalogId: 1,
-      request,
-      demo: false,
-      state: demoLibrary(),
-      onGame: vi.fn(),
-    }),
+    isolated(
+      createElement(GameSeries, {
+        catalogId: 1,
+        request,
+        demo: false,
+        state: demoLibrary(),
+        onGame: vi.fn(),
+      }),
+    ),
   );
   await waitFor(() => expect(screen.getByText("Reintentar saga")).toBeTruthy());
   fireEvent.click(screen.getByText("Reintentar saga"));

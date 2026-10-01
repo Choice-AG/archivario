@@ -6,6 +6,7 @@ import { Modal, type ApiRequest, type Execute } from "./shared";
 import type { Library, Saga, SagaEntry } from "../domain/model";
 import artworkData from "../infrastructure/saga-artworks.json";
 import { useSagaGuides } from "./saga-guides";
+import { useSagaPreview, useSagaSearch } from "./use-api";
 const artworks: Record<string, string> = artworkData;
 function sagaImage(s: Saga) {
   return (
@@ -53,12 +54,9 @@ export function Sagas({
   const [hideCompleted, setHideCompleted] = useState(false),
     [hideOptional, setHideOptional] = useState(false);
   const [query, setQuery] = useState(""),
-    [items, setItems] = useState<{ id: number; name: string }[]>([]),
-    [loading, setLoading] = useState(false),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
+    [saving, setBusy] = useState(false),
+    [actionError, setError] = useState(""),
     [draft, setDraft] = useState<Saga>(),
-    [preview, setPreview] = useState<Saga>(),
     [release, setRelease] = useState(false),
     [confirm, setConfirm] = useState(false),
     [draftKeys, setDraftKeys] = useState<string[]>([]);
@@ -88,92 +86,29 @@ export function Sagas({
             ?.entries.find((x) => x.catalogId === e.catalogId)?.alternatives,
       })),
     })),
-    saga =
-      saved.find((s) => s.id === selectedId) ??
-      (preview?.id === selectedId ? preview : undefined) ??
-      guides.find((s) => s.id === selectedId);
-  const hasSaga = !!saga;
-  useEffect(() => {
-    if (!selectedId || hasSaga || demo || !/^igdb-[1-9]\d*$/.test(selectedId))
-      return;
-    const c = new AbortController();
-    setBusy(true);
-    setError("");
-    request("/api/catalog/sagas?id=" + selectedId.slice(5), {
-      signal: c.signal,
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!c.signal.aborted) setPreview(d);
-      })
-      .catch((e) => {
-        if (!c.signal.aborted) setError(e.message);
-      })
-      .finally(() => {
-        if (!c.signal.aborted) setBusy(false);
-      });
-    return () => {
-      c.abort();
-      // Sin esto, salir durante la carga dejaba los botones deshabilitados.
-      setBusy(false);
-    };
-  }, [selectedId, hasSaga, demo, request]);
+    savedSaga = saved.find((s) => s.id === selectedId);
+  // Una saga de IGDB que aún no está guardada se consulta al abrirla.
+  const igdbId =
+    selectedId && /^igdb-[1-9]\d*$/.test(selectedId)
+      ? Number(selectedId.slice(5))
+      : undefined;
+  const previewQuery = useSagaPreview(request, igdbId, !demo && !savedSaga);
+  const preview = previewQuery.data;
+  const search = useSagaSearch(request, query, !demo);
+  const items = search.items,
+    loading = search.loading,
+    busy = saving || previewQuery.loading,
+    error = actionError || previewQuery.error || search.error;
+  const saga =
+    savedSaga ??
+    (preview?.id === selectedId ? preview : undefined) ??
+    guides.find((s) => s.id === selectedId);
   useEffect(() => {
     setRelease(false);
     setConfirm(false);
   }, [selectedId]);
-  useEffect(() => {
-    if (demo || query.trim().length < 2) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
-    let active = true;
-    const c = new AbortController();
-    setLoading(true);
-    setItems([]);
-    setError("");
-    const t = setTimeout(() => {
-      request("/api/catalog/sagas?q=" + encodeURIComponent(query.trim()), {
-        signal: c.signal,
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          if (active) setItems(d.items);
-        })
-        .catch((e) => {
-          if (active) setError(e.message);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }, 200);
-    return () => {
-      active = false;
-      c.abort();
-      clearTimeout(t);
-    };
-  }, [query, request, demo]);
-  async function load(id: number) {
-    setBusy(true);
-    setError("");
-    try {
-      const found = saved.find((s) => s.id === "igdb-" + id);
-      if (found) {
-        onSelect(found.id);
-        return;
-      }
-      const data = (await (
-        await request("/api/catalog/sagas?id=" + id)
-      ).json()) as Saga;
-      setPreview(data);
-      onSelect(data.id);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+
+  const load = (id: number) => onSelect("igdb-" + id);
   function fromLibrary() {
     openDraft({
       id: crypto.randomUUID(),
@@ -189,7 +124,6 @@ export function Sagas({
     setError("");
     try {
       await execute({ type: "save-saga", saga: s });
-      setPreview(undefined);
       setDraft(undefined);
       setDraftKeys([]);
       onSelect(s.id);
@@ -468,7 +402,6 @@ export function Sagas({
                       setBusy(true);
                       try {
                         await execute({ type: "delete-saga", id: saga.id });
-                        setPreview(undefined);
                         onSelect(undefined);
                       } catch (e) {
                         setError((e as Error).message);

@@ -745,3 +745,22 @@ test("el aviso de guardado permite deshacer", async ({ page }) => {
   await toast.getByRole("button", { name: "Deshacer último cambio" }).click();
   await expect(card.getByLabel("Estado de Celeste")).toHaveValue("pendiente");
 });
+
+test("cada vista tiene su propia URL y título", async ({ page }) => {
+  await page.goto("/diario?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Lo que has estado jugando." }),
+  ).toBeVisible();
+  await expect(page).toHaveTitle("Diario · Archivario");
+  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
+  await page
+    .locator(mobile ? ".bottom-nav" : ".sidebar nav")
+    .getByRole("button", { name: "Calendario", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/calendario\?demo=1$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/diario\?demo=1$/);
+  await expect(
+    page.getByRole("heading", { name: "Lo que has estado jugando." }),
+  ).toBeVisible();
+});

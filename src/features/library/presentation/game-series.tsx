@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCatalogSeries } from "./use-api";
 import type { ApiRequest } from "./shared";
 import type { Library } from "../domain/model";
 export type SeriesData = {
@@ -27,28 +27,7 @@ export function GameSeries({
   state: Library;
   onGame: (id: string) => void;
 }) {
-  const [data, setData] = useState<SeriesData>(),
-    [error, setError] = useState(""),
-    [retry, setRetry] = useState(0);
-  useEffect(() => {
-    if (!catalogId || demo) return;
-    const c = new AbortController();
-    let active = true;
-    setData(undefined);
-    setError("");
-    request("/api/catalog/series?id=" + catalogId, { signal: c.signal })
-      .then((r) => r.json())
-      .then((d) => {
-        if (active) setData(d);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-      c.abort();
-    };
-  }, [catalogId, request, demo, retry]);
+  const { data, error, retry } = useCatalogSeries(request, catalogId, !demo);
   if (!catalogId)
     return (
       <p className="muted">
@@ -66,7 +45,7 @@ export function GameSeries({
     return (
       <p role="alert">
         {error}{" "}
-        <button className="text-link" onClick={() => setRetry((n) => n + 1)}>
+        <button className="text-link" onClick={retry}>
           Reintentar saga
         </button>
       </p>

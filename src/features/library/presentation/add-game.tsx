@@ -1,6 +1,7 @@
 "use client";
 import { StatusOptions } from "./format";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCatalogTimes } from "./use-api";
 import { Check, LoaderCircle, Plus, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,9 +33,6 @@ export function AddGame({
   initialGame?: CatalogGame;
   onAdded?: (id: string) => void;
 }) {
-  const [times, setTimes] = useState<GameTimes>(),
-    [timeLoading, setTimeLoading] = useState(false),
-    [timeNotice, setTimeNotice] = useState("");
   const [selected, setSelected] = useState<CatalogGame | undefined>(
     initialGame,
   );
@@ -50,42 +48,16 @@ export function AddGame({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const search = useCatalogSearch(request, !demo && !manual && !selected);
-  useEffect(() => {
-    setTimes(undefined);
-    setTimeNotice("");
-    if (!selected || demo) {
-      setTimeLoading(false);
-      return;
-    }
-    const c = new AbortController();
-    let active = true;
-    setTimeLoading(true);
-    request("/api/catalog/times?id=" + selected.catalogId, { signal: c.signal })
-      .then((r) => r.json())
-      .then((data: GameTimes) => {
-        if (active) {
-          setTimes(data);
-          setTimeNotice(
-            Object.keys(data).length
-              ? "Tiempos de IGDB incluidos. Podrás ajustarlos en la pestaña Tiempos."
-              : "IGDB no tiene estimaciones de tiempo para este juego.",
-          );
-        }
-      })
-      .catch(() => {
-        if (active)
-          setTimeNotice(
-            "No se han podido cargar los tiempos. Puedes consultarlos después desde la ficha.",
-          );
-      })
-      .finally(() => {
-        if (active) setTimeLoading(false);
-      });
-    return () => {
-      active = false;
-      c.abort();
-    };
-  }, [selected, demo, request]);
+  const timesQuery = useCatalogTimes(request, selected?.catalogId, !demo);
+  const times: GameTimes | undefined = timesQuery.data,
+    timeLoading = timesQuery.loading,
+    timeNotice = timesQuery.error
+      ? "No se han podido cargar los tiempos. Puedes consultarlos después desde la ficha."
+      : times
+        ? Object.keys(times).length
+          ? "Tiempos de IGDB incluidos. Podrás ajustarlos en la pestaña Tiempos."
+          : "IGDB no tiene estimaciones de tiempo para este juego."
+        : "";
   const select = (game: CatalogGame) => {
     setSelected(game);
     setPlatforms(

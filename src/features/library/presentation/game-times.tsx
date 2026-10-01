@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useCatalogTimes } from "./use-api";
 import { Button } from "@/components/ui/button";
 import type { Game, GameTimes, Library } from "../domain/model";
 import { formatHours, timeLabels } from "../domain/daily";
@@ -18,41 +19,24 @@ export function GameTimeForm({
   execute: Execute;
   demo: boolean;
 }) {
-  const [times, setTimes] = useState<GameTimes>(game.times ?? {}),
-    [loading, setLoading] = useState(false),
+  const remote = useCatalogTimes(request, game.catalogId, !demo);
+  const [edited, setEdited] = useState<GameTimes>(),
     [pending, setPending] = useState(false),
-    [error, setError] = useState(""),
-    [message, setMessage] = useState(""),
-    [retry, setRetry] = useState(0);
-  useEffect(() => {
-    if (demo || !game.catalogId) return;
-    const c = new AbortController();
-    let active = true;
-    setLoading(true);
-    setError("");
-    request("/api/catalog/times?id=" + game.catalogId, { signal: c.signal })
-      .then((r) => r.json())
-      .then((data: GameTimes) => {
-        if (active) {
-          setTimes((current) => ({ ...data, ...current }));
-          setMessage(
-            Object.keys(data).length
-              ? "Estimaciones de IGDB disponibles. Guarda para usarlas en filtros y comparaciones."
-              : "IGDB no tiene tiempos para este juego. Puedes introducirlos manualmente.",
-          );
-        }
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-      c.abort();
-    };
-  }, [game.catalogId, request, demo, retry]);
+    [saveError, setSaveError] = useState(""),
+    [saved, setSaved] = useState(false);
+  // Lo guardado en la ficha manda sobre IGDB; lo editado aquí, sobre ambos.
+  const times = edited ?? { ...remote.data, ...game.times },
+    loading = remote.loading,
+    error = saveError || remote.error;
+  const setTimes = (update: (current: GameTimes) => GameTimes) =>
+    setEdited((current) => update(current ?? times));
+  const message = saved
+    ? "Tiempos guardados."
+    : remote.data
+      ? Object.keys(remote.data).length
+        ? "Estimaciones de IGDB disponibles. Guarda para usarlas en filtros y comparaciones."
+        : "IGDB no tiene tiempos para este juego. Puedes introducirlos manualmente."
+      : "";
   const runs = state.runs.filter(
     (r) => r.gameId === game.id && r.completionMinutes !== undefined,
   );
@@ -71,7 +55,7 @@ export function GameTimeForm({
       {error && (
         <p role="alert" className="form-error">
           {error}{" "}
-          <button className="text-link" onClick={() => setRetry((n) => n + 1)}>
+          <button className="text-link" onClick={remote.retry}>
             Reintentar
           </button>
         </p>
@@ -80,12 +64,12 @@ export function GameTimeForm({
         onSubmit={async (e) => {
           e.preventDefault();
           setPending(true);
-          setError("");
+          setSaveError("");
           try {
             await execute({ type: "save-game", game: { ...game, times } });
-            setMessage("Tiempos guardados.");
+            setSaved(true);
           } catch (e) {
-            setError((e as Error).message);
+            setSaveError((e as Error).message);
           } finally {
             setPending(false);
           }
