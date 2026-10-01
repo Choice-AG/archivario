@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { reportError } from "@/lib/monitoring";
 
 export default function Error({
   error,
@@ -11,6 +12,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error("Error de interfaz", error.name, error.digest ?? "");
+    reportError(error);
   }, [error]);
   return (
     <main className="empty-state" role="alert">

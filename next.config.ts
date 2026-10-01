@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const dev = process.env.NODE_ENV !== "production";
 const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
+// Destino de Sentry, solo si está configurado.
+const sentryHost = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SENTRY_DSN
+      ? " https://" + new URL(process.env.NEXT_PUBLIC_SENTRY_DSN).host
+      : "";
+  } catch {
+    return "";
+  }
+})();
 const images = "https://images.igdb.com https://cdn.cloudflare.steamstatic.com";
 const csp = [
   "default-src 'self'",
@@ -10,7 +20,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${images}`,
   "font-src 'self' data:",
-  "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
+  `connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com${sentryHost}`,
   `frame-src ${authDomain ? "https://" + authDomain : "'none'"}`,
   "object-src 'none'",
   "base-uri 'self'",

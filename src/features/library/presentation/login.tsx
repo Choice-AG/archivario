@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { ArrowUpRight, Eye, EyeOff, Gamepad2 } from "lucide-react";
@@ -72,13 +73,15 @@ export function Login({ onDemo }: { onDemo: () => void }) {
               new FormData(e.currentTarget).get("password"),
             );
             try {
-              if (signup)
-                await createUserWithEmailAndPassword(
+              if (signup) {
+                const { user } = await createUserWithEmailAndPassword(
                   clientAuth(),
                   email,
                   password,
                 );
-              else
+                // Si falla el envío, el aviso de la app permite reenviarlo.
+                await sendEmailVerification(user).catch(() => {});
+              } else
                 await signInWithEmailAndPassword(clientAuth(), email, password);
             } catch (error) {
               setMessage(authMessage(error, signup));
