@@ -16,6 +16,7 @@ const config = [
   {
     ignores: [
       ".next/**",
+      ".next-emulators/**",
       "node_modules/**",
       "test-results/**",
       "playwright-report/**",
