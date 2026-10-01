@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { themeScript } from "@/features/library/presentation/theme";
 export const metadata: Metadata = {
   title: {
     default: "Archivario · Tus juegos, a tu ritmo",
@@ -14,7 +15,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

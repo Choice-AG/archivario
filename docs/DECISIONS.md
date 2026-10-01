@@ -23,3 +23,4 @@
 - Sin TTL de Firestore (requiere facturación): limpieza ocasional de la caché desde el servidor.
 - Portadas con `<img>` en lugar de next/image para no gastar la cuota de optimización de Vercel Hobby.
 - El dominio no depende de Zod; validation.ts comprueba en compilación que esquemas y tipos coinciden.
+- Tema claro además del oscuro: sigue la preferencia del sistema salvo que se elija otro en Ajustes. Los colores de globals.css son variables (`--c-*`) con su versión clara calculada; lo que va sobre portadas e ilustraciones conserva la paleta oscura.

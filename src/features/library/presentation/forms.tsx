@@ -18,6 +18,7 @@ import {
 } from "../domain/model";
 import type { ApiRequest, Execute } from "./shared";
 import { list, RatingOptions, value } from "./form-utils";
+import { ThemePicker } from "./theme";
 function FormError({ message }: { message: string }) {
   return message ? (
     <p className="form-error" role="alert">
@@ -807,6 +808,7 @@ export function SettingsPanel({
           <Save size={16} /> Guardar perfil
         </Button>
       </form>
+      <ThemePicker />
       <div className="divider" />
       <div className="profile-avatar-preview">
         <span className="avatar" aria-hidden="true">
@@ -961,7 +963,7 @@ export function SettingsPanel({
         </Button>
       </div>
       <FormError message={error} />
-      <p role="status" className="text-sm text-violet-300 mt-3">
+      <p role="status" className="text-sm accent-text mt-3">
         {notice}
       </p>
     </div>
