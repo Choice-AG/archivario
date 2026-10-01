@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { adminAuth } from "./firebase";
 import { isDeleting } from "./lifecycle";
 import { needsVerification } from "@/features/account/verification";
+import { reportError } from "@/lib/monitoring";
 import { DomainError } from "@/features/library/domain/model";
 import { ConflictError } from "@/features/library/application/ports";
 export class HttpError extends Error {
@@ -105,6 +106,7 @@ export async function route(work: () => Promise<Response>): Promise<Response> {
     if (e instanceof DomainError) return json({ error: e.message }, 400);
     if (e instanceof ConflictError) return json({ error: e.message }, 409);
     if (e instanceof HttpError) return json({ error: e.message }, e.status);
+    reportError(e);
     // Solo nombre y mensaje: nunca el cuerpo de la petición.
     console.error(
       "Error de API",
