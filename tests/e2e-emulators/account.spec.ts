@@ -172,3 +172,67 @@ test("una contraseña incorrecta muestra un mensaje claro y salir borra la copia
     page.getByText("El correo o la contraseña no son correctos."),
   ).toBeVisible();
 });
+
+test("seguir a alguien, ver su juego completado en el feed y su perfil público", async ({
+  browser,
+}) => {
+  const suffix = String(Math.round(Math.random() * 1e6));
+  const ana = await (await browser.newContext()).newPage();
+  const beto = await (await browser.newContext()).newPage();
+  const enableSocial = async (page: Page, handle: string) => {
+    await page.goto("/perfil/ajustes");
+    await page.getByLabel("Nombre de usuario").fill(handle);
+    await page.getByRole("button", { name: "Activar perfil público" }).click();
+    await expect(page.getByText("Perfil público activado.")).toBeVisible();
+  };
+
+  await signUp(ana, uniqueEmail());
+  await enableSocial(ana, "ana" + suffix);
+  await ana.goto("/");
+  await addGame(ana, "Tunic");
+  await ana
+    .getByRole("button", { name: /^Estado de Tunic/ })
+    .first()
+    .click();
+  await ana.getByRole("menuitemradio", { name: "Completado" }).click();
+  const note = ana.getByLabel(/Una frase para tus seguidores/);
+  await note.fill("Un zorrito precioso");
+  await note.press("Tab");
+  await ana.getByRole("button", { name: "Ahora no" }).click();
+
+  await signUp(beto, uniqueEmail());
+  await enableSocial(beto, "beto" + suffix);
+  await beto.goto("/amigos");
+  await beto
+    .getByLabel("Buscar personas por nombre de usuario")
+    .fill("ana" + suffix);
+  await beto.getByRole("button", { name: "Buscar", exact: true }).click();
+  await beto
+    .getByRole("list", { name: "Resultados de la búsqueda" })
+    .getByRole("button", { name: "Seguir" })
+    .click();
+  await expect(
+    beto
+      .getByRole("list", { name: "Resultados de la búsqueda" })
+      .getByRole("button", { name: "Siguiendo" }),
+  ).toBeVisible();
+  await beto.reload();
+  const card = beto.locator(".feed-card").filter({ hasText: "Tunic" });
+  await expect(card).toContainText("ha completado");
+  await expect(card).toContainText("Un zorrito precioso");
+
+  // Ana recibe el aviso de que Beto la sigue.
+  await ana.goto("/amigos");
+  await expect(
+    ana.locator(".notices").getByText("ha empezado a seguirte"),
+  ).toBeVisible();
+
+  // El perfil público se abre sin iniciar sesión, con el detalle del juego.
+  const visitor = await (await browser.newContext()).newPage();
+  await visitor.goto("/u/ana" + suffix);
+  await expect(
+    visitor.getByRole("heading", { name: "ana" + suffix, level: 1 }),
+  ).toBeVisible();
+  await visitor.getByRole("link", { name: "Ver Tunic" }).first().click();
+  await expect(visitor.getByRole("dialog")).toContainText("Completado");
+});

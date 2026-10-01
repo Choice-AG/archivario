@@ -64,8 +64,11 @@ export function GameDetails({
             setPending(true);
             setError("");
             const f = new FormData(e.currentTarget);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { rating: _rating, approximateHours: _hours, ...base } = game;
+            // Lo que el formulario vuelve a decidir se quita del original.
+            const base = { ...game };
+            delete base.rating;
+            delete base.approximateHours;
+            delete base.hidden;
             try {
               await execute({
                 type: "save-game",
@@ -78,6 +81,7 @@ export function GameDetails({
                   wishlist: f.has("wishlist"),
                   favorite: f.has("favorite"),
                   next: f.has("next"),
+                  ...(f.has("hidden") ? { hidden: true } : {}),
                   ...(value(f, "rating")
                     ? { rating: Number(f.get("rating")) }
                     : {}),
@@ -161,6 +165,14 @@ export function GameDetails({
             <label>
               <input type="checkbox" name="next" defaultChecked={game.next} />{" "}
               Entre mis próximos tres
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                name="hidden"
+                defaultChecked={game.hidden}
+              />{" "}
+              Ocultar a mis seguidores
             </label>
           </div>
           <div className="form-actions">
@@ -325,6 +337,8 @@ export function RunForm({
             primary: f.has("primary"),
             run: {
               id: run?.id ?? crypto.randomUUID(),
+              // La frase para el feed se escribe en la celebración: se conserva.
+              ...(run?.shareNote ? { shareNote: run.shareNote } : {}),
               gameId: game.id,
               label: value(f, "label"),
               platform: value(f, "platform"),

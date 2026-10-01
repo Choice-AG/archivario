@@ -38,6 +38,7 @@ export function Celebration({
   state,
   completion,
   today,
+  social = false,
   execute,
   onReview,
   onClose,
@@ -45,12 +46,18 @@ export function Celebration({
   state: Library;
   completion: Completion;
   today: string;
+  // Con el perfil público activo se pide una frase para el feed.
+  social?: boolean;
   execute: Execute;
   onReview: () => void;
   onClose: () => void;
 }) {
   const [mute, setMute] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [note, setNote] = useState(
+      () =>
+        state.runs.find((r) => r.id === completion.before.id)?.shareNote ?? "",
+    );
   const game = state.games.find((g) => g.id === completion.gameId);
   const run = state.runs.find((r) => r.id === completion.before.id);
   if (!game || !run) return null;
@@ -141,6 +148,27 @@ export function Celebration({
           />
         </div>
       </div>
+      {social && (
+        <label className="celebration-note">
+          Una frase para tus seguidores <small>Opcional, sin spoilers</small>
+          <input
+            value={note}
+            maxLength={200}
+            placeholder="Una obra maestra, la música es increíble"
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => {
+              if (note.trim() === (run.shareNote ?? "")) return;
+              const rest = { ...run };
+              delete rest.shareNote;
+              act({
+                type: "save-run",
+                primary: run.id === game.primaryRunId,
+                run: note.trim() ? { ...rest, shareNote: note.trim() } : rest,
+              });
+            }}
+          />
+        </label>
+      )}
       {error && (
         <p className="form-error" role="alert">
           {error}

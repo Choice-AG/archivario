@@ -8,6 +8,7 @@ export const viewPaths: Record<string, string> = {
   Favoritos: "/favoritos",
   Próximos: "/proximos",
   Perfil: "/perfil",
+  Amigos: "/amigos",
 };
 
 export type Route = {
@@ -15,6 +16,8 @@ export type Route = {
   gameId?: string;
   sagaId?: string;
   settings?: boolean;
+  // Perfil público de otra persona (/u/<nombre>).
+  handle?: string;
 };
 export const settingsPath = "/perfil/ajustes";
 
@@ -27,6 +30,8 @@ export function parsePath(pathname: string): Route {
       view: "Sagas",
       sagaId: saga[1] ? decodeURIComponent(saga[1]) : undefined,
     };
+  const person = pathname.match(/^\/u\/([^/]+)\/?$/);
+  if (person) return { view: "Amigos", handle: decodeURIComponent(person[1]) };
   if (/^\/perfil\/ajustes\/?$/.test(pathname))
     return { view: "Perfil", settings: true };
   const view = Object.entries(viewPaths).find(
