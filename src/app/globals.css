@@ -6622,3 +6622,131 @@ button.heat:focus-visible {
 .saga-group > summary {
   cursor: pointer;
 }
+
+/* Carrusel «Ahora jugando» del menú lateral */
+.side-playing {
+  margin-bottom: 25px;
+  padding: 12px;
+  border: 1px solid var(--c-8171b61a);
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--c-7961ba13), transparent);
+}
+.side-playing-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-79788f);
+}
+.side-playing-head button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--c-c3bddb);
+}
+.side-playing-head button:hover {
+  background: var(--c-ffffff0d);
+}
+.side-playing-slide {
+  display: grid;
+  gap: 10px;
+  animation: surface-in 260ms ease;
+}
+.side-playing-game {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+}
+.side-playing-cover {
+  flex-shrink: 0;
+  width: 40px;
+  aspect-ratio: 264 / 374;
+  overflow: hidden;
+  border-radius: 6px;
+}
+.side-playing-cover img,
+.side-playing-cover .cover-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.side-playing-cover .cover-fallback span {
+  display: none;
+}
+.side-playing-text {
+  display: grid;
+  min-width: 0;
+}
+.side-playing-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--c-e4e6f2);
+}
+.side-playing-text small {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--c-9096ad);
+}
+.side-playing-game:hover strong {
+  color: var(--c-b49cfa);
+}
+.side-playing-today {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--c-ffffff14);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--c-c3bddb);
+}
+.side-playing-today:not(:disabled):hover {
+  border-color: var(--c-b49aff80);
+}
+.side-playing-today:disabled {
+  opacity: 0.75;
+}
+.side-playing-dots {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+}
+/* Zona táctil de 24 px con un punto pequeño dentro. */
+.side-playing-dots button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+.side-playing-dots button::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--c-ffffff14);
+  transition: width 200ms ease;
+}
+.side-playing-dots button[aria-current="true"]::before {
+  width: 16px;
+  background: var(--c-b49cfa);
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-playing-slide {
+    animation: none;
+  }
+}

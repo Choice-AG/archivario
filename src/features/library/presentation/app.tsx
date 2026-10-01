@@ -35,6 +35,7 @@ import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Avatar, Modal, type Execute } from "./shared";
 import { Onboarding, showOnboarding } from "./onboarding";
+import { SidebarPlaying } from "./sidebar-playing";
 import { Celebration, completedBy, type Completion } from "./celebration";
 import {
   gamePath,
@@ -277,15 +278,12 @@ function Dashboard({
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="quiet-card">
-            <span>
-              Sin prisa.
-              <br />
-              Sin rachas ni fechas límite.
-            </span>
-            <p>Solo historias por vivir.</p>
-            <Sparkles size={20} />
-          </div>
+          <SidebarPlaying
+            state={state}
+            today={today}
+            execute={safeExecute}
+            onGame={openGame}
+          />
           <button
             className={"profile-button " + (view === "Perfil" ? "active" : "")}
             aria-current={view === "Perfil" ? "page" : undefined}
