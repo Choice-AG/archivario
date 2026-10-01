@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   BookOpen,
@@ -22,19 +23,9 @@ import { Button } from "@/components/ui/button";
 import { configured, clientAuth } from "@/features/account/firebase-client";
 import { useLibrary } from "./use-library";
 import { dateInZone, type Activity } from "../domain/model";
-import { CatalogGamePage } from "./catalog-game-page";
 import { GlobalSearch } from "./library-improvements";
-import { DayActivity } from "./day-activity";
-import { Sagas } from "./sagas";
-import { GamePage } from "./game-page";
-import { BulkActivity } from "./bulk-activity";
-import { Planning } from "./planning";
-import { YearReview } from "./year-review";
-import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
-import { BulkLink } from "./bulk-link";
-import { ImportGames } from "./import-games";
 import { ShortcutList, useShortcuts } from "./shortcuts";
 import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
@@ -42,6 +33,37 @@ import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Modal, type Execute } from "./shared";
 import { gamePath, parsePath, sagaPath, viewPaths } from "./routes";
+
+// Lo que solo se usa al abrir una vista o un modal se descarga bajo demanda,
+// para que la primera carga sea más ligera.
+function load<P>(loader: () => Promise<React.ComponentType<P>>) {
+  return dynamic<P>(loader, {
+    loading: () => <p className="loading-inline">Cargando…</p>,
+  });
+}
+const CatalogGamePage = load(() =>
+  import("./catalog-game-page").then((m) => m.CatalogGamePage),
+);
+const DayActivity = load(() =>
+  import("./day-activity").then((m) => m.DayActivity),
+);
+const Sagas = load(() => import("./sagas").then((m) => m.Sagas));
+const GamePage = load(() => import("./game-page").then((m) => m.GamePage));
+const BulkActivity = load(() =>
+  import("./bulk-activity").then((m) => m.BulkActivity),
+);
+const Planning = load(() => import("./planning").then((m) => m.Planning));
+const YearReview = load(() =>
+  import("./year-review").then((m) => m.YearReview),
+);
+const BulkLink = load(() => import("./bulk-link").then((m) => m.BulkLink));
+const ImportGames = load(() =>
+  import("./import-games").then((m) => m.ImportGames),
+);
+const AddGame = load(() => import("./add-game").then((m) => m.AddGame));
+const SettingsPanel = load(() =>
+  import("./forms").then((m) => m.SettingsPanel),
+);
 
 export function ArchivarioApp() {
   const [user, setUser] = useState<User | null>(null),

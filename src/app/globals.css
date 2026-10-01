@@ -4787,3 +4787,9 @@ select:focus {
     display: none;
   }
 }
+
+.loading-inline {
+  padding: 24px 0;
+  color: var(--muted);
+  font-size: 13px;
+}

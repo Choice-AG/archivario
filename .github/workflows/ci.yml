@@ -23,6 +23,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build
+      # Presupuesto de JavaScript inicial por página.
+      - run: npm run check:bundle
       - run: npx playwright install --with-deps chromium
       # Sin variables de Firebase: la app arranca en modo demostración.
       - run: npm run test:e2e
