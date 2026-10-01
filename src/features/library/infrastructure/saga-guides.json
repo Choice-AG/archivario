@@ -973,5 +973,725 @@
         "optional": true
       }
     ]
+  },
+  {
+    "id": "guide-zelda",
+    "name": "The Legend of Zelda",
+    "description": "Una selección de las aventuras principales en orden de lanzamiento. Casi todas se entienden por separado: la cronología interna existe, pero no hace falta para disfrutarlas. Las opcionales son buenas, aunque prescindibles.",
+    "order": "release",
+    "source": "Selección editorial · https://www.zelda.com/",
+    "entries": [
+      {
+        "catalogId": 1022,
+        "title": "The Legend of Zelda",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1uii.jpg",
+        "releaseDate": "1986-02-21",
+        "chapter": "Los orígenes",
+        "note": "El primero de todos. Hoy se nota su edad: ideal si te interesa la historia de la saga.",
+        "optional": true
+      },
+      {
+        "catalogId": 1026,
+        "title": "The Legend of Zelda: A Link to the Past",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3vzn.jpg",
+        "releaseDate": "1991-11-21",
+        "chapter": "La fórmula clásica",
+        "note": "Mazmorras, mundo de la luz y de las sombras: la base de casi todo lo que vino después.",
+        "optional": false
+      },
+      {
+        "catalogId": 1028,
+        "title": "The Legend of Zelda: Link's Awakening",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3nnt.jpg",
+        "releaseDate": "1993-06-06",
+        "chapter": "Un sueño en la isla Koholint",
+        "note": "Una historia más íntima y extraña. El remake de Switch es la forma más cómoda de jugarlo.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 115284,
+            "title": "The Legend of Zelda: Link's Awakening"
+          }
+        ]
+      },
+      {
+        "catalogId": 1029,
+        "title": "The Legend of Zelda: Ocarina of Time",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3nnx.jpg",
+        "releaseDate": "1998-11-21",
+        "chapter": "El salto al 3D",
+        "note": "Para muchos, el gran clásico. La versión de 3DS mejora los controles y los gráficos.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 1039,
+            "title": "The Legend of Zelda: Ocarina of Time 3D"
+          }
+        ]
+      },
+      {
+        "catalogId": 1030,
+        "title": "The Legend of Zelda: Majora's Mask",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3pah.jpg",
+        "releaseDate": "2000-04-27",
+        "chapter": "Tres días para salvar Términa",
+        "note": "Secuela directa de Ocarina, con un reloj que se reinicia y un tono melancólico.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 8593,
+            "title": "The Legend of Zelda: Majora's Mask 3D"
+          }
+        ]
+      },
+      {
+        "catalogId": 1032,
+        "title": "The Legend of Zelda: Oracle of Seasons",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2tw0.jpg",
+        "releaseDate": "2001-02-27",
+        "chapter": "Los oráculos",
+        "note": "Pareja de juegos de Game Boy Color que se conectan entre sí. Puedes jugar uno solo.",
+        "optional": true,
+        "alternatives": [
+          {
+            "catalogId": 1041,
+            "title": "The Legend of Zelda: Oracle of Ages"
+          }
+        ]
+      },
+      {
+        "catalogId": 1033,
+        "title": "The Legend of Zelda: The Wind Waker",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3ohz.jpg",
+        "releaseDate": "2002-12-13",
+        "chapter": "El gran mar",
+        "note": "Navegación, estilo de dibujos animados y mucho encanto. La edición HD es más ágil.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 2276,
+            "title": "The Legend of Zelda: The Wind Waker HD"
+          }
+        ]
+      },
+      {
+        "catalogId": 1035,
+        "title": "The Legend of Zelda: The Minish Cap",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3nsk.jpg",
+        "releaseDate": "2004-11-04",
+        "chapter": "El mundo diminuto",
+        "note": "Corto y muy pulido; un buen descanso entre los grandes.",
+        "optional": true
+      },
+      {
+        "catalogId": 1036,
+        "title": "The Legend of Zelda: Twilight Princess",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3mtv.jpg",
+        "releaseDate": "2006-11-19",
+        "chapter": "El crepúsculo",
+        "note": "El Zelda más oscuro de su época, con Link transformado en lobo. Hay edición HD para Wii U.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 18017,
+            "title": "The Legend of Zelda: Twilight Princess HD"
+          }
+        ]
+      },
+      {
+        "catalogId": 1037,
+        "title": "The Legend of Zelda: Phantom Hourglass",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3ocu.jpg",
+        "releaseDate": "2007-06-23",
+        "chapter": "Secuelas en DS",
+        "note": "Continúa Wind Waker con controles táctiles. Spirit Tracks sigue la misma línea.",
+        "optional": true,
+        "alternatives": [
+          {
+            "catalogId": 1038,
+            "title": "The Legend of Zelda: Spirit Tracks"
+          }
+        ]
+      },
+      {
+        "catalogId": 534,
+        "title": "The Legend of Zelda: Skyward Sword",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5wrj.jpg",
+        "releaseDate": "2011-11-18",
+        "chapter": "El origen de la espada",
+        "note": "Cuenta el principio de la leyenda. La versión HD permite jugar sin controles de movimiento.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 143614,
+            "title": "The Legend of Zelda: Skyward Sword HD"
+          }
+        ]
+      },
+      {
+        "catalogId": 2909,
+        "title": "The Legend of Zelda: A Link Between Worlds",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p0j.jpg",
+        "releaseDate": "2013-11-22",
+        "chapter": "Vuelta a Hyrule desde arriba",
+        "note": "Sucesor espiritual de A Link to the Past, más libre a la hora de elegir mazmorras.",
+        "optional": false
+      },
+      {
+        "catalogId": 7346,
+        "title": "The Legend of Zelda: Breath of the Wild",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.jpg",
+        "releaseDate": "2017-03-03",
+        "chapter": "Un Hyrule abierto",
+        "note": "Exploración total: ve a donde quieras desde el primer momento.",
+        "optional": false
+      },
+      {
+        "catalogId": 119388,
+        "title": "The Legend of Zelda: Tears of the Kingdom",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.jpg",
+        "releaseDate": "2023-05-12",
+        "chapter": "Cielo, tierra y abismo",
+        "note": "Secuela directa de Breath of the Wild; mejor jugarlo después.",
+        "optional": false
+      },
+      {
+        "catalogId": 306149,
+        "title": "The Legend of Zelda: Echoes of Wisdom",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co8d9b.jpg",
+        "releaseDate": "2024-09-26",
+        "chapter": "Zelda toma el mando",
+        "note": "Por fin protagoniza la princesa, con un sistema de ecos para resolverlo todo.",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "id": "guide-metal-gear",
+    "name": "Metal Gear",
+    "description": "El recorrido recomendado sigue el orden de lanzamiento, que es como se pensó la historia: cada juego cuenta con que conoces los giros de los anteriores. Los originales de MSX son opcionales y se resumen bien.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.konami.com/mg/",
+    "entries": [
+      {
+        "catalogId": 374,
+        "title": "Metal Gear",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3ogc.jpg",
+        "releaseDate": "1987-07-13",
+        "chapter": "Los orígenes en MSX",
+        "note": "Opcional: Metal Gear Solid resume lo esencial. Interesa si quieres la historia completa.",
+        "optional": true,
+        "alternatives": [
+          {
+            "catalogId": 377,
+            "title": "Metal Gear 2: Solid Snake"
+          }
+        ]
+      },
+      {
+        "catalogId": 375,
+        "title": "Metal Gear Solid",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobpak.jpg",
+        "releaseDate": "1998-09-03",
+        "chapter": "Shadow Moses",
+        "note": "El punto de partida ideal. The Twin Snakes es un remake con otro estilo de juego.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 4006,
+            "title": "Metal Gear Solid: The Twin Snakes"
+          }
+        ]
+      },
+      {
+        "catalogId": 376,
+        "title": "Metal Gear Solid 2: Sons of Liberty",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5e1c.jpg",
+        "releaseDate": "2001-11-13",
+        "chapter": "La Big Shell",
+        "note": "Juégalo justo después del primero: su sorpresa depende de ello.",
+        "optional": false
+      },
+      {
+        "catalogId": 379,
+        "title": "Metal Gear Solid 3: Snake Eater",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5ei5.jpg",
+        "releaseDate": "2004-11-17",
+        "chapter": "La operación Snake Eater",
+        "note": "Una precuela en los años sesenta que se entiende sola. Delta es el remake de 2025.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 250634,
+            "title": "Metal Gear Solid Delta: Snake Eater"
+          }
+        ]
+      },
+      {
+        "catalogId": 381,
+        "title": "Metal Gear Solid: Portable Ops",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2qok.jpg",
+        "releaseDate": "2006-12-05",
+        "chapter": "Entre III y Peace Walker",
+        "note": "Spin-off de PSP con un papel menor en la historia.",
+        "optional": true
+      },
+      {
+        "catalogId": 380,
+        "title": "Metal Gear Solid 4: Guns of the Patriots",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5eju.jpg",
+        "releaseDate": "2008-06-12",
+        "chapter": "El final de Solid Snake",
+        "note": "Cierra los arcos de los tres primeros juegos; no lo juegues antes.",
+        "optional": false
+      },
+      {
+        "catalogId": 382,
+        "title": "Metal Gear Solid: Peace Walker",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coawb5.jpg",
+        "releaseDate": "2010-04-29",
+        "chapter": "Los soldados sin fronteras",
+        "note": "Imprescindible para entender Metal Gear Solid V.",
+        "optional": false
+      },
+      {
+        "catalogId": 5328,
+        "title": "Metal Gear Solid V: Ground Zeroes",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v88.jpg",
+        "releaseDate": "2014-03-18",
+        "chapter": "El prólogo",
+        "note": "Corto: es la introducción directa de The Phantom Pain.",
+        "optional": false
+      },
+      {
+        "catalogId": 1985,
+        "title": "Metal Gear Solid V: The Phantom Pain",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v85.jpg",
+        "releaseDate": "2015-09-01",
+        "chapter": "Venom Snake",
+        "note": "Mundo abierto y la mayor libertad de la saga.",
+        "optional": false
+      },
+      {
+        "catalogId": 378,
+        "title": "Metal Gear Rising: Revengeance",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2l1t.jpg",
+        "releaseDate": "2013-02-19",
+        "chapter": "Raiden por su cuenta",
+        "note": "Acción pura, aparte de la historia principal.",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "guide-mass-effect",
+    "name": "Mass Effect",
+    "description": "La trilogía de Shepard en orden. Tus decisiones pasan de un juego a otro, así que conviene jugarlos seguidos con el mismo personaje. Legendary Edition reúne los tres remasterizados.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.ea.com/games/mass-effect",
+    "entries": [
+      {
+        "catalogId": 73,
+        "title": "Mass Effect",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1x7o.jpg",
+        "releaseDate": "2007-11-20",
+        "chapter": "La amenaza de los segadores",
+        "note": "El comienzo de Shepard. En Legendary Edition se juega mucho mejor.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 140839,
+            "title": "Mass Effect Legendary Edition"
+          }
+        ]
+      },
+      {
+        "catalogId": 74,
+        "title": "Mass Effect 2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co20ac.jpg",
+        "releaseDate": "2010-01-26",
+        "chapter": "El escuadrón suicida",
+        "note": "Importa tu partida del primero para conservar tus decisiones.",
+        "optional": false
+      },
+      {
+        "catalogId": 75,
+        "title": "Mass Effect 3",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1x7q.jpg",
+        "releaseDate": "2012-03-06",
+        "chapter": "La guerra final",
+        "note": "El cierre de la trilogía: las decisiones de los dos anteriores pesan aquí.",
+        "optional": false
+      },
+      {
+        "catalogId": 7349,
+        "title": "Mass Effect: Andromeda",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co39vk.jpg",
+        "releaseDate": "2017-03-21",
+        "chapter": "Una nueva galaxia",
+        "note": "Historia aparte, con otro protagonista. Puedes jugarlo cuando quieras.",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "guide-witcher",
+    "name": "The Witcher",
+    "description": "Las aventuras de Geralt de Rivia en orden. Se puede empezar por The Witcher 3, que pone en contexto lo importante, pero los dos primeros enriquecen la historia y sus decisiones pueden importarse.",
+    "order": "recommended",
+    "source": "Selección editorial · https://www.thewitcher.com/",
+    "entries": [
+      {
+        "catalogId": 80,
+        "title": "The Witcher",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1xrx.jpg",
+        "releaseDate": "2007-10-26",
+        "chapter": "Geralt sin memoria",
+        "note": "El más anticuado de jugar; si se te atraganta, puedes saltar al segundo.",
+        "optional": true
+      },
+      {
+        "catalogId": 478,
+        "title": "The Witcher 2: Assassins of Kings",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1wy4.jpg",
+        "releaseDate": "2011-05-17",
+        "chapter": "El matarreyes",
+        "note": "Política y decisiones con consecuencias. Sus elecciones pueden pasar al tercero.",
+        "optional": false
+      },
+      {
+        "catalogId": 1942,
+        "title": "The Witcher 3: Wild Hunt",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coaarl.jpg",
+        "releaseDate": "2015-05-19",
+        "chapter": "La cacería salvaje",
+        "note": "La búsqueda de Ciri. Uno de los grandes juegos de rol de su generación.",
+        "optional": false
+      },
+      {
+        "catalogId": 12503,
+        "title": "The Witcher 3: Wild Hunt - Hearts of Stone",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1t7q.jpg",
+        "releaseDate": "2015-10-12",
+        "chapter": "Expansión: Corazones de piedra",
+        "note": "Una historia breve y muy bien escrita. Juégala después de la principal.",
+        "optional": true
+      },
+      {
+        "catalogId": 13166,
+        "title": "The Witcher 3: Wild Hunt - Blood and Wine",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2lgo.jpg",
+        "releaseDate": "2016-05-30",
+        "chapter": "Expansión: Sangre y vino",
+        "note": "Un nuevo territorio y el epílogo de Geralt.",
+        "optional": true
+      },
+      {
+        "catalogId": 107300,
+        "title": "Thronebreaker: The Witcher Tales",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1qsk.jpg",
+        "releaseDate": "2018-10-23",
+        "chapter": "Cuentos del mundo de The Witcher",
+        "note": "Rol con cartas de Gwent y otra protagonista; independiente.",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "guide-persona",
+    "name": "Persona",
+    "description": "Cada Persona numerado cuenta una historia independiente, así que puedes empezar por cualquiera. Este orden recorre los modernos de más clásico a más pulido. Las versiones ampliadas son la mejor forma de jugarlos hoy.",
+    "order": "recommended",
+    "source": "Selección editorial · https://atlus.com/",
+    "entries": [
+      {
+        "catalogId": 9577,
+        "title": "Persona 3",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co5mo6.jpg",
+        "releaseDate": "2006-07-13",
+        "chapter": "La hora oscura",
+        "note": "Reload es el remake moderno y la forma más cómoda de jugarlo.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 252647,
+            "title": "Persona 3 Reload"
+          }
+        ]
+      },
+      {
+        "catalogId": 9600,
+        "title": "Persona 4",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1u07.jpg",
+        "releaseDate": "2008-07-10",
+        "chapter": "El canal de medianoche",
+        "note": "Misterio en un pueblo rural. Golden añade contenido y se juega mejor.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 2985,
+            "title": "Persona 4 Golden"
+          }
+        ]
+      },
+      {
+        "catalogId": 9927,
+        "title": "Persona 5",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r76.jpg",
+        "releaseDate": "2016-09-15",
+        "chapter": "Los ladrones fantasma",
+        "note": "Estilo y ritmo impecables. Royal amplía la historia con un semestre extra.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 114283,
+            "title": "Persona 5 Royal"
+          }
+        ]
+      },
+      {
+        "catalogId": 11452,
+        "title": "Revelations: Persona",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1u0f.jpg",
+        "releaseDate": "1996-11-01",
+        "chapter": "Los inicios",
+        "note": "Para completistas: muy distinto a los modernos.",
+        "optional": true
+      },
+      {
+        "catalogId": 11453,
+        "title": "Persona 2: Innocent Sin",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co898j.jpg",
+        "releaseDate": "1999-06-24",
+        "chapter": "El dúo de Persona 2",
+        "note": "Eternal Punishment es su continuación directa.",
+        "optional": true,
+        "alternatives": [
+          {
+            "catalogId": 11454,
+            "title": "Persona 2: Eternal Punishment"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guide-resident-evil",
+    "name": "Resident Evil",
+    "description": "La saga principal en orden de lanzamiento, con los remakes como alternativa moderna. Los de Revelations son historias paralelas, y la etapa de Ethan (7 y Village) puede jugarse por separado.",
+    "order": "release",
+    "source": "Selección editorial · https://www.residentevil.com/",
+    "entries": [
+      {
+        "catalogId": 424,
+        "title": "Resident Evil",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co20bp.jpg",
+        "releaseDate": "1996-03-22",
+        "chapter": "La mansión Spencer",
+        "note": "El remake de 2002 es la versión recomendada para jugarlo hoy.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 24869,
+            "title": "Resident Evil"
+          }
+        ]
+      },
+      {
+        "catalogId": 880,
+        "title": "Resident Evil 2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2vz0.jpg",
+        "releaseDate": "1998-01-21",
+        "chapter": "Raccoon City",
+        "note": "El remake de 2019 reinventa el clásico con cámara al hombro.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 19686,
+            "title": "Resident Evil 2"
+          }
+        ]
+      },
+      {
+        "catalogId": 966,
+        "title": "Resident Evil 3: Nemesis",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2vvb.jpg",
+        "releaseDate": "1999-09-22",
+        "chapter": "La huida de Jill",
+        "note": "Hay remake en 2020, más corto pero más espectacular.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 115115,
+            "title": "Resident Evil 3"
+          }
+        ]
+      },
+      {
+        "catalogId": 968,
+        "title": "Resident Evil Code: Veronica",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2vzn.jpg",
+        "releaseDate": "2000-02-03",
+        "chapter": "Los hermanos Ashford",
+        "note": "Continúa la historia de Claire y Chris.",
+        "optional": false
+      },
+      {
+        "catalogId": 970,
+        "title": "Resident Evil Zero",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2w3w.jpg",
+        "releaseDate": "2002-11-12",
+        "chapter": "Antes de la mansión",
+        "note": "Precuela del primero; opcional si no te atrae su sistema de objetos.",
+        "optional": true
+      },
+      {
+        "catalogId": 974,
+        "title": "Resident Evil 4",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co2wk8.jpg",
+        "releaseDate": "2005-01-11",
+        "chapter": "León en Europa",
+        "note": "Cambió la saga hacia la acción. El remake de 2023 es excelente.",
+        "optional": false,
+        "alternatives": [
+          {
+            "catalogId": 132181,
+            "title": "Resident Evil 4"
+          }
+        ]
+      },
+      {
+        "catalogId": 847,
+        "title": "Resident Evil 5",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobtgs.jpg",
+        "releaseDate": "2009-03-05",
+        "chapter": "Chris en África",
+        "note": "Pensado para jugar en cooperativo.",
+        "optional": false
+      },
+      {
+        "catalogId": 978,
+        "title": "Resident Evil: Revelations",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co54dy.jpg",
+        "releaseDate": "2012-01-26",
+        "chapter": "En alta mar",
+        "note": "Historia paralela entre el 4 y el 5, más cercana al terror clásico.",
+        "optional": true
+      },
+      {
+        "catalogId": 1082,
+        "title": "Resident Evil 6",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobgod.jpg",
+        "releaseDate": "2012-10-02",
+        "chapter": "Cuatro campañas",
+        "note": "El más orientado a la acción; útil para cerrar las historias de León y Chris.",
+        "optional": true
+      },
+      {
+        "catalogId": 7725,
+        "title": "Resident Evil: Revelations 2",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co92d9.jpg",
+        "releaseDate": "2015-02-24",
+        "chapter": "Claire y Barry",
+        "note": "Episódico y con buen ritmo; independiente.",
+        "optional": true
+      },
+      {
+        "catalogId": 19562,
+        "title": "Resident Evil 7: Biohazard",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobtwh.jpg",
+        "releaseDate": "2017-01-24",
+        "chapter": "La casa Baker",
+        "note": "Nuevo protagonista y vuelta al terror en primera persona.",
+        "optional": false
+      },
+      {
+        "catalogId": 55163,
+        "title": "Resident Evil Village",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coab9q.jpg",
+        "releaseDate": "2021-05-06",
+        "chapter": "El pueblo",
+        "note": "Continúa la historia de Ethan del séptimo.",
+        "optional": false
+      }
+    ]
+  },
+  {
+    "id": "guide-god-of-war",
+    "name": "God of War",
+    "description": "La historia de Kratos en orden de lanzamiento: primero la etapa griega y después la nórdica. Los juegos de PSP y Ascension amplían la etapa griega, pero se pueden saltar.",
+    "order": "release",
+    "source": "Selección editorial · https://sms.playstation.com/",
+    "entries": [
+      {
+        "catalogId": 549,
+        "title": "God of War",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3ddc.jpg",
+        "releaseDate": "2005-03-22",
+        "chapter": "La venganza contra Ares",
+        "note": "El inicio de la etapa griega.",
+        "optional": false
+      },
+      {
+        "catalogId": 551,
+        "title": "God of War II",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3dik.jpg",
+        "releaseDate": "2007-03-13",
+        "chapter": "Contra el Olimpo",
+        "note": "Continúa justo donde termina el primero.",
+        "optional": false
+      },
+      {
+        "catalogId": 552,
+        "title": "God of War: Chains of Olympus",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3dip.jpg",
+        "releaseDate": "2008-03-04",
+        "chapter": "Precuela en PSP",
+        "note": "Corto y opcional; cuenta un episodio anterior al primero.",
+        "optional": true,
+        "alternatives": [
+          {
+            "catalogId": 550,
+            "title": "God of War: Ghost of Sparta"
+          }
+        ]
+      },
+      {
+        "catalogId": 499,
+        "title": "God of War III",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3koi.jpg",
+        "releaseDate": "2010-03-16",
+        "chapter": "La caída del Olimpo",
+        "note": "El final de la etapa griega.",
+        "optional": false
+      },
+      {
+        "catalogId": 1291,
+        "title": "God of War: Ascension",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3die.jpg",
+        "releaseDate": "2013-03-12",
+        "chapter": "Los orígenes de Kratos",
+        "note": "Precuela opcional con modo multijugador.",
+        "optional": true
+      },
+      {
+        "catalogId": 19560,
+        "title": "God of War",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobkt6.jpg",
+        "releaseDate": "2018-04-20",
+        "chapter": "Kratos y Atreus",
+        "note": "La etapa nórdica; se entiende sin los anteriores, aunque los disfrutarás más.",
+        "optional": false
+      },
+      {
+        "catalogId": 112875,
+        "title": "God of War Ragnarök",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/coba3d.jpg",
+        "releaseDate": "2022-11-09",
+        "chapter": "El fin del mundo nórdico",
+        "note": "Secuela directa del de 2018.",
+        "optional": false
+      }
+    ]
   }
 ]

@@ -10,12 +10,12 @@ import {
   Pencil,
   Plus,
 } from "lucide-react";
-import { RatingInput } from "./rating-input";
+import { RatingInput, Stars } from "./rating-input";
 import { StatusMenu } from "./status-menu";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
 import { Cover, Modal, type ApiRequest, type Execute } from "./shared";
-import { GameDetails } from "./forms";
+import { GameDetails, RunForm } from "./forms";
 import { GameSeries } from "./game-series";
 import { CatalogDetails } from "./catalog-details";
 import { LinkCatalog } from "./link-catalog";
@@ -109,6 +109,8 @@ export function GamePage({
   const [todayNote, setTodayNote] = useState(playedToday?.note ?? ""),
     [noteOpen, setNoteOpen] = useState(false);
   const [whereDraft, setWhereDraft] = useState<string>();
+  // Partida que se está editando en su pestaña ("new" para una nueva).
+  const [editingRun, setEditingRun] = useState<string>();
   const remoteTimes = timesQuery.data,
     loading = timesQuery.loading,
     timeError = timesQuery.error;
@@ -501,63 +503,110 @@ export function GamePage({
           <section className="game-section" id="game-runs">
             <div className="section-header">
               <h2>Mis partidas</h2>
-              <button
-                className="text-link"
-                onClick={() => setEditor("Partidas")}
-              >
-                Gestionar partidas
-              </button>
             </div>
-            {runs.map((r) => (
-              <article className="game-run-summary" key={r.id}>
-                <div>
-                  <h3>{r.label}</h3>
-                  <p>
-                    {r.platform} · {statusLabel(r.status)}
-                    {r.id === game.primaryRunId ? " · Principal" : ""}
-                  </p>
+            <p className="muted text-sm">
+              La partida principal marca el estado del juego en tu biblioteca.
+              Si lo rejuegas, añade otra partida y conserva la anterior.
+            </p>
+            {runs.map((r) =>
+              editingRun === r.id ? (
+                <div className="run-edit" key={r.id}>
+                  <h3>Editar «{r.label}»</h3>
+                  <RunForm
+                    run={r}
+                    game={game}
+                    execute={execute}
+                    onDone={() => setEditingRun(undefined)}
+                    onCancel={() => setEditingRun(undefined)}
+                  />
                 </div>
-                <dl>
-                  <div>
-                    <dt>Comienzo</dt>
-                    <dd>
-                      <DateText date={r.startedOn} />
-                    </dd>
-                  </div>
-                  {r.completedOn && (
+              ) : (
+                <article className="game-run-summary" key={r.id}>
+                  <div className="run-head">
                     <div>
-                      <dt>Finalización</dt>
+                      <h3>
+                        {r.label}
+                        {r.id === game.primaryRunId && (
+                          <span className="run-primary">Principal</span>
+                        )}
+                      </h3>
+                      <p>
+                        {r.platform} · {statusLabel(r.status)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      aria-label={"Editar " + r.label}
+                      onClick={() => setEditingRun(r.id)}
+                    >
+                      <Pencil size={14} /> Editar
+                    </Button>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Comienzo</dt>
                       <dd>
-                        <DateText date={r.completedOn} />
+                        <DateText date={r.startedOn} />
                       </dd>
                     </div>
+                    {r.completedOn && (
+                      <div>
+                        <dt>Finalización</dt>
+                        <dd>
+                          <DateText date={r.completedOn} />
+                        </dd>
+                      </div>
+                    )}
+                    {r.completionMinutes !== undefined && (
+                      <div>
+                        <dt>Mi tiempo real</dt>
+                        <dd>
+                          {Math.floor(r.completionMinutes / 60) +
+                            " h " +
+                            (r.completionMinutes % 60) +
+                            " min"}
+                        </dd>
+                      </div>
+                    )}
+                    {r.rating !== undefined && (
+                      <div>
+                        <dt>Mi nota</dt>
+                        <dd>
+                          <Stars value={r.rating} size={11} />
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                  {r.whereLeft && r.status !== "completado" && (
+                    <p className="run-where">Dónde lo dejé: {r.whereLeft}</p>
                   )}
-                  <div>
-                    <dt>Mi tiempo real</dt>
-                    <dd>
-                      {r.completionMinutes !== undefined
-                        ? Math.floor(r.completionMinutes / 60) +
-                          " h " +
-                          (r.completionMinutes % 60) +
-                          " min"
-                        : "Sin registrar"}
-                    </dd>
-                  </div>
-                  {r.rating && (
-                    <div>
-                      <dt>Mi nota</dt>
-                      <dd>{r.rating}/10</dd>
-                    </div>
+                  {r.review && (
+                    <Markdown className="game-prose" text={r.review} />
                   )}
-                </dl>
-                {r.whereLeft && r.status !== "completado" && (
-                  <p className="run-where">Dónde lo dejé: {r.whereLeft}</p>
-                )}
-                {r.review && (
-                  <Markdown className="game-prose" text={r.review} />
-                )}
-              </article>
-            ))}
+                </article>
+              ),
+            )}
+            {editingRun === "new" ? (
+              <div className="run-edit">
+                <h3>Nueva partida</h3>
+                <RunForm
+                  game={game}
+                  execute={execute}
+                  today={today}
+                  onDone={() => setEditingRun(undefined)}
+                  onCancel={() => setEditingRun(undefined)}
+                />
+              </div>
+            ) : (
+              <Button
+                variant="secondary"
+                className="mt-4"
+                onClick={() => setEditingRun("new")}
+              >
+                <Plus size={16} /> Nueva partida o rejugada
+              </Button>
+            )}
           </section>
         )}
         {tab === "resena" && (
@@ -652,7 +701,6 @@ export function GamePage({
             {
               Ficha: "Editar juego",
               Notas: "Editar notas",
-              Partidas: "Gestionar partidas",
               Tiempos: "Ajustar estimaciones",
             }[editor] ?? editor
           }
@@ -660,8 +708,6 @@ export function GamePage({
             {
               Ficha: "Título, plataformas, tiendas y tu valoración.",
               Notas: "Tu reseña y las notas con spoilers, siempre privadas.",
-              Partidas:
-                "Cada partida o rejugada, con su estado y dónde lo dejaste.",
               Tiempos: "Cuánto dura el juego según IGDB o según tú.",
             }[editor]
           }

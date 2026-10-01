@@ -106,18 +106,6 @@ export function GameCard({
           />
           <span className="game-genre">{g.genres[0]}</span>
         </div>
-        {["jugando", "en pausa"].includes(run.status) && (
-          <details className="resume-note">
-            <summary>Retomar partida</summary>
-            <p>
-              {run.whereLeft ||
-                "Añade una nota en Partidas para recordar dónde lo dejaste."}
-            </p>
-            <button className="text-link" onClick={onOpen}>
-              Abrir partida
-            </button>
-          </details>
-        )}
         <p className="card-time">
           {timeLabels[timeMode]}: {formatHours(hours)}
         </p>

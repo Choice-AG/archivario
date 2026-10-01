@@ -21,6 +21,20 @@ export function sagaCompleted(state: Library, e: SagaEntry) {
     state.runs.some((r) => r.gameId === game.id && r.status === "completado")
   );
 }
+// Estado que se muestra: «completada» cuando están todos los juegos no
+// opcionales; si no, el que hayas elegido (por defecto, siguiéndola).
+export function sagaStatus(state: Library, saga: Saga) {
+  const required = saga.entries.filter((e) => !e.optional);
+  return required.length && required.every((e) => sagaCompleted(state, e))
+    ? "completada"
+    : (saga.status ?? "siguiendo");
+}
+export const sagaStatusLabels = {
+  siguiendo: "Siguiéndola",
+  "en pausa": "En pausa",
+  abandonada: "Abandonada",
+  completada: "Completada",
+} as const;
 export function sagaOrder(saga: Saga) {
   return saga.order === "release"
     ? [...saga.entries].sort(

@@ -27,7 +27,8 @@ import {
   type TimeMode,
 } from "../domain/daily";
 import type { GameSort } from "../domain/insights";
-import { BatchLibrary, ContinuePlaying } from "./library-improvements";
+import { BatchLibrary } from "./library-improvements";
+import { NowPlaying } from "./now-playing";
 import { GameCard, GameRow } from "./game-card";
 import { Welcome } from "./welcome";
 import { MonthCard, Recent } from "./journal";
@@ -65,7 +66,6 @@ export function LibraryView({
   onAdd,
   onPlanning,
   onYear,
-  onActivity,
   onEditActivity,
   onJournal,
   onView,
@@ -85,7 +85,6 @@ export function LibraryView({
   onAdd: () => void;
   onPlanning: () => void;
   onYear: () => void;
-  onActivity: (gameId: string) => void;
   onEditActivity: (a: Activity) => void;
   onJournal: () => void;
   onView: (view: string) => void;
@@ -221,10 +220,21 @@ export function LibraryView({
         </Button>
       </div>
       {view === "Biblioteca" && (
-        <ContinuePlaying
+        <NowPlaying
           state={state}
+          playedToday={playedToday}
+          busy={busy}
           onGame={onGame}
-          onActivity={onActivity}
+          onToday={markToday}
+          onResume={(g) => {
+            const r = runOf(g);
+            if (r)
+              run({
+                type: "save-run",
+                run: changeRunStatus(r, "jugando", today),
+                primary: true,
+              });
+          }}
         />
       )}
       <div className="library-tools">

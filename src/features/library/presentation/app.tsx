@@ -551,9 +551,6 @@ function Dashboard({
                   onAdd={() => setModal({ kind: "add" })}
                   onPlanning={() => setModal({ kind: "planning" })}
                   onYear={() => setModal({ kind: "year" })}
-                  onActivity={(id) =>
-                    setModal({ kind: "activity", id, date: today })
-                  }
                   onEditActivity={(a) =>
                     setModal({ kind: "activity", activity: a })
                   }

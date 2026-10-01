@@ -4,11 +4,10 @@ import { StatusMenu } from "./status-menu";
 import { GameTimeForm } from "./game-times";
 import { CatalogDetails } from "./catalog-details";
 import { useState } from "react";
-import { Plus, Trash2, Save, Check } from "lucide-react";
+import { Trash2, Save, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   activityId,
-  dateInZone,
   type Activity,
   type Game,
   type Library,
@@ -54,9 +53,7 @@ export function GameDetails({
   const tab = initialSection;
   const [error, setError] = useState(""),
     [pending, setPending] = useState(false),
-    [newRun, setNewRun] = useState(false),
     [confirmDelete, setConfirmDelete] = useState(false);
-  const runs = state.runs.filter((r) => r.gameId === game.id);
   return (
     <div>
       <FormError message={error} />
@@ -292,65 +289,23 @@ export function GameDetails({
           </Button>
         </form>
       )}
-      {tab === "Partidas" && (
-        <div>
-          <p className="info-note">
-            La partida principal determina el estado de la biblioteca. El grado
-            de finalización es independiente del estado.
-          </p>
-          {runs.map((r) => (
-            <details
-              className="run-panel"
-              key={r.id}
-              open={runs.length === 1 || undefined}
-            >
-              <summary>
-                <span>
-                  {r.label}
-                  <small>
-                    {r.platform} · {statusLabel(r.status)}
-                  </small>
-                </span>
-                {game.primaryRunId === r.id && (
-                  <span className="status-badge">Principal</span>
-                )}
-              </summary>
-              <RunForm key={r.id} run={r} game={game} execute={execute} />
-            </details>
-          ))}
-          {newRun ? (
-            <RunForm
-              game={game}
-              execute={execute}
-              today={dateInZone(new Date(), state.profile.timezone)}
-              onDone={() => setNewRun(false)}
-            />
-          ) : (
-            <Button
-              variant="secondary"
-              className="mt-4"
-              onClick={() => setNewRun(true)}
-            >
-              <Plus size={16} /> Nueva partida o rejugada
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
-function RunForm({
+export function RunForm({
   run,
   game,
   execute,
   today,
   onDone,
+  onCancel,
 }: {
   run?: Run;
   game: Game;
   execute: Execute;
   today?: string;
   onDone?: () => void;
+  onCancel?: () => void;
 }) {
   const [status, setStatus] = useState(run?.status ?? "jugando"),
     [pending, setPending] = useState(false),
@@ -430,19 +385,6 @@ function RunForm({
             onChange={setStatus}
           />
         </div>
-        <label>
-          Grado de finalización
-          <select
-            name="completion"
-            defaultValue={run?.completion ?? "sin especificar"}
-          >
-            {["sin especificar", "historia", "100%"].map((s) => (
-              <option key={s} value={s}>
-                {statusLabel(s)}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
       <div className="form-grid">
         <label>
@@ -484,68 +426,94 @@ function RunForm({
           defaultValue={run?.rating}
         />
       </div>
-      <label>
-        Reseña de esta partida
-        <textarea
-          name="runReview"
-          rows={4}
-          maxLength={5000}
-          defaultValue={run?.review}
-          aria-describedby={"run-review-format-" + (run?.id ?? "new")}
-        />
-      </label>
-      <p id={"run-review-format-" + (run?.id ?? "new")} className="field-hint">
-        {markdownHint}
-      </p>
-      <fieldset className="time-field">
-        <legend>Tiempo de finalización, opcional</legend>
-        <p>
-          Introduce el total que indica el juego. No se calcula a partir del
-          calendario.
+      <details className="run-more">
+        <summary>Más detalles: reseña, tiempo y finalización</summary>
+        <label>
+          Grado de finalización
+          <select
+            name="completion"
+            defaultValue={run?.completion ?? "sin especificar"}
+          >
+            {["sin especificar", "historia", "100%"].map((s) => (
+              <option key={s} value={s}>
+                {statusLabel(s)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Reseña de esta partida
+          <textarea
+            name="runReview"
+            rows={4}
+            maxLength={5000}
+            defaultValue={run?.review}
+            aria-describedby={"run-review-format-" + (run?.id ?? "new")}
+          />
+        </label>
+        <p
+          id={"run-review-format-" + (run?.id ?? "new")}
+          className="field-hint"
+        >
+          {markdownHint}
         </p>
-        <div className="form-grid">
-          <label>
-            Horas
-            <input
-              name="hours"
-              type="number"
-              min={0}
-              max={10000}
-              defaultValue={
-                run?.completionMinutes !== undefined
-                  ? Math.floor(run.completionMinutes / 60)
-                  : ""
-              }
-            />
-          </label>
-          <label>
-            Minutos
-            <input
-              name="minutes"
-              type="number"
-              min={0}
-              max={59}
-              defaultValue={
-                run?.completionMinutes !== undefined
-                  ? run.completionMinutes % 60
-                  : ""
-              }
-            />
-          </label>
-        </div>
-      </fieldset>
-      <label className="checkbox-label">
-        <input
-          type="checkbox"
-          name="primary"
-          defaultChecked={!run || run.id === game.primaryRunId}
-        />{" "}
-        Usar como partida principal
-      </label>
+        <fieldset className="time-field">
+          <legend>Tiempo de finalización, opcional</legend>
+          <p>
+            Introduce el total que indica el juego. No se calcula a partir del
+            calendario.
+          </p>
+          <div className="form-grid">
+            <label>
+              Horas
+              <input
+                name="hours"
+                type="number"
+                min={0}
+                max={10000}
+                defaultValue={
+                  run?.completionMinutes !== undefined
+                    ? Math.floor(run.completionMinutes / 60)
+                    : ""
+                }
+              />
+            </label>
+            <label>
+              Minutos
+              <input
+                name="minutes"
+                type="number"
+                min={0}
+                max={59}
+                defaultValue={
+                  run?.completionMinutes !== undefined
+                    ? run.completionMinutes % 60
+                    : ""
+                }
+              />
+            </label>
+          </div>
+        </fieldset>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            name="primary"
+            defaultChecked={!run || run.id === game.primaryRunId}
+          />{" "}
+          Usar como partida principal
+        </label>
+      </details>
       <FormError message={error} />
-      <Button disabled={pending} className="mt-3">
-        <Check size={16} /> Guardar partida
-      </Button>
+      <div className="form-actions">
+        <Button disabled={pending}>
+          <Check size={16} /> Guardar partida
+        </Button>
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancelar
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

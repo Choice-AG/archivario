@@ -87,7 +87,11 @@ export type SagaEntry = {
   note: string;
   optional: boolean;
 };
+// Cómo vas con una saga guardada. «Completada» se calcula a partir de sus juegos.
+export const sagaStatuses = ["siguiendo", "en pausa", "abandonada"] as const;
+export type SagaStatus = (typeof sagaStatuses)[number];
 export type Saga = {
+  status?: SagaStatus;
   id: string;
   name: string;
   description: string;

@@ -109,19 +109,14 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
   await page.getByRole("button", { name: "Guardar notas" }).click();
   await page.getByRole("button", { name: "Cerrar", exact: true }).click();
   await openTab(page, "Partidas");
-  await page
-    .getByRole("button", { name: "Gestionar partidas", exact: true })
-    .click();
   await page.getByRole("button", { name: "Nueva partida o rejugada" }).click();
   await page
     .getByRole("textbox", { name: "Nombre de la partida" })
-    .last()
     .fill("Segunda escapada");
-  await page.getByRole("button", { name: "Guardar partida" }).last().click();
+  await page.getByRole("button", { name: "Guardar partida" }).click();
   await expect(
-    page.locator("summary").filter({ hasText: "Segunda escapada" }),
+    page.getByRole("heading", { name: "Segunda escapada", level: 3 }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
   await page
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
@@ -270,14 +265,15 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await openTab(page, "Partidas");
   await page
-    .getByRole("button", { name: "Gestionar partidas", exact: true })
+    .getByRole("button", { name: "Editar Primera partida", exact: true })
     .click();
   await setRating(page, "Valoración de esta partida", 8.5);
+  await page.getByText("Más detalles: reseña, tiempo y finalización").click();
   await page.getByLabel("Reseña de esta partida").fill("Me ha gustado aún más");
   await page
     .getByRole("button", { name: "Guardar partida", exact: true })
     .click();
-  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await expect(page.getByText("Me ha gustado aún más")).toBeVisible();
   await page
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
@@ -303,15 +299,16 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await openTab(page, "Partidas");
   await page
-    .getByRole("button", { name: "Gestionar partidas", exact: true })
+    .getByRole("button", { name: "Editar Primera partida", exact: true })
     .click();
+  await page.getByText("Más detalles: reseña, tiempo y finalización").click();
   await expect(page.getByLabel("Reseña de esta partida")).toHaveValue(
     "Me ha gustado aún más",
   );
   await expect(
     page.getByRole("slider", { name: "Valoración de esta partida" }),
   ).toHaveAttribute("aria-valuenow", "8.5");
-  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click();
   await page
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
@@ -332,8 +329,11 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
       exact: true,
     }),
   });
-  await card.getByText("Retomar partida", { exact: true }).click();
-  await expect(card.getByText(/Explorando Ciudad/)).toBeVisible();
+  // «Dónde lo dejé» se ve en «Ahora jugando», no en cada tarjeta.
+  await expect(
+    page.locator(".continue-section").getByText(/Explorando Ciudad/),
+  ).toBeVisible();
+  await expect(card.getByText(/Explorando Ciudad/)).toHaveCount(0);
   await chooseStatus(page, page, "Hollow Knight", "completado");
   // Completar un juego lo celebra e invita a la reseña.
   await expect(
@@ -497,7 +497,7 @@ test("sagas preparadas, recorrido, edición, guardado y enlace directo", async (
   await expect(
     page.getByRole("heading", { name: "Historias que merecen un recorrido." }),
   ).toBeVisible();
-  await expect(page.locator(".saga-tile")).toHaveCount(7);
+  await expect(page.locator(".saga-tile")).toHaveCount(14);
   await page
     .locator(".saga-tile")
     .filter({
@@ -650,7 +650,7 @@ test("buscador global, continuar, lote y varios juegos en un día", async ({
 }) => {
   await page.goto("/?demo=1");
   await expect(
-    page.getByRole("heading", { name: "Continuar donde lo dejé" }),
+    page.getByRole("heading", { name: "Ahora jugando" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Buscar en Archivario" }).click();
   await page.getByLabel("Buscar en todo").fill("Kingdom");
@@ -1161,18 +1161,16 @@ test("el estado de una partida se elige con el menú de colores", async ({
   await page.goto("/juegos/disco?demo=1");
   await openTab(page, "Partidas");
   await page
-    .getByRole("button", { name: "Gestionar partidas", exact: true })
+    .getByRole("button", { name: "Editar Primera partida", exact: true })
     .click();
-  const dialog = page.getByRole("dialog");
-  await dialog
-    .getByRole("button", { name: /^Estado de esta partida/ })
-    .first()
-    .click();
+  const form = page.locator(".run-edit");
+  await form.getByRole("button", { name: /^Estado de esta partida/ }).click();
   await page.getByRole("menuitemradio", { name: "Completado" }).click();
   await expect(
-    dialog.getByRole("button", { name: /^Estado de esta partida: Completado/ }),
+    form.getByRole("button", { name: /^Estado de esta partida: Completado/ }),
   ).toHaveCount(1);
-  await expect(dialog).toBeVisible();
+  // Al completarla aparece la fecha de finalización.
+  await expect(form.getByLabel("Finalización", { exact: true })).toBeVisible();
 });
 
 test("la zona horaria se busca por ciudad", async ({ page }) => {
@@ -1338,4 +1336,63 @@ test("los ajustes avisan de cambios sin guardar y muestran el aviso en su secci�
     .poll(async () => (await demoData(page)).profile)
     .toMatchObject({ name: "Sam", avatarColor: "azul" });
   await expect(perfil.getByText("Tienes cambios sin guardar.")).toHaveCount(0);
+});
+
+test("ahora jugando registra el día y retoma lo que está en pausa", async ({
+  page,
+}) => {
+  await openDemo(page);
+  const now = page.locator(".continue-section");
+  await expect(
+    now.getByRole("heading", { name: "Ahora jugando" }),
+  ).toBeVisible();
+  // Celeste pasa a «en pausa» y aparece abajo para retomarla.
+  await chooseStatus(page, page, "Celeste", "en pausa");
+  await expect(
+    now.getByRole("button", { name: "Retomar Celeste" }),
+  ).toBeVisible();
+  await now.getByRole("button", { name: "Retomar Celeste" }).click();
+  await expect(statusButton(page, "Celeste")).toHaveAttribute(
+    "data-status",
+    "jugando",
+  );
+  await now.getByRole("button", { name: "He jugado hoy: Celeste" }).click();
+  await expect(
+    now.getByRole("button", { name: "Registrado hoy: Celeste" }),
+  ).toBeVisible();
+});
+
+test("una saga guardada se pausa, se abandona y se quita", async ({ page }) => {
+  await page.goto("/sagas/guide-mass-effect?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Mass Effect", level: 1 }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Guardar saga", exact: true }).click();
+  const status = page.getByRole("radiogroup", { name: "Estado de la saga" });
+  await expect(
+    status.getByRole("radio", { name: "Siguiéndola" }),
+  ).toHaveAttribute("aria-checked", "true");
+  await status.getByRole("radio", { name: "En pausa" }).click();
+  await expect
+    .poll(
+      async () =>
+        (await demoData(page)).sagas?.find(
+          (s: { id: string }) => s.id === "guide-mass-effect",
+        )?.status,
+    )
+    .toBe("en pausa");
+  await page.getByRole("button", { name: "← Volver a Sagas" }).click();
+  await expect(
+    page
+      .locator(".saved-sagas")
+      .getByText("En pausa", { exact: false })
+      .first(),
+  ).toBeVisible();
+  await page.locator(".saved-sagas .saga-tile").first().click();
+  await status.getByRole("radio", { name: "Abandonada" }).click();
+  await page.getByRole("button", { name: "Quitar de Mis sagas" }).click();
+  await page.getByRole("button", { name: "Sí, quitar de Mis sagas" }).click();
+  await expect
+    .poll(async () => (await demoData(page)).sagas ?? [])
+    .toHaveLength(0);
 });
