@@ -7,6 +7,15 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      # La app corre en Node 22: los tipos deben coincidir con esa versión.
+      - dependency-name: "@types/node"
+        versions: [">=23"]
+      # Versiones mayores con cambios incompatibles: se actualizarán a mano.
+      - dependency-name: typescript
+        versions: [">=6"]
+      - dependency-name: eslint
+        versions: [">=10"]
     groups:
       # Parches y versiones menores juntos para no llenar la lista de PRs.
       minor-and-patch:
