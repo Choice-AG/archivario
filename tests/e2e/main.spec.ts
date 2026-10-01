@@ -1422,3 +1422,27 @@ test("el menú lateral muestra un carrusel con lo que estás jugando", async ({
   await side.getByRole("button", { name: "Abrir la ficha de Hades" }).click();
   await expect(page).toHaveURL(/\/juegos\/hades/);
 });
+
+test("la ficha de un juego del catálogo también va por pestañas", async ({
+  page,
+}) => {
+  await page.goto("/juegos/igdb-1219?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Kingdom Hearts", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Resumen" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Sobre el juego", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Saga" }).click();
+  await expect(page).toHaveURL(/#saga$/);
+  await expect(
+    page.getByRole("heading", { name: "Otros juegos de la saga" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Sobre el juego", exact: true }),
+  ).toHaveCount(0);
+});

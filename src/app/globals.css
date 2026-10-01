@@ -6929,3 +6929,32 @@ button.heat:focus-visible {
   margin-top: auto;
   padding-top: 8px;
 }
+
+/* Ficha del catálogo */
+.catalog-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0 6px;
+}
+.catalog-facts dt {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.catalog-facts dd {
+  font-size: 14px;
+}
+.catalog-videos {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .catalog-facts {
+    grid-template-columns: 1fr;
+  }
+}

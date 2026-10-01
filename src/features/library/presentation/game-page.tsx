@@ -1,6 +1,7 @@
 "use client";
 import { DateText, statusLabel } from "./format";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
+import { GameTabs, useHashTab } from "./tabs";
 import {
   ArrowLeft,
   CalendarPlus,
@@ -27,29 +28,6 @@ import { activityId, type Game, type Library } from "../domain/model";
 
 const tabIds = ["resumen", "partidas", "resena", "diario", "juego"] as const;
 type Tab = (typeof tabIds)[number];
-
-// La pestaña vive en el fragmento de la URL (#partidas…): se puede enlazar y
-// el botón Atrás del navegador vuelve a la anterior.
-const subscribe = (cb: () => void) => {
-  window.addEventListener("hashchange", cb);
-  return () => window.removeEventListener("hashchange", cb);
-};
-function useHashTab(): [Tab, (tab: Tab) => void] {
-  const hash = useSyncExternalStore(
-    subscribe,
-    () => window.location.hash.slice(1),
-    () => "",
-  );
-  const tab = (tabIds as readonly string[]).includes(hash)
-    ? (hash as Tab)
-    : "resumen";
-  return [
-    tab,
-    (next) => {
-      if (next !== tab) window.location.hash = next;
-    },
-  ];
-}
 
 export function GamePage({
   game,
@@ -81,7 +59,7 @@ export function GamePage({
   const [editor, setEditor] = useState<string>(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const [tab, setTab] = useHashTab();
+  const [tab, setTab] = useHashTab(tabIds);
   // Al celebrar que se ha completado, se cierra el editor que esté abierto.
   const [wasCelebrating, setWasCelebrating] = useState(celebrating);
   if (celebrating !== wasCelebrating) {
@@ -330,36 +308,7 @@ export function GamePage({
           {error}
         </p>
       )}
-      <div
-        className="game-tabs"
-        role="tablist"
-        aria-label="Secciones de la ficha"
-        onKeyDown={(e) => {
-          const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-          if (!step) return;
-          e.preventDefault();
-          const i = tabIds.indexOf(tab);
-          const next = tabIds[(i + step + tabIds.length) % tabIds.length];
-          setTab(next);
-          document.getElementById("tab-" + next)?.focus();
-        }}
-      >
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            id={"tab-" + t.id}
-            role="tab"
-            aria-selected={tab === t.id}
-            aria-controls={"panel-" + t.id}
-            tabIndex={tab === t.id ? 0 : -1}
-            className={tab === t.id ? "active" : ""}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-            {!!t.count && <small>{t.count}</small>}
-          </button>
-        ))}
-      </div>
+      <GameTabs tabs={tabs} active={tab} onSelect={setTab} />
       <div
         className="game-tab-panel"
         role="tabpanel"
