@@ -324,6 +324,11 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
   await card.getByText("Retomar partida", { exact: true }).click();
   await expect(card.getByText(/Explorando Ciudad/)).toBeVisible();
   await chooseStatus(page, page, "Hollow Knight", "completado");
+  // Completar un juego lo celebra e invita a la reseña.
+  await expect(
+    page.getByRole("heading", { name: "¡Has completado Hollow Knight!" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Ahora no" }).click();
   await expect(statusButton(page, "Hollow Knight")).toHaveAttribute(
     "data-status",
     "completado",
@@ -1187,4 +1192,34 @@ test("el calendario muestra portadas y el aviso no tapa el buscador", async ({
   await expect(toast).toBeVisible();
   const box = (await toast.boundingBox())!;
   expect(box.y).toBeGreaterThan((page.viewportSize()?.height ?? 900) / 2);
+});
+
+test("completar un juego lo celebra y lleva a la reseña", async ({ page }) => {
+  await page.goto("/juegos/disco?demo=1");
+  await page
+    .getByRole("button", { name: /^Estado de la partida principal/ })
+    .click();
+  await page.getByRole("menuitemradio", { name: "Completado" }).click();
+  await expect(
+    page.getByRole("heading", { name: "¡Has completado Disco Elysium!" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Escribir la reseña" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).toHaveURL(/#resena$/);
+  await expect(
+    page.getByRole("heading", { name: "Mi reseña", exact: true }),
+  ).toBeVisible();
+});
+
+test("los ajustes se dividen en secciones con índice", async ({ page }) => {
+  await page.goto("/perfil/ajustes?demo=1");
+  const index = page.getByRole("navigation", {
+    name: "Secciones de los ajustes",
+  });
+  for (const name of ["Perfil", "Apariencia", "Tus datos", "Cuenta"])
+    await expect(page.getByRole("region", { name, exact: true })).toBeVisible();
+  await index.getByRole("link", { name: "Cuenta" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Cuenta", exact: true }),
+  ).toBeInViewport();
 });

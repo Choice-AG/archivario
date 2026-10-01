@@ -37,7 +37,7 @@ export function SettingsPage({
         </h1>
         <p className="muted">Tu perfil y tus notas son privados.</p>
       </header>
-      <section className="panel">
+      <div>
         <SettingsPanel
           state={state}
           execute={execute}
@@ -45,7 +45,7 @@ export function SettingsPage({
           demo={demo}
           onClose={onLibrary}
         />
-      </section>
+      </div>
     </div>
   );
 }

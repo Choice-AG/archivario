@@ -36,6 +36,12 @@ const avatarColorLabels: Record<AvatarColor, string> = {
   azul: "Azul",
   gris: "Gris",
 };
+const settingsSections = [
+  ["perfil", "Perfil"],
+  ["apariencia", "Apariencia"],
+  ["datos", "Tus datos"],
+  ["cuenta", "Cuenta"],
+] as const;
 function FormError({ message }: { message: string }) {
   return message ? (
     <p className="form-error" role="alert">
@@ -778,241 +784,38 @@ export function SettingsPanel({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <div>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setPending(true);
-          setError("");
-          const f = new FormData(e.currentTarget);
-          try {
-            await execute({
-              type: "profile",
-              profile: {
-                ...state.profile,
-                name: value(f, "name"),
-                bio: value(f, "bio"),
-                timezone: value(f, "timezone"),
-              },
-            });
-            setNotice("Perfil guardado.");
-          } catch (e) {
-            setError(message(e));
-          } finally {
-            setPending(false);
-          }
-        }}
+    <div className="settings-sections">
+      {/* Índice de secciones: la página es larga y así se salta directo. */}
+      <nav className="settings-index" aria-label="Secciones de los ajustes">
+        {settingsSections.map(([id, title]) => (
+          <a key={id} href={"#ajustes-" + id}>
+            {title}
+          </a>
+        ))}
+      </nav>
+      <section
+        className="settings-section"
+        id="ajustes-perfil"
+        aria-labelledby="ajustes-perfil-title"
       >
-        <label>
-          Nombre
-          <input name="name" defaultValue={state.profile.name} maxLength={80} />
-        </label>
-        <label>
-          Bio <small>Opcional</small>
-          <textarea
-            name="bio"
-            rows={2}
-            defaultValue={state.profile.bio}
-            maxLength={300}
-          />
-        </label>
-        <TimezoneField name="timezone" defaultValue={state.profile.timezone} />
-        <p className="info-note">
-          Cambiar la zona horaria afecta a «hoy». Las fechas ya registradas no
-          se desplazan.
-        </p>
-        <Button disabled={pending}>
-          <Save size={16} /> Guardar perfil
-        </Button>
-      </form>
-      <ThemePicker />
-      <div className="divider" />
-      <fieldset className="avatar-picker">
-        <legend>Color del avatar</legend>
-        <div className="profile-avatar-preview">
-          <Avatar profile={state.profile} />
-          <div
-            className="avatar-swatches"
-            role="radiogroup"
-            aria-label="Color del avatar"
-          >
-            {avatarColors.map((c) => {
-              const selected = (state.profile.avatarColor ?? "violeta") === c;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  aria-label={avatarColorLabels[c]}
-                  className={"avatar-swatch avatar-" + c}
-                  disabled={pending}
-                  onClick={async () => {
-                    if (selected) return;
-                    setPending(true);
-                    setError("");
-                    try {
-                      await execute({
-                        type: "profile",
-                        profile: { ...state.profile, avatarColor: c },
-                      });
-                    } catch (e) {
-                      setError(message(e));
-                    } finally {
-                      setPending(false);
-                    }
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
-        <p className="muted text-sm">
-          Tu avatar usa la inicial de tu nombre sobre este color.
-        </p>
-      </fieldset>
-      <div className="divider" />
-      <h3>Tu biblioteca te pertenece.</h3>
-      <p className="muted text-sm my-2">
-        Exporta juegos, partidas, notas y días de actividad.
-      </p>
-      <div className="form-actions">
-        <Button variant="secondary" onClick={download}>
-          <Download size={16} /> Exportar JSON
-        </Button>
-        <Button variant="secondary" onClick={downloadCsv}>
-          <Download size={16} /> Exportar CSV
-        </Button>
-        <label className="upload-label">
-          <Upload size={16} /> Importar JSON
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setError("");
-              setIncoming(undefined);
-              try {
-                if (file.size > 500000)
-                  throw new Error("El archivo supera los 500 KB.");
-                const backup = backupSchema.parse(
-                  JSON.parse(await file.text()),
-                );
-                setIncoming(backup);
-              } catch (e) {
-                setError("No se puede importar: " + message(e));
-              }
-              e.target.value = "";
-            }}
-          />
-        </label>
-      </div>
-      {incoming && preview && (
-        <div className="import-preview">
-          <h3>Vista previa · formato v1</h3>
-          <p>
-            {preview.newGames} juegos nuevos · {preview.duplicates.length}{" "}
-            duplicados · {preview.activities} actividades en el archivo
-          </p>
-          {preview.duplicates.length > 0 && (
-            <p className="muted">Duplicados: {preview.duplicates.join(", ")}</p>
-          )}
-          <label>
-            Política de importación
-            <select
-              value={policy}
-              onChange={(e) => setPolicy(e.target.value as "skip" | "replace")}
-            >
-              <option value="skip">
-                Añadir nuevos; omitir juegos duplicados completos
-              </option>
-              <option value="replace">
-                Reemplazar toda mi biblioteca y perfil
-              </option>
-            </select>
-          </label>
-          <p className="info-note">
-            {policy === "skip"
-              ? "Los duplicados conservan sus partidas y actividad actuales. Los nuevos se añaden fuera de «Próximos»."
-              : "Se sustituirán todos tus juegos, partidas, actividad y perfil por el archivo. Exporta primero si quieres conservarlos."}
-          </p>
-          <Button
-            disabled={pending}
-            onClick={async () => {
-              setPending(true);
-              try {
-                await execute({ type: "import", data: incoming.data, policy });
-                setIncoming(undefined);
-                setNotice("Importación completada.");
-              } catch (e) {
-                setError(message(e));
-              } finally {
-                setPending(false);
-              }
-            }}
-          >
-            Confirmar importación
-          </Button>
-        </div>
-      )}
-      <div className="divider" />
-      <ImportGames
-        state={state}
-        execute={execute}
-        request={request}
-        demo={demo}
-      />
-      <div className="danger-area">
-        <h3>
-          {demo
-            ? "Borrar datos de demostración"
-            : "Eliminar cuenta y todos mis datos"}
-        </h3>
-        <p className="muted text-sm my-3">
-          {demo
-            ? "Esto vacía los ejemplos guardados en este navegador."
-            : "Se borrarán perfil, juegos, partidas, actividad. Esta acción no se puede deshacer. Requiere haber iniciado sesión en los últimos cinco minutos."}
-        </p>
-        <label>
-          Escribe ELIMINAR
-          <input value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-        </label>
-        <Button
-          variant="destructive"
-          disabled={confirm !== "ELIMINAR" || pending}
-          onClick={async () => {
+        <h2 id="ajustes-perfil-title">Perfil</h2>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
             setPending(true);
             setError("");
+            const f = new FormData(e.currentTarget);
             try {
-              if (demo) {
-                await execute({
-                  type: "import",
-                  policy: "replace",
-                  data: {
-                    revision: 0,
-                    games: [],
-                    runs: [],
-                    activities: [],
-                    profile: {
-                      name: "",
-                      bio: "",
-                      timezone: state.profile.timezone,
-                    },
-                  },
-                });
-                onClose();
-              } else {
-                await request("/api/account", {
-                  method: "DELETE",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ confirm }),
-                });
-                const { signOut } = await import("firebase/auth");
-                const { clientAuth } =
-                  await import("@/features/account/firebase-client");
-                await signOut(clientAuth());
-              }
+              await execute({
+                type: "profile",
+                profile: {
+                  ...state.profile,
+                  name: value(f, "name"),
+                  bio: value(f, "bio"),
+                  timezone: value(f, "timezone"),
+                },
+              });
+              setNotice("Perfil guardado.");
             } catch (e) {
               setError(message(e));
             } finally {
@@ -1020,10 +823,264 @@ export function SettingsPanel({
             }
           }}
         >
-          <Trash2 size={16} />{" "}
-          {demo ? "Borrar demostración" : "Eliminar cuenta"}
-        </Button>
-      </div>
+          <label>
+            Nombre
+            <input
+              name="name"
+              defaultValue={state.profile.name}
+              maxLength={80}
+            />
+          </label>
+          <label>
+            Bio <small>Opcional</small>
+            <textarea
+              name="bio"
+              rows={2}
+              defaultValue={state.profile.bio}
+              maxLength={300}
+            />
+          </label>
+          <TimezoneField
+            name="timezone"
+            defaultValue={state.profile.timezone}
+          />
+          <p className="info-note">
+            Cambiar la zona horaria afecta a «hoy». Las fechas ya registradas no
+            se desplazan.
+          </p>
+          <Button disabled={pending}>
+            <Save size={16} /> Guardar perfil
+          </Button>
+        </form>
+        <fieldset className="avatar-picker">
+          <legend>Color del avatar</legend>
+          <div className="profile-avatar-preview">
+            <Avatar profile={state.profile} />
+            <div
+              className="avatar-swatches"
+              role="radiogroup"
+              aria-label="Color del avatar"
+            >
+              {avatarColors.map((c) => {
+                const selected = (state.profile.avatarColor ?? "violeta") === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={avatarColorLabels[c]}
+                    className={"avatar-swatch avatar-" + c}
+                    disabled={pending}
+                    onClick={async () => {
+                      if (selected) return;
+                      setPending(true);
+                      setError("");
+                      try {
+                        await execute({
+                          type: "profile",
+                          profile: { ...state.profile, avatarColor: c },
+                        });
+                      } catch (e) {
+                        setError(message(e));
+                      } finally {
+                        setPending(false);
+                      }
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          <p className="muted text-sm">
+            Tu avatar usa la inicial de tu nombre sobre este color.
+          </p>
+        </fieldset>
+      </section>
+      <section
+        className="settings-section"
+        id="ajustes-apariencia"
+        aria-labelledby="ajustes-apariencia-title"
+      >
+        <h2 id="ajustes-apariencia-title">Apariencia</h2>
+        <ThemePicker />
+      </section>
+      <section
+        className="settings-section"
+        id="ajustes-datos"
+        aria-labelledby="ajustes-datos-title"
+      >
+        <h2 id="ajustes-datos-title">Tus datos</h2>
+        <h3>Tu biblioteca te pertenece.</h3>
+        <p className="muted text-sm my-2">
+          Exporta juegos, partidas, notas y días de actividad.
+        </p>
+        <div className="form-actions">
+          <Button variant="secondary" onClick={download}>
+            <Download size={16} /> Exportar JSON
+          </Button>
+          <Button variant="secondary" onClick={downloadCsv}>
+            <Download size={16} /> Exportar CSV
+          </Button>
+          <label className="upload-label">
+            <Upload size={16} /> Importar JSON
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setError("");
+                setIncoming(undefined);
+                try {
+                  if (file.size > 500000)
+                    throw new Error("El archivo supera los 500 KB.");
+                  const backup = backupSchema.parse(
+                    JSON.parse(await file.text()),
+                  );
+                  setIncoming(backup);
+                } catch (e) {
+                  setError("No se puede importar: " + message(e));
+                }
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+        {incoming && preview && (
+          <div className="import-preview">
+            <h3>Vista previa · formato v1</h3>
+            <p>
+              {preview.newGames} juegos nuevos · {preview.duplicates.length}{" "}
+              duplicados · {preview.activities} actividades en el archivo
+            </p>
+            {preview.duplicates.length > 0 && (
+              <p className="muted">
+                Duplicados: {preview.duplicates.join(", ")}
+              </p>
+            )}
+            <label>
+              Política de importación
+              <select
+                value={policy}
+                onChange={(e) =>
+                  setPolicy(e.target.value as "skip" | "replace")
+                }
+              >
+                <option value="skip">
+                  Añadir nuevos; omitir juegos duplicados completos
+                </option>
+                <option value="replace">
+                  Reemplazar toda mi biblioteca y perfil
+                </option>
+              </select>
+            </label>
+            <p className="info-note">
+              {policy === "skip"
+                ? "Los duplicados conservan sus partidas y actividad actuales. Los nuevos se añaden fuera de «Próximos»."
+                : "Se sustituirán todos tus juegos, partidas, actividad y perfil por el archivo. Exporta primero si quieres conservarlos."}
+            </p>
+            <Button
+              disabled={pending}
+              onClick={async () => {
+                setPending(true);
+                try {
+                  await execute({
+                    type: "import",
+                    data: incoming.data,
+                    policy,
+                  });
+                  setIncoming(undefined);
+                  setNotice("Importación completada.");
+                } catch (e) {
+                  setError(message(e));
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              Confirmar importación
+            </Button>
+          </div>
+        )}
+        <ImportGames
+          state={state}
+          execute={execute}
+          request={request}
+          demo={demo}
+        />
+      </section>
+      <section
+        className="settings-section"
+        id="ajustes-cuenta"
+        aria-labelledby="ajustes-cuenta-title"
+      >
+        <h2 id="ajustes-cuenta-title">Cuenta</h2>
+        <div className="danger-area">
+          <h3>
+            {demo
+              ? "Borrar datos de demostración"
+              : "Eliminar cuenta y todos mis datos"}
+          </h3>
+          <p className="muted text-sm my-3">
+            {demo
+              ? "Esto vacía los ejemplos guardados en este navegador."
+              : "Se borrarán perfil, juegos, partidas, actividad. Esta acción no se puede deshacer. Requiere haber iniciado sesión en los últimos cinco minutos."}
+          </p>
+          <label>
+            Escribe ELIMINAR
+            <input
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </label>
+          <Button
+            variant="destructive"
+            disabled={confirm !== "ELIMINAR" || pending}
+            onClick={async () => {
+              setPending(true);
+              setError("");
+              try {
+                if (demo) {
+                  await execute({
+                    type: "import",
+                    policy: "replace",
+                    data: {
+                      revision: 0,
+                      games: [],
+                      runs: [],
+                      activities: [],
+                      profile: {
+                        name: "",
+                        bio: "",
+                        timezone: state.profile.timezone,
+                      },
+                    },
+                  });
+                  onClose();
+                } else {
+                  await request("/api/account", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ confirm }),
+                  });
+                  const { signOut } = await import("firebase/auth");
+                  const { clientAuth } =
+                    await import("@/features/account/firebase-client");
+                  await signOut(clientAuth());
+                }
+              } catch (e) {
+                setError(message(e));
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            <Trash2 size={16} />{" "}
+            {demo ? "Borrar demostración" : "Eliminar cuenta"}
+          </Button>
+        </div>
+      </section>
       <FormError message={error} />
       <p role="status" className="text-sm accent-text mt-3">
         {notice}
