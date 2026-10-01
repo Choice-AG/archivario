@@ -16,6 +16,7 @@ import { Avatar, type ApiRequest, type Execute } from "./shared";
 import { TimezoneField } from "./timezone-field";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
+import { SocialSettings } from "@/features/social/presentation/social-pages";
 
 const avatarColorLabels: Record<AvatarColor, string> = {
   violeta: "Violeta",
@@ -27,6 +28,7 @@ const avatarColorLabels: Record<AvatarColor, string> = {
 };
 const sections = [
   ["perfil", "Perfil"],
+  ["social", "Perfil público"],
   ["apariencia", "Apariencia"],
   ["copia", "Copia de seguridad"],
   ["importar", "Importar juegos"],
@@ -233,6 +235,10 @@ export function SettingsPanel({
           </div>
         </form>
         <SectionFeedback section="perfil" feedback={feedback} />
+      </SettingsSection>
+
+      <SettingsSection id="social" title="Perfil público">
+        <SocialSettings request={request} demo={demo} />
       </SettingsSection>
 
       <SettingsSection id="apariencia" title="Apariencia">

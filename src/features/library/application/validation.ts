@@ -62,6 +62,7 @@ export const gameSchema = z
     platforms: z.array(text(60).min(1)).min(1).max(12),
     stores: z.array(text(60)).max(12),
     wishlist: z.boolean().optional(),
+    hidden: z.boolean().optional(),
     favorite: z.boolean(),
     next: z.boolean(),
     rating: z.number().min(1).max(10).multipleOf(0.5).optional(),
@@ -85,6 +86,7 @@ export const runSchema = z
     rating: z.number().min(1).max(10).multipleOf(0.5).optional(),
     review: text(5000).optional(),
     completionMinutes: z.number().int().min(0).max(600000).optional(),
+    shareNote: text(200).optional(),
   })
   .strict();
 export const activitySchema = z

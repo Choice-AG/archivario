@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Sparkles,
   Undo2,
+  Users,
   WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,12 @@ import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Avatar, Modal, type Execute } from "./shared";
+import { plural } from "./format";
+import {
+  publicRequest,
+  useSocial,
+  type SocialMe,
+} from "@/features/social/presentation/social-api";
 import { Onboarding, showOnboarding } from "./onboarding";
 import { SidebarPlaying } from "./sidebar-playing";
 import { Celebration, completedBy, type Completion } from "./celebration";
@@ -78,8 +85,20 @@ const ProfilePage = load(() =>
 const SettingsPage = load(() =>
   import("./settings-page").then((m) => m.SettingsPage),
 );
+const FriendsPage = load(() =>
+  import("@/features/social/presentation/social-pages").then(
+    (m) => m.FriendsPage,
+  ),
+);
+const PublicProfileView = load(() =>
+  import("@/features/social/presentation/social-pages").then(
+    (m) => m.PublicProfileView,
+  ),
+);
 
 export function ArchivarioApp() {
+  const pathname = usePathname(),
+    router = useRouter();
   const [user, setUser] = useState<User | null>(null),
     [authReady, setAuthReady] = useState(!configured),
     // ?demo=1 abre la demostración aunque Firebase esté configurado.
@@ -99,6 +118,14 @@ export function ArchivarioApp() {
   }, []);
   if (!authReady)
     return <div className="loading">Preparando tu biblioteca…</div>;
+  // Un perfil público se puede ver sin iniciar sesión.
+  if (!user && !demo && pathname.startsWith("/u/"))
+    return (
+      <PublicShell
+        handle={decodeURIComponent(pathname.split("/")[2] ?? "")}
+        onLogin={() => router.push("/")}
+      />
+    );
   if (!user && !demo) return <Login onDemo={() => setDemo(true)} />;
   return (
     <Dashboard
@@ -132,6 +159,7 @@ const nav = [
   { name: "Calendario", icon: CalendarDays },
   { name: "Favoritos", icon: Heart },
   { name: "Próximos", icon: Sparkles },
+  { name: "Amigos", icon: Users },
 ];
 // En móvil, Favoritos y Próximos están como vistas dentro de la biblioteca;
 // el perfil se abre desde el avatar de arriba. En medio va el botón de añadir.
@@ -148,7 +176,7 @@ function Dashboard({
 }) {
   const pathname = usePathname(),
     router = useRouter();
-  const { view, gameId, sagaId, settings } = parsePath(pathname);
+  const { view, gameId, sagaId, settings, handle } = parsePath(pathname);
   const [modal, setModal] = useState<ModalState>(null),
     [notice, setNotice] = useState(""),
     // Juego con el que se abre el diario desde una ficha.
@@ -161,6 +189,16 @@ function Dashboard({
   const filterState = useLibraryFilters();
   const api = useLibrary(user),
     { state, execute, ready, busy, error, setError } = api;
+  const social = useSocial<SocialMe>(
+    api.request,
+    user ? "/api/social/me" : null,
+  );
+  // Navega a una ruta interna que puede llevar #fragmento (p. ej. un juego).
+  const openPath = (path: string) => {
+    const [base, hash] = path.split("#");
+    setModal(null);
+    router.push(base + suffix + (hash ? "#" + hash : ""));
+  };
   const today = dateInZone(new Date(), state.profile.timezone),
     [month, setMonth] = useState(today.slice(0, 7));
   const suffix = user ? "" : "?demo=1";
@@ -273,6 +311,18 @@ function Dashboard({
               {n.name}
               {n.name === "Biblioteca" && (
                 <span className="nav-count">{state.games.length}</span>
+              )}
+              {n.name === "Amigos" && !!social.data?.unread && (
+                <span
+                  className="nav-count nav-unread"
+                  aria-label={plural(
+                    social.data.unread,
+                    "aviso nuevo",
+                    "avisos nuevos",
+                  )}
+                >
+                  {social.data.unread}
+                </span>
               )}
             </button>
           ))}
@@ -388,7 +438,23 @@ function Dashboard({
               </Button>
             </div>
           )}
-          {view === "Perfil" && settings ? (
+          {view === "Amigos" && handle ? (
+            <PublicProfileView
+              key={handle}
+              handle={handle}
+              request={user ? api.request : publicRequest}
+              signedIn={!!user}
+              onOpen={openPath}
+              onBack={() => goTo("Amigos")}
+            />
+          ) : view === "Amigos" ? (
+            <FriendsPage
+              request={api.request}
+              demo={!user}
+              onOpen={openPath}
+              onUnreadChange={social.refresh}
+            />
+          ) : view === "Perfil" && settings ? (
             <SettingsPage
               state={state}
               execute={safeExecute}
@@ -407,6 +473,7 @@ function Dashboard({
               onYear={() => setModal({ kind: "year" })}
               onLibrary={backToLibrary}
               onSettings={() => navigate(settingsPath)}
+              onFriends={() => goTo("Amigos")}
             />
           ) : view === "Sagas" && !gameId ? (
             <Sagas
@@ -700,6 +767,7 @@ function Dashboard({
           state={state}
           completion={celebrating}
           today={today}
+          social={!!social.data?.enabled}
           execute={safeExecute}
           onClose={() => setCelebrating(undefined)}
           onReview={() => {
@@ -813,6 +881,36 @@ function Dashboard({
           <YearReview state={state} today={today} onGame={openGame} />
         </Modal>
       )}
+    </div>
+  );
+}
+
+// Perfil público para quien no ha iniciado sesión.
+function PublicShell({
+  handle,
+  onLogin,
+}: {
+  handle: string;
+  onLogin: () => void;
+}) {
+  return (
+    <div className="public-shell">
+      <header className="public-shell-bar">
+        <span className="brand">
+          <Gamepad2 size={26} /> Archivario
+          <span className="brand-dot" />
+        </span>
+        <Button size="sm" variant="secondary" onClick={onLogin}>
+          Iniciar sesión
+        </Button>
+      </header>
+      <main id="main-content">
+        <PublicProfileView
+          handle={handle}
+          request={publicRequest}
+          signedIn={false}
+        />
+      </main>
     </div>
   );
 }

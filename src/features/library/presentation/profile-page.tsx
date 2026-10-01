@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Pencil, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Pencil, Settings, Sparkles, Users } from "lucide-react";
 import { Stars } from "./rating-input";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
@@ -27,6 +27,7 @@ export function ProfilePage({
   onYear,
   onLibrary,
   onSettings,
+  onFriends,
 }: {
   state: Library;
   execute: Execute;
@@ -36,6 +37,7 @@ export function ProfilePage({
   onYear: () => void;
   onLibrary: () => void;
   onSettings: () => void;
+  onFriends: () => void;
 }) {
   const stats = useMemo(() => profileStats(state), [state]);
   const showcase = showcaseGames(state);
@@ -78,6 +80,9 @@ export function ProfilePage({
         <div className="profile-hero-actions">
           <Button variant="secondary" onClick={onYear}>
             <BarChart3 size={16} /> Tu año en juegos
+          </Button>
+          <Button variant="ghost" onClick={onFriends}>
+            <Users size={16} /> Amigos
           </Button>
           <Button variant="ghost" onClick={onSettings}>
             <Settings size={16} /> Ajustes

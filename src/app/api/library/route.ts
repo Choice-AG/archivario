@@ -1,5 +1,7 @@
 import { authenticate, body, json, route, throttle } from "@/server/http";
 import { library } from "@/server/container";
+import { sync as syncSocial } from "@/server/social";
+import { reportError } from "@/lib/monitoring";
 import { mutationSchema } from "@/features/library/application/validation";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,6 +23,17 @@ export function POST(request: Request) {
     throttle("library:" + user.uid, 60);
     // Importar o deshacer envía la biblioteca completa.
     const input = mutationSchema.parse(await body(request, 4_000_000));
-    return json(await library.execute(user.uid, input.revision, input.command));
+    const { prev, next } = await library.executeTracked(
+      user.uid,
+      input.revision,
+      input.command,
+    );
+    // La copia pública nunca debe impedir guardar la biblioteca.
+    try {
+      await syncSocial(user.uid, prev, next);
+    } catch (e) {
+      reportError(e);
+    }
+    return json(next);
   });
 }

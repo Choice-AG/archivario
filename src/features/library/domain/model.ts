@@ -28,6 +28,8 @@ export type Game = {
   platforms: string[];
   stores: string[];
   wishlist?: boolean;
+  // No se comparte con los seguidores.
+  hidden?: boolean;
   favorite: boolean;
   next: boolean;
   rating?: number;
@@ -49,6 +51,8 @@ export type Run = {
   rating?: number;
   review?: string;
   completionMinutes?: number;
+  // Frase sin spoilers para la tarjeta del feed al completarla.
+  shareNote?: string;
 };
 export type Activity = {
   id: string;

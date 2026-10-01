@@ -1,6 +1,7 @@
 import { authenticate, body, HttpError, json, route } from "@/server/http";
 import { adminAuth, db } from "@/server/firebase";
 import { deletionRef } from "@/server/lifecycle";
+import { disable as disableSocial } from "@/server/social";
 export const dynamic = "force-dynamic";
 export function DELETE(request: Request) {
   return route(async () => {
@@ -15,6 +16,8 @@ export function DELETE(request: Request) {
       );
     await deletionRef(user.uid).set({ deleting: true });
 
+    // Primero lo público: perfil, actividad, seguidores y avisos.
+    await disableSocial(user.uid);
     await db().recursiveDelete(db().collection("users").doc(user.uid));
     await db().collection("catalogLimits").doc(user.uid).delete();
     try {

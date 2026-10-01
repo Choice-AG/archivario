@@ -1446,3 +1446,19 @@ test("la ficha de un juego del catálogo también va por pestañas", async ({
     page.getByRole("heading", { name: "Sobre el juego", exact: true }),
   ).toHaveCount(0);
 });
+
+test("en la demostración, Amigos explica que hace falta una cuenta", async ({
+  page,
+}) => {
+  await page.goto("/amigos?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Amigos", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Inicia sesión para seguir a otras personas"),
+  ).toBeVisible();
+  await page.goto("/perfil/ajustes?demo=1");
+  await expect(
+    page.getByRole("region", { name: "Perfil público", exact: true }),
+  ).toContainText("Inicia sesión para tener un perfil público");
+});

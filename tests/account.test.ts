@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   recursiveDelete: vi.fn(),
   deleteLimit: vi.fn(),
   markDeletion: vi.fn(),
+  disableSocial: vi.fn(),
 }));
 vi.mock("@/server/firebase", () => ({
   adminAuth: () => ({
@@ -27,6 +28,8 @@ vi.mock("@/server/firebase", () => ({
   }),
   // Deliberately no Storage adapter: deletion must work on Spark.
 }));
+// Lo público (perfil, actividad, seguidores) se borra antes que lo privado.
+vi.mock("@/server/social", () => ({ disable: mocks.disableSocial }));
 vi.mock("@/server/lifecycle", () => ({
   isDeleting: async () => false,
   deletionRef: () => ({ set: mocks.markDeletion }),
@@ -48,6 +51,7 @@ it("elimina los datos propios y Auth sin necesitar Storage", async () => {
   expect(mocks.recursiveDelete).toHaveBeenCalledWith(
     expect.objectContaining({ path: "users/alice" }),
   );
+  expect(mocks.disableSocial).toHaveBeenCalledWith("alice");
   expect(mocks.deleteUser).toHaveBeenCalledWith("alice");
 });
 it("exige confirmación antes de borrar", async () => {

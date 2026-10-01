@@ -39,6 +39,16 @@ export async function authenticate(request: Request, allowDeletion = false) {
     );
   return user;
 }
+// Para páginas públicas: identifica a quien inició sesión, si lo hizo.
+export async function optionalUser(request: Request) {
+  if (!request.headers.get("authorization")?.startsWith("Bearer "))
+    return undefined;
+  try {
+    return await authenticate(request);
+  } catch {
+    return undefined;
+  }
+}
 // El catálogo consume la cuota compartida de IGDB: las cuentas nuevas deben
 // confirmar su correo antes de usarlo.
 const creationTimes = new Map<string, string>();
