@@ -148,7 +148,9 @@ function Dashboard({
     router = useRouter();
   const { view, gameId, sagaId, settings } = parsePath(pathname);
   const [modal, setModal] = useState<ModalState>(null),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    // Juego con el que se abre el diario desde una ficha.
+    [journalGame, setJournalGame] = useState<string>();
   // Vista desde la que se abrió una ficha del catálogo, para volver a ella.
   const [origin, setOrigin] = useState<{ view: string; sagaId?: string }>({
     view: sagaId !== undefined ? "Sagas" : "Biblioteca",
@@ -181,6 +183,7 @@ function Dashboard({
         : (viewPaths[origin.view] ?? "/"),
     );
   const goTo = (name: string) => {
+    setJournalGame(undefined);
     filterState.setPage(1);
     if (name === "Próximos") filterState.reset(viewDefaults("Próximos"));
     navigate(viewPaths[name] ?? "/");
@@ -462,6 +465,14 @@ function Dashboard({
                 onActivity={() =>
                   setModal({ kind: "activity", id: gameId, date: today })
                 }
+                onJournal={() => {
+                  setJournalGame(gameId);
+                  router.push(
+                    "/diario?juego=" +
+                      encodeURIComponent(gameId) +
+                      (user ? "" : "&demo=1"),
+                  );
+                }}
               />
             ) : (
               <section className="empty-state">
@@ -573,6 +584,7 @@ function Dashboard({
                     state={state}
                     onEdit={(a) => setModal({ kind: "activity", activity: a })}
                     full
+                    initialGameId={journalGame}
                   />
                 </section>
               ) : (
