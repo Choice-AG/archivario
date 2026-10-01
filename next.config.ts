@@ -34,6 +34,11 @@ const config: NextConfig = {
   async headers() {
     return [
       {
+        // El service worker debe revisarse en cada visita para actualizarse.
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: "no-cache" }],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "Content-Security-Policy", value: csp },

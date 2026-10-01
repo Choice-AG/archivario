@@ -4585,3 +4585,15 @@ select:focus {
 .import-sample small {
   color: var(--muted);
 }
+
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--c-ffffff18);
+  border-radius: 12px;
+  background: var(--c-ffffff0d);
+  font-size: 13px;
+}
