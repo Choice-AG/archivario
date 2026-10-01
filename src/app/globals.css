@@ -3398,3 +3398,62 @@ select:focus {
     margin-left: 0;
   }
 }
+
+/* Menú de estado propio */
+.status-trigger {
+  gap: 5px;
+  font-size: 11px;
+  padding: 5px 8px;
+  border: 0;
+  cursor: pointer;
+}
+.status-trigger:hover {
+  filter: brightness(1.25);
+}
+.status-trigger:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+.status-menu {
+  z-index: 60;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid #ffffff18;
+  border-radius: 12px;
+  background: #191c29;
+  box-shadow: 0 14px 40px #0009;
+}
+.status-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+/* Cada opción usa el color de su estado, sin el fondo de la etiqueta. */
+.status-menu .status-menu-item {
+  background: transparent;
+}
+.status-menu .status-jugando {
+  color: #bcaaf5;
+}
+.status-menu-item i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-menu .status-menu-item[data-highlighted] {
+  background: #ffffff10;
+}
+.status-menu-item[data-state="checked"] {
+  font-weight: 650;
+}
+.status-menu-check {
+  margin-left: auto;
+  display: flex;
+  color: #b49cfa;
+}

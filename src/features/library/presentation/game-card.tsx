@@ -1,13 +1,6 @@
 "use client";
-import { StatusOptions } from "./format";
-import {
-  Check,
-  ChevronDown,
-  Gamepad2,
-  Heart,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { StatusMenu } from "./status-menu";
+import { Check, Gamepad2, Heart, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Game, Run } from "../domain/model";
 import { formatHours, timeLabels, type TimeMode } from "../domain/daily";
@@ -99,24 +92,12 @@ export function GameCard({
           {g.stores[0] ?? "Sin tienda"}
         </p>
         <div className="card-bottom">
-          {/* La etiqueta de estado es a la vez el selector para cambiarlo. */}
-          <span
-            className={
-              "status-badge status-select status-" +
-              run.status.replace(" ", "-")
-            }
-          >
-            <i aria-hidden="true" />
-            <select
-              aria-label={"Estado de " + g.title}
-              value={run.status}
-              disabled={busy}
-              onChange={(e) => onStatus(e.target.value as Run["status"])}
-            >
-              <StatusOptions />
-            </select>
-            <ChevronDown size={12} aria-hidden="true" />
-          </span>
+          <StatusMenu
+            label={"Estado de " + g.title}
+            status={run.status}
+            disabled={busy}
+            onChange={onStatus}
+          />
           <span className="game-genre">{g.genres[0]}</span>
         </div>
         {["jugando", "en pausa"].includes(run.status) && (

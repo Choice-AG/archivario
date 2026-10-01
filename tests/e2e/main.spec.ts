@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 
 // La demo con ?demo=1 es determinista: no depende de si Firebase está configurado.
 async function openDemo(page: Page, path = "/") {
@@ -13,6 +13,23 @@ async function openFilters(page: Page) {
   if ((await toggle.getAttribute("aria-expanded")) !== "true")
     await toggle.click();
   await expect(page.locator("#library-filters")).toBeVisible();
+}
+// El estado de cada tarjeta es un menú propio, no un <select>.
+const statusButton = (scope: Page | Locator, title: string) =>
+  scope.getByRole("button", { name: new RegExp("^Estado de " + title + ":") });
+async function chooseStatus(
+  page: Page,
+  scope: Page | Locator,
+  title: string,
+  status: string,
+) {
+  await statusButton(scope, title).click();
+  await page
+    .getByRole("menuitemradio", {
+      name: status[0].toUpperCase() + status.slice(1),
+      exact: true,
+    })
+    .click();
 }
 function demoData(page: Page) {
   return page.evaluate(() =>
@@ -275,18 +292,18 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
   });
   await card.getByText("Retomar partida", { exact: true }).click();
   await expect(card.getByText(/Explorando Ciudad/)).toBeVisible();
-  await page
-    .getByLabel("Estado de Hollow Knight", { exact: true })
-    .selectOption("completado");
-  await expect(
-    page.getByLabel("Estado de Hollow Knight", { exact: true }),
-  ).toHaveValue("completado");
+  await chooseStatus(page, page, "Hollow Knight", "completado");
+  await expect(statusButton(page, "Hollow Knight")).toHaveAttribute(
+    "data-status",
+    "completado",
+  );
   await page
     .getByRole("button", { name: "Deshacer último cambio", exact: true })
     .click();
-  await expect(
-    page.getByLabel("Estado de Hollow Knight", { exact: true }),
-  ).toHaveValue("jugando");
+  await expect(statusButton(page, "Hollow Knight")).toHaveAttribute(
+    "data-status",
+    "jugando",
+  );
   await page
     .getByRole("button", { name: "Abrir Hollow Knight", exact: true })
     .click();
@@ -522,9 +539,7 @@ test("desglose diario completo, edición de una nota y pendientes en Próximos",
       .or(card.getByRole("button", { name: "Registrado hoy", exact: true }))
       .click();
   }
-  await page
-    .getByLabel("Estado de Hades", { exact: true })
-    .selectOption("pendiente");
+  await chooseStatus(page, page, "Hades", "pendiente");
   const mobileView = (page.viewportSize()?.width ?? 1440) <= 640;
   const nav = page.locator(mobileView ? ".bottom-nav" : ".sidebar nav");
   // En móvil, Próximos es una vista dentro de la biblioteca.
@@ -605,16 +620,19 @@ test("buscador global, continuar, lote y varios juegos en un día", async ({
   await page
     .getByRole("button", { name: "Aplicar estado", exact: true })
     .click();
-  await expect(page.getByLabel("Estado de Hades", { exact: true })).toHaveValue(
+  await expect(statusButton(page, "Hades")).toHaveAttribute(
+    "data-status",
     "pendiente",
   );
-  await expect(
-    page.getByLabel("Estado de Hollow Knight", { exact: true }),
-  ).toHaveValue("pendiente");
+  await expect(statusButton(page, "Hollow Knight")).toHaveAttribute(
+    "data-status",
+    "pendiente",
+  );
   await page
     .getByRole("button", { name: "Deshacer último cambio", exact: true })
     .click();
-  await expect(page.getByLabel("Estado de Hades", { exact: true })).toHaveValue(
+  await expect(statusButton(page, "Hades")).toHaveAttribute(
+    "data-status",
     "jugando",
   );
   await nav.getByRole("button", { name: "Calendario", exact: true }).click();
@@ -739,11 +757,14 @@ test("el aviso de guardado permite deshacer", async ({ page }) => {
   const card = page.locator(".game-card").filter({
     has: page.getByRole("button", { name: "Abrir Celeste", exact: true }),
   });
-  await card.getByLabel("Estado de Celeste").selectOption("jugando");
+  await chooseStatus(page, card, "Celeste", "jugando");
   const toast = page.getByRole("status").filter({ hasText: "Guardado" });
   await expect(toast).toBeVisible();
   await toast.getByRole("button", { name: "Deshacer último cambio" }).click();
-  await expect(card.getByLabel("Estado de Celeste")).toHaveValue("pendiente");
+  await expect(statusButton(card, "Celeste")).toHaveAttribute(
+    "data-status",
+    "pendiente",
+  );
 });
 
 test("cada vista tiene su propia URL y título", async ({ page }) => {
