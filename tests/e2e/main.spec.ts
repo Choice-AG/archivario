@@ -373,14 +373,14 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
   await expect(
-    card.getByText("Historia principal: 12,5 h", { exact: true }),
+    card.getByTitle("Historia principal").getByText("12,5 h", { exact: true }),
   ).toBeVisible();
   await openFilters(page);
   await page
     .getByLabel("Tipo de duración", { exact: true })
     .selectOption("extras");
   await expect(
-    card.getByText("Historia + extras: 25 h", { exact: true }),
+    card.getByTitle("Historia + extras").getByText("25 h", { exact: true }),
   ).toBeVisible();
   await page
     .getByLabel("Buscar en mi biblioteca", { exact: true })

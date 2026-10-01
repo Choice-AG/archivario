@@ -1,6 +1,6 @@
 "use client";
 import { StatusMenu } from "./status-menu";
-import { Check, Gamepad2, Heart, Plus, Sparkles } from "lucide-react";
+import { Check, Heart, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Game, Run } from "../domain/model";
 import { formatHours, timeLabels, type TimeMode } from "../domain/daily";
@@ -39,19 +39,10 @@ export function GameCard({
   onStatus: (status: Run["status"]) => void;
   onToday: () => void;
 }) {
+  // Tarjeta compacta: la portada manda y lo demás cabe en dos líneas, para ver
+  // muchos juegos de un vistazo (hasta ocho por fila).
   return (
     <article className="game-card">
-      {selecting && (
-        <label className="checkbox-label card-select">
-          <input
-            type="checkbox"
-            aria-label={"Seleccionar " + g.title}
-            checked={selected}
-            onChange={(e) => onSelect(e.target.checked)}
-          />
-          Seleccionar
-        </label>
-      )}
       <div className="cover-wrap">
         <button
           className="cover-link"
@@ -60,6 +51,16 @@ export function GameCard({
         >
           <Cover game={g} />
         </button>
+        {selecting && (
+          <label className="card-select">
+            <input
+              type="checkbox"
+              aria-label={"Seleccionar " + g.title}
+              checked={selected}
+              onChange={(e) => onSelect(e.target.checked)}
+            />
+          </label>
+        )}
         <button
           className={"favorite-button " + (g.favorite ? "is-favorite" : "")}
           aria-label={
@@ -68,35 +69,34 @@ export function GameCard({
           aria-pressed={g.favorite}
           onClick={onFavorite}
         >
-          <Heart size={17} fill={g.favorite ? "currentColor" : "none"} />
+          <Heart size={14} fill={g.favorite ? "currentColor" : "none"} />
         </button>
+        {g.next && (
+          <span className="next-badge" title="Próximamente">
+            <Sparkles size={12} />
+            <span className="sr-only">Próximamente</span>
+          </span>
+        )}
         {showCritic && g.critic && (
           <span className="card-critic">
             <CriticScore critic={g.critic} compact />
           </span>
         )}
-        {g.next && (
-          <span className="next-badge">
-            <Sparkles size={12} /> Próximamente
-          </span>
-        )}
       </div>
       <div className="game-body">
-        <button className="game-title" onClick={onOpen}>
+        <button className="game-title" onClick={onOpen} title={g.title}>
           {g.title}
         </button>
-        {g.rating !== undefined && (
-          <Stars value={g.rating} size={11} className="rating" />
-        )}
-        {g.wishlist && (
-          <small className="wish-label">En tu lista de deseos</small>
-        )}
         <p className="platform-line">
-          <Gamepad2 size={14} />
-          {g.platforms.join(" · ")}
-          <span>·</span>
-          {g.stores[0] ?? "Sin tienda"}
+          <span>{g.platforms[0] ?? "Sin plataforma"}</span>
+          {hours !== undefined && (
+            <span title={timeLabels[timeMode]}>{formatHours(hours)}</span>
+          )}
+          {g.wishlist && <span className="wish-label">Deseado</span>}
         </p>
+        {g.rating !== undefined && (
+          <Stars value={g.rating} size={9} className="rating" />
+        )}
         <div className="card-bottom">
           <StatusMenu
             label={"Estado de " + g.title}
@@ -104,27 +104,17 @@ export function GameCard({
             disabled={busy}
             onChange={onStatus}
           />
-          <span className="game-genre">{g.genres[0]}</span>
+          <button
+            type="button"
+            className={"today-button " + (playedToday ? "is-today" : "")}
+            disabled={busy}
+            aria-label={playedToday ? "Registrado hoy" : "He jugado hoy"}
+            title={playedToday ? "Registrado hoy" : "He jugado hoy"}
+            onClick={onToday}
+          >
+            {playedToday ? <Check size={14} /> : <Plus size={14} />}
+          </button>
         </div>
-        <p className="card-time">
-          {timeLabels[timeMode]}: {formatHours(hours)}
-        </p>
-        <Button
-          variant="secondary"
-          className="w-full today-button"
-          disabled={busy}
-          onClick={onToday}
-        >
-          {playedToday ? (
-            <>
-              <Check size={15} /> Registrado hoy
-            </>
-          ) : (
-            <>
-              <Plus size={15} /> He jugado hoy
-            </>
-          )}
-        </Button>
       </div>
     </article>
   );
