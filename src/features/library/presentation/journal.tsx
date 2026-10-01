@@ -38,14 +38,23 @@ export function Recent({
   onEdit,
   onAll,
   full = false,
+  initialGameId,
 }: {
   state: Library;
   onEdit: (a: Activity) => void;
   onAll?: () => void;
   full?: boolean;
+  initialGameId?: string;
 }) {
   const [page, setPage] = useState(1),
-    [gameId, setGameId] = useState(""),
+    // El diario puede abrirse ya filtrado desde la ficha (?juego=id).
+    [gameId, setGameId] = useState(() => {
+      if (!full || typeof window === "undefined") return "";
+      const id =
+        initialGameId ??
+        new URLSearchParams(window.location.search).get("juego");
+      return id && state.games.some((g) => g.id === id) ? id : "";
+    }),
     [from, setFrom] = useState(""),
     [to, setTo] = useState("");
   const games = useMemo(

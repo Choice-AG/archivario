@@ -46,6 +46,13 @@ async function openSettings(page: Page) {
   await expect(page).toHaveURL(/\/perfil\/ajustes/);
   return mobile;
 }
+// Pestañas de la ficha del juego.
+async function openTab(page: Page, name: string) {
+  await page.getByRole("tab", { name: new RegExp("^" + name) }).click();
+  await expect(
+    page.getByRole("tab", { name: new RegExp("^" + name) }),
+  ).toHaveAttribute("aria-selected", "true");
+}
 function demoData(page: Page) {
   return page.evaluate(() =>
     JSON.parse(localStorage.getItem("archivario-demo-v1") ?? "{}"),
@@ -76,6 +83,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
     )
     .toHaveLength(1);
   await hades.getByRole("button", { name: "Abrir Hades", exact: true }).click();
+  await openTab(page, "Reseña");
   await page.getByRole("button", { name: "Editar notas", exact: true }).click();
   await page.getByLabel("Tu reseña personal").fill("Un viaje extraordinario.");
   await page.getByText("Mostrar notas con spoilers", { exact: true }).click();
@@ -84,6 +92,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
     .fill("Mi spoiler privado");
   await page.getByRole("button", { name: "Guardar notas" }).click();
   await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await openTab(page, "Partidas");
   await page
     .getByRole("button", { name: "Gestionar partidas", exact: true })
     .click();
@@ -240,6 +249,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
     .click();
   await page.getByRole("button", { name: "Cerrar", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await openTab(page, "Partidas");
   await page
     .getByRole("button", { name: "Gestionar partidas", exact: true })
     .click();
@@ -272,6 +282,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
     .selectOption("wishlist");
   await page.getByRole("button", { name: "Abrir Hades", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await openTab(page, "Partidas");
   await page
     .getByRole("button", { name: "Gestionar partidas", exact: true })
     .click();
@@ -409,16 +420,28 @@ test("ficha propia, enlaces de sección y navegación del navegador", async ({
   ).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "¿Cuánto dura?", exact: true }),
+    page.getByRole("heading", { name: "Duración", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Editar juego", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Mi reseña", exact: true }).click();
+  await openTab(page, "Reseña");
+  await expect(page).toHaveURL(/#resena$/);
   await expect(
     page.getByRole("heading", { name: "Mi reseña", exact: true }),
-  ).toBeInViewport();
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Duración", exact: true }),
+  ).toHaveCount(0);
+  // La pestaña sobrevive a recargar y Atrás vuelve al resumen.
   await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Mi reseña", exact: true }),
+  ).toBeVisible();
+  await page.goBack();
+  await expect(
+    page.getByRole("heading", { name: "Duración", exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Hollow Knight", exact: true }),
   ).toBeVisible();
@@ -750,12 +773,14 @@ test("atajo de búsqueda, ficha manual simplificada y fechas legibles", async ({
   await page
     .getByRole("button", { name: "Abrir Hollow Knight", exact: true })
     .click();
+  await openTab(page, "Sobre el juego");
   await expect(
     page.getByRole("heading", { name: "Completa la ficha", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Otros juegos de la saga" }),
   ).toHaveCount(0);
+  await openTab(page, "Diario");
   await expect(page.locator(".game-journal-row time").first()).toHaveText(
     /^\d{1,2} [a-z]{3,4}\.? \d{4}$/,
   );
@@ -943,6 +968,7 @@ test("la ficha permite registrar hoy con una nota y cambiar el estado", async ({
     .getByRole("button", { name: "He jugado hoy", exact: true })
     .click();
   await expect(page.getByText("Jugado hoy", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Añadir una nota de hoy" }).click();
   await page.getByLabel(/Una nota rápida de hoy/).fill("Primer interrogatorio");
   await page.getByRole("button", { name: "Guardar nota" }).click();
   await expect
@@ -1013,4 +1039,32 @@ test("en el móvil el botón + abre las acciones rápidas", async ({ page }) => 
   await expect(
     page.getByRole("heading", { name: "Tu próxima aventura", exact: true }),
   ).toBeVisible();
+});
+
+test("desde la ficha se abre el diario filtrado por ese juego", async ({
+  page,
+}) => {
+  await page.goto("/juegos/hollow?demo=1");
+  await openTab(page, "Diario");
+  await page.getByRole("button", { name: "Ver todos en el diario" }).click();
+  await expect(page).toHaveURL(/\/diario\?juego=hollow/);
+  await expect(page.locator(".journal-filters select")).toHaveValue("hollow");
+  await expect(page.locator(".activity-row strong")).toHaveText([
+    "Hollow Knight",
+  ]);
+});
+
+test("en el resumen se edita dónde lo dejaste", async ({ page }) => {
+  await page.goto("/juegos/hollow?demo=1");
+  await page.getByRole("button", { name: "Editar dónde lo dejé" }).click();
+  await page.getByLabel("Dónde lo dejé").fill("Frente a la puerta del Rey");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Frente a la puerta del Rey")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await demoData(page)).runs
+        .filter((r: { gameId: string }) => r.gameId === "hollow")
+        .map((r: { whereLeft: string }) => r.whereLeft),
+    )
+    .toContain("Frente a la puerta del Rey");
 });
