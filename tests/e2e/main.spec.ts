@@ -835,3 +835,30 @@ test("se puede instalar y abrir sin conexión", async ({ page, context }) => {
   ).toBeVisible();
   await context.setOffline(false);
 });
+
+test("atajos de una tecla para añadir, buscar, registrar y ver la ayuda", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page.keyboard.press("Shift+?");
+  await expect(
+    page.getByRole("heading", { name: "Atajos de teclado" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("n");
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura", exact: true }),
+  ).toBeVisible();
+  // Escribir dentro de un campo no dispara atajos.
+  await page.getByPlaceholder("Escribe el nombre de un juego…").fill("nd/");
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("/");
+  await expect(page.getByLabel("Buscar en mi biblioteca")).toBeFocused();
+  await page.getByLabel("Buscar en mi biblioteca").press("Escape");
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await page.keyboard.press("d");
+  await expect(
+    page.getByRole("heading", { name: "Tu día de juego" }),
+  ).toBeVisible();
+});

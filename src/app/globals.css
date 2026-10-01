@@ -4752,3 +4752,38 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* Atajos de teclado */
+.shortcut-list {
+  margin: 0;
+}
+.shortcut-list > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-ffffff0d);
+}
+.shortcut-list dt {
+  min-width: 70px;
+}
+.shortcut-list dd {
+  margin: 0;
+}
+.shortcut-list kbd,
+.shortcut-link kbd {
+  padding: 2px 7px;
+  border: 1px solid var(--c-ffffff1c);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+}
+.shortcut-link {
+  margin-right: 12px;
+  font-size: inherit;
+}
+@media (max-width: 640px) {
+  .shortcut-link {
+    display: none;
+  }
+}

@@ -35,6 +35,7 @@ import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
 import { BulkLink } from "./bulk-link";
 import { ImportGames } from "./import-games";
+import { ShortcutList, useShortcuts } from "./shortcuts";
 import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
@@ -79,7 +80,8 @@ type ModalState = {
     | "planning"
     | "bulk"
     | "link"
-    | "import";
+    | "import"
+    | "shortcuts";
   source?: "steam" | "csv";
   id?: string;
   activity?: Activity;
@@ -168,6 +170,25 @@ function Dashboard({
         : "Guardado en " + (user ? "tu biblioteca" : "la demostración local"),
     );
   };
+  useShortcuts(ready && !modal, {
+    n: () => setModal({ kind: "add" }),
+    d: () => setModal({ kind: "activity", date: today }),
+    "?": () => setModal({ kind: "shortcuts" }),
+    "/": () => {
+      const focus = () =>
+        document
+          .querySelector<HTMLInputElement>(
+            '[aria-label="Buscar en mi biblioteca"]',
+          )
+          ?.focus();
+      if (["Biblioteca", "Favoritos", "Próximos"].includes(view) && !gameId)
+        focus();
+      else {
+        goTo("Biblioteca");
+        setTimeout(focus, 150);
+      }
+    },
+  });
   if (!ready) return <div className="loading">Abriendo tu biblioteca…</div>;
   const ownedGame = gameId
     ? state.games.find((g) => g.id === gameId)
@@ -469,6 +490,12 @@ function Dashboard({
               <span className="muted">· Tus juegos, a tu ritmo.</span>
             </span>
             <span>
+              <button
+                className="text-link shortcut-link"
+                onClick={() => setModal({ kind: "shortcuts" })}
+              >
+                Atajos: pulsa <kbd>?</kbd>
+              </button>
               <ShieldCheck size={13} /> Solo para ti
             </span>
           </footer>
@@ -564,6 +591,15 @@ function Dashboard({
           onClose={() => setModal(null)}
         >
           <Planning state={state} execute={safeExecute} onGame={openGame} />
+        </Modal>
+      )}
+      {modal?.kind === "shortcuts" && (
+        <Modal
+          title="Atajos de teclado"
+          description="Funcionan cuando no estás escribiendo en un campo."
+          onClose={() => setModal(null)}
+        >
+          <ShortcutList />
         </Modal>
       )}
       {modal?.kind === "import" && (
