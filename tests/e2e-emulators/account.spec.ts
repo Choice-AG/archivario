@@ -50,6 +50,13 @@ test("registro, confirmación del correo y biblioteca guardada en Firestore", as
   const email = uniqueEmail();
   await signUp(page, email);
   await expect(page.locator(".verify-banner")).toContainText(email);
+  // Una cuenta nueva ve la bienvenida con las tres formas de empezar.
+  await expect(
+    page.getByRole("heading", { name: "Empieza tu biblioteca" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Importar desde Steam/ }),
+  ).toBeEnabled();
   // El emulador expone los enlaces de verificación enviados.
   const { oobCodes } = await (
     await request.get(

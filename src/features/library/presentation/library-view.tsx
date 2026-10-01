@@ -27,6 +27,7 @@ import {
 import type { GameSort } from "../domain/insights";
 import { BatchLibrary, ContinuePlaying } from "./library-improvements";
 import { GameCard } from "./game-card";
+import { Welcome } from "./welcome";
 import { MonthCard, Recent } from "./journal";
 import {
   countActiveFilters,
@@ -57,6 +58,7 @@ export function LibraryView({
   onJournal,
   onView,
   onBulkLink,
+  onImport,
   demo,
 }: {
   state: Library;
@@ -76,6 +78,7 @@ export function LibraryView({
   onJournal: () => void;
   onView: (view: string) => void;
   onBulkLink: () => void;
+  onImport: (source: "steam" | "csv") => void;
   demo: boolean;
 }) {
   const unlinked = state.games.filter((g) => !g.catalogId).length;
@@ -126,6 +129,15 @@ export function LibraryView({
     });
   };
   const visible = filtered.slice((page - 1) * PAGE, page * PAGE);
+  if (!state.games.length)
+    return (
+      <Welcome
+        demo={demo}
+        onImport={onImport}
+        onAdd={onAdd}
+        onSagas={onSagas}
+      />
+    );
   return (
     <>
       <div

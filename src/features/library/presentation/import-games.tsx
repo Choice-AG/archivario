@@ -20,13 +20,15 @@ export function ImportGames({
   execute,
   request,
   demo,
+  initialSource = "csv",
 }: {
   state: Library;
   execute: Execute;
   request: ApiRequest;
   demo: boolean;
+  initialSource?: "csv" | "steam";
 }) {
-  const [source, setSource] = useState<"csv" | "steam">("csv"),
+  const [source, setSource] = useState<"csv" | "steam">(initialSource),
     [candidates, setCandidates] = useState<ImportCandidate[]>(),
     [steamGames, setSteamGames] = useState<SteamGame[]>(),
     [playedOnly, setPlayedOnly] = useState(false),

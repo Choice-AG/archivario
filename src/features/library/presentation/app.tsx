@@ -34,6 +34,7 @@ import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
 import { BulkLink } from "./bulk-link";
+import { ImportGames } from "./import-games";
 import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
@@ -70,7 +71,16 @@ export function ArchivarioApp() {
 }
 
 type ModalState = {
-  kind: "add" | "activity" | "settings" | "year" | "planning" | "bulk" | "link";
+  kind:
+    | "add"
+    | "activity"
+    | "settings"
+    | "year"
+    | "planning"
+    | "bulk"
+    | "link"
+    | "import";
+  source?: "steam" | "csv";
   id?: string;
   activity?: Activity;
   date?: string;
@@ -411,6 +421,7 @@ function Dashboard({
                   onJournal={() => goTo("Diario")}
                   onView={goTo}
                   onBulkLink={() => setModal({ kind: "link" })}
+                  onImport={(source) => setModal({ kind: "import", source })}
                   demo={!user}
                 />
               ) : view === "Diario" ? (
@@ -553,6 +564,21 @@ function Dashboard({
           onClose={() => setModal(null)}
         >
           <Planning state={state} execute={safeExecute} onGame={openGame} />
+        </Modal>
+      )}
+      {modal?.kind === "import" && (
+        <Modal
+          title="Importar juegos"
+          description="Los juegos que ya tienes no se duplican y entran como pendientes."
+          onClose={() => setModal(null)}
+        >
+          <ImportGames
+            state={state}
+            execute={safeExecute}
+            request={api.request}
+            demo={!user}
+            initialSource={modal.source}
+          />
         </Modal>
       )}
       {modal?.kind === "link" && (
