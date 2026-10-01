@@ -97,17 +97,23 @@ export function NowPlaying({
                       {g.title}
                     </button>
                   </h3>
-                  <p>
-                    {run.whereLeft ||
-                      "Abre la ficha para apuntar dónde lo dejas."}
-                  </p>
-                  <small className="continue-last">
-                    {today
-                      ? "Has jugado hoy"
-                      : last
-                        ? "Último día: " + formatDate(last)
-                        : "Aún sin días registrados"}
-                  </small>
+                  {/* Solo lo que aporta: dónde lo dejaste (si lo apuntaste) y
+                      el último día cuando no es hoy; «hoy» ya lo dice el botón. */}
+                  {run.whereLeft ? (
+                    <p>{run.whereLeft}</p>
+                  ) : (
+                    <button
+                      className="text-link continue-note"
+                      onClick={() => onGame(g.id)}
+                    >
+                      Apuntar dónde lo dejo
+                    </button>
+                  )}
+                  {!today && last && (
+                    <small className="continue-last">
+                      Último día: {formatDate(last)}
+                    </small>
+                  )}
                   <div className="form-actions">
                     <Button
                       variant="secondary"

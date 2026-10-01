@@ -7082,3 +7082,9 @@ button.heat:focus-visible {
     flex-shrink: 0;
   }
 }
+
+.continue-note {
+  display: block;
+  margin: 2px 0 8px;
+  font-size: 12px;
+}
