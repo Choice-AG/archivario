@@ -3,6 +3,7 @@ import {
   activityId,
   assertLibrary,
   LIMITS,
+  sagaStatuses,
   statuses,
   type Activity,
   type Game,
@@ -132,6 +133,7 @@ export const sagaSchema = z
     name: text(100).trim().min(1),
     description: text(3000),
     order: z.enum(["release", "story", "recommended"]),
+    status: z.enum(sagaStatuses).optional(),
     source: text(500),
     entries: z
       .array(

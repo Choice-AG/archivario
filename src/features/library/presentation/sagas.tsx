@@ -28,7 +28,14 @@ function SagaArt({ saga, hero = false }: { saga: Saga; hero?: boolean }) {
   ) : null;
 }
 
-import { sagaGame, sagaCompleted, sagaOrder } from "../domain/sagas";
+import {
+  sagaGame,
+  sagaCompleted,
+  sagaOrder,
+  sagaStatus,
+  sagaStatusLabels,
+} from "../domain/sagas";
+import { sagaStatuses, type SagaStatus } from "../domain/model";
 const labels = {
   release: "Orden de lanzamiento",
   story: "Cronología de la historia",
@@ -136,6 +143,20 @@ export function Sagas({
       setBusy(false);
     }
   };
+  // Cambia el estado de una saga guardada sin tocar su recorrido.
+  const setStatus = async (status: SagaStatus) => {
+    const original = state.sagas?.find((x) => x.id === selectedId);
+    if (!original || (original.status ?? "siguiendo") === status) return;
+    setBusy(true);
+    setError("");
+    try {
+      await execute({ type: "save-saga", saga: { ...original, status } });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const entries = saga
       ? sagaOrder(release ? { ...saga, order: "release" } : saga)
       : [],
@@ -174,7 +195,63 @@ export function Sagas({
                 <span>{entries.length} títulos</span>
                 <span>{complete} completados</span>
                 <span>{labels[saga.order]}</span>
+                {savedSaga && sagaStatus(state, savedSaga) === "completada" && (
+                  <span className="saga-done">✓ Completada</span>
+                )}
               </div>
+              {savedSaga && (
+                <div
+                  className="saga-status"
+                  role="radiogroup"
+                  aria-label="Estado de la saga"
+                >
+                  {sagaStatuses.map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      role="radio"
+                      aria-checked={(savedSaga.status ?? "siguiendo") === st}
+                      disabled={busy}
+                      onClick={() => setStatus(st)}
+                    >
+                      {sagaStatusLabels[st]}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {saved.some((s) => s.id === saga.id) && (
+                <div className="saga-remove">
+                  <Button variant="ghost" onClick={() => setConfirm(!confirm)}>
+                    Quitar de Mis sagas
+                  </Button>
+                  {confirm && (
+                    <>
+                      <p>
+                        La saga dejará de estar en Mis sagas. Conservarás tus
+                        juegos y partidas, y podrás volver a guardarla cuando
+                        quieras.
+                      </p>
+                      <Button
+                        variant="destructive"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            await execute({ type: "delete-saga", id: saga.id });
+                            onSelect(undefined);
+                          } catch (e) {
+                            setError((e as Error).message);
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        Sí, quitar de Mis sagas
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
               <div className="form-actions">
                 <Button
                   disabled={busy}
@@ -387,38 +464,6 @@ export function Sagas({
               biblioteca.
             </p>
           )}
-          {saved.some((s) => s.id === saga.id) && (
-            <div className="danger-area">
-              <Button variant="ghost" onClick={() => setConfirm(!confirm)}>
-                Eliminar esta guía
-              </Button>
-              {confirm && (
-                <>
-                  <p>
-                    Se eliminará la guía, pero conservarás todos tus juegos y
-                    partidas.
-                  </p>
-                  <Button
-                    variant="destructive"
-                    disabled={busy}
-                    onClick={async () => {
-                      setBusy(true);
-                      try {
-                        await execute({ type: "delete-saga", id: saga.id });
-                        onSelect(undefined);
-                      } catch (e) {
-                        setError((e as Error).message);
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  >
-                    Confirmar eliminación de saga
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
         </>
       ) : selectedId ? (
         <section className="empty-state">
@@ -472,29 +517,62 @@ export function Sagas({
               Tus guías guardadas. Guardar una saga no añade sus juegos a la
               biblioteca.
             </p>
-            <div className="saga-library">
-              {saved.map((s) => {
-                const done = s.entries.filter((e) =>
-                  sagaCompleted(state, e),
-                ).length;
-                return (
-                  <button
-                    className="saga-tile"
-                    key={s.id}
-                    onClick={() => onSelect(s.id)}
-                  >
-                    <SagaArt saga={s} />
-                    <div>
-                      <span>{labels[s.order]}</span>
-                      <h3>{s.name}</h3>
-                      <p>
-                        {done} / {s.entries.length} completados
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {(
+              [
+                ["siguiendo", "En curso"],
+                ["en pausa", "En pausa"],
+                ["completada", "Completadas"],
+                ["abandonada", "Abandonadas"],
+              ] as const
+            ).map(([group, title]) => {
+              const items = saved.filter((x) => sagaStatus(state, x) === group);
+              if (!items.length) return null;
+              const tiles = (
+                <div className="saga-library">
+                  {items.map((s) => {
+                    const done = s.entries.filter((e) =>
+                      sagaCompleted(state, e),
+                    ).length;
+                    return (
+                      <button
+                        className="saga-tile"
+                        key={s.id}
+                        onClick={() => onSelect(s.id)}
+                      >
+                        <SagaArt saga={s} />
+                        <div>
+                          <span>
+                            {labels[s.order]} · {sagaStatusLabels[group]}
+                          </span>
+                          <h3>{s.name}</h3>
+                          <p>
+                            {done} / {s.entries.length} completados
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+              // Las abandonadas siguen a mano, pero plegadas para no estorbar.
+              return group === "abandonada" ? (
+                <details key={group} className="saga-group">
+                  <summary>
+                    {title} ({items.length})
+                  </summary>
+                  {tiles}
+                </details>
+              ) : (
+                <div key={group} className="saga-group">
+                  {items.length < saved.length && (
+                    <h3>
+                      {title} ({items.length})
+                    </h3>
+                  )}
+                  {tiles}
+                </div>
+              );
+            })}
             {!saved.length && (
               <p className="info-note">
                 Aún no has guardado ninguna saga. Explora las guías de abajo y
@@ -504,8 +582,8 @@ export function Sagas({
           </section>
           <h2 className="saga-library-title">Guías para empezar</h2>
           <p className="muted">
-            Siete recorridos preparados para ti. Ábrelos, consulta sus notas y
-            guarda los que quieras personalizar.
+            {guides.length} recorridos preparados para ti. Ábrelos, consulta sus
+            notas y guarda los que quieras personalizar.
           </p>
           <div className="saga-library">
             {guides.map((s) => (

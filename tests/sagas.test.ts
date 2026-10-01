@@ -5,11 +5,15 @@ import {
   backupSchema,
 } from "../src/features/library/application/validation";
 import { applyCommand, type Saga } from "../src/features/library/domain/model";
-import { sagaOrder, sagaCompleted } from "../src/features/library/domain/sagas";
+import {
+  sagaOrder,
+  sagaCompleted,
+  sagaStatus,
+} from "../src/features/library/domain/sagas";
 import { demoLibrary } from "../src/features/library/infrastructure/demo";
 const now = "2026-09-30T12:00:00.000Z";
-it("validates all seven guides and backs them up without changing existing games", () => {
-  expect(data).toHaveLength(7);
+it("validates all fourteen guides and backs them up without changing existing games", () => {
+  expect(data).toHaveLength(14);
   let s = demoLibrary();
   const games = structuredClone(s.games);
   for (const guide of data)
@@ -20,11 +24,11 @@ it("validates all seven guides and backs them up without changing existing games
     );
   expect(
     backupSchema.parse({ version: 1, exportedAt: now, data: s }).data.sagas,
-  ).toHaveLength(7);
+  ).toHaveLength(14);
   expect(s.games).toEqual(games);
   const deleted = applyCommand(s, { type: "delete-saga", id: data[0].id }, now);
   expect(deleted.games).toEqual(games);
-  expect(deleted.sagas).toHaveLength(6);
+  expect(deleted.sagas).toHaveLength(13);
 });
 it("keeps editorial order distinct from release order and treats missing dates as unknown", () => {
   const saga = structuredClone(data[0]) as Saga;
@@ -60,4 +64,46 @@ it("rejects duplicate titles within a guide and unsafe cover URLs", () => {
   ).toThrow();
   saga.entries[0] = { ...saga.entries[0], cover: "javascript:alert(1)" };
   expect(() => sagaSchema.parse(saga)).toThrow();
+});
+
+it("keeps the chosen saga status until every required game is completed", () => {
+  const guide = sagaSchema.parse(
+    data.find((g) => g.id === "guide-mass-effect"),
+  ) as Saga;
+  const s = demoLibrary();
+  expect(sagaStatus(s, guide)).toBe("siguiendo");
+  expect(sagaStatus(s, { ...guide, status: "en pausa" })).toBe("en pausa");
+  expect(sagaSchema.safeParse({ ...guide, status: "olvidada" }).success).toBe(
+    false,
+  );
+  // Con los juegos obligatorios completados, la saga cuenta como completada.
+  for (const e of guide.entries.filter((e) => !e.optional)) {
+    const id = "g" + e.catalogId;
+    s.games.push({
+      id,
+      title: e.title,
+      catalogId: e.catalogId,
+      genres: [],
+      platforms: ["PC"],
+      stores: [],
+      favorite: false,
+      next: false,
+      review: "",
+      spoilerNote: "",
+      primaryRunId: id,
+      updatedAt: now,
+    });
+    s.runs.push({
+      id,
+      gameId: id,
+      label: "Primera partida",
+      platform: "PC",
+      status: "completado",
+      completion: "sin especificar",
+      startedOn: "2026-01-01",
+      completedOn: "2026-02-01",
+      whereLeft: "",
+    });
+  }
+  expect(sagaStatus(s, { ...guide, status: "abandonada" })).toBe("completada");
 });

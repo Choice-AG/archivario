@@ -1,11 +1,11 @@
 "use client";
 import { StatusOptions } from "./format";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 const noSubscribe = () => () => {};
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCatalogSearch } from "./use-catalog-search";
-import { Modal, type ApiRequest, type Execute, Cover } from "./shared";
+import { Modal, type ApiRequest, type Execute } from "./shared";
 import { type Library, type Status } from "../domain/model";
 import { useSagaGuides } from "./saga-guides";
 import { useSagaSearch } from "./use-api";
@@ -190,86 +190,6 @@ export function GlobalSearch({
         </Modal>
       )}
     </>
-  );
-}
-export function ContinuePlaying({
-  state,
-  onGame,
-  onActivity,
-}: {
-  state: Library;
-  onGame: (id: string) => void;
-  onActivity: (id: string) => void;
-}) {
-  const track = useRef<HTMLDivElement>(null);
-  const games = state.games
-    .filter((g) =>
-      state.runs.some((r) => r.id === g.primaryRunId && r.status === "jugando"),
-    )
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const scroll = (direction: number) =>
-    track.current?.scrollBy({
-      left: direction * track.current.clientWidth * 0.9,
-      behavior: "smooth",
-    });
-  if (!games.length) return null;
-  return (
-    <section className="continue-section">
-      <div className="section-header">
-        <h2>Continuar donde lo dejé</h2>
-        {games.length > 1 && (
-          <div className="carousel-arrows">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Anteriores"
-              onClick={() => scroll(-1)}
-            >
-              <ChevronLeft size={18} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Siguientes"
-              onClick={() => scroll(1)}
-            >
-              <ChevronRight size={18} />
-            </Button>
-          </div>
-        )}
-      </div>
-      <div className="continue-grid" ref={track}>
-        {games.map((g) => {
-          const run = state.runs.find((r) => r.id === g.primaryRunId)!;
-          return (
-            <article key={g.id}>
-              <button
-                className="continue-cover"
-                aria-label={"Continuar " + g.title}
-                onClick={() => onGame(g.id)}
-              >
-                <Cover game={g} />
-              </button>
-              <div>
-                <h3>{g.title}</h3>
-                <p>
-                  {run.whereLeft ||
-                    "Abre tu partida para guardar tu próximo paso."}
-                </p>
-                <div className="form-actions">
-                  <Button variant="secondary" onClick={() => onGame(g.id)}>
-                    Continuar partida
-                  </Button>
-                  <Button variant="ghost" onClick={() => onActivity(g.id)}>
-                    Registrar actividad
-                  </Button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
   );
 }
 export function BatchLibrary({
