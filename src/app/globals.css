@@ -4614,3 +4614,36 @@ select:focus {
   font-size: 11px;
   color: var(--muted);
 }
+
+/* Completar fichas con IGDB en bloque */
+.bulk-link-list {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow: auto;
+}
+.bulk-link-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-ffffff0d);
+  font-size: 13px;
+}
+.bulk-link-choice {
+  margin: 0;
+}
+.bulk-link-choice select {
+  font-size: 12px;
+  padding: 7px;
+}
+.bulk-link-choice small {
+  color: var(--muted);
+}
+@media (max-width: 640px) {
+  .bulk-link-list li {
+    grid-template-columns: 1fr;
+  }
+}

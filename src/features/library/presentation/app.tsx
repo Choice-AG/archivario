@@ -33,6 +33,7 @@ import { YearReview } from "./year-review";
 import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
+import { BulkLink } from "./bulk-link";
 import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
@@ -69,7 +70,7 @@ export function ArchivarioApp() {
 }
 
 type ModalState = {
-  kind: "add" | "activity" | "settings" | "year" | "planning" | "bulk";
+  kind: "add" | "activity" | "settings" | "year" | "planning" | "bulk" | "link";
   id?: string;
   activity?: Activity;
   date?: string;
@@ -409,6 +410,8 @@ function Dashboard({
                   }
                   onJournal={() => goTo("Diario")}
                   onView={goTo}
+                  onBulkLink={() => setModal({ kind: "link" })}
+                  demo={!user}
                 />
               ) : view === "Diario" ? (
                 <section className="panel">
@@ -550,6 +553,20 @@ function Dashboard({
           onClose={() => setModal(null)}
         >
           <Planning state={state} execute={safeExecute} onGame={openGame} />
+        </Modal>
+      )}
+      {modal?.kind === "link" && (
+        <Modal
+          title="Completar fichas con IGDB"
+          description="Vincula los juegos añadidos a mano o importados con su ficha del catálogo."
+          onClose={() => setModal(null)}
+        >
+          <BulkLink
+            state={state}
+            request={api.request}
+            execute={safeExecute}
+            onDone={() => setModal(null)}
+          />
         </Modal>
       )}
       {modal?.kind === "year" && (
