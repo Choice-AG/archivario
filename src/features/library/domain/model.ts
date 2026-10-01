@@ -1,4 +1,5 @@
 import { changeRunStatus } from "./daily";
+import type { AvatarColor } from "./profile";
 export const statuses = [
   "pendiente",
   "jugando",
@@ -61,6 +62,11 @@ export type Profile = {
   bio: string;
   timezone: string;
   avatarVersion?: string;
+  avatarColor?: AvatarColor;
+  // Juegos destacados en la cabecera del perfil, en orden.
+  showcase?: string[];
+  // La bienvenida guiada se ha cerrado.
+  onboardingDone?: boolean;
 };
 export type GameList = {
   id: string;

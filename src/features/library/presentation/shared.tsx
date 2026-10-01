@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import type { Command, Game } from "../domain/model";
+import type { Command, Game, Profile } from "../domain/model";
 
 export type Execute = (command: Command) => Promise<void>;
 export type ApiRequest = (url: string, init?: RequestInit) => Promise<Response>;
@@ -66,5 +66,24 @@ export function Cover({
       <Gamepad2 size={44} />
       <span>{game.title}</span>
     </div>
+  );
+}
+// Inicial del nombre sobre el color elegido en el perfil.
+export function Avatar({
+  profile,
+  className = "",
+}: {
+  profile: Profile;
+  className?: string;
+}) {
+  return (
+    <span
+      className={
+        "avatar avatar-" + (profile.avatarColor ?? "violeta") + " " + className
+      }
+      aria-hidden="true"
+    >
+      {(profile.name || "A").slice(0, 1).toLocaleUpperCase("es")}
+    </span>
   );
 }

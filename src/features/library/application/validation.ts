@@ -11,6 +11,7 @@ import {
   type Run,
   type Saga,
 } from "../domain/model";
+import { avatarColors, SHOWCASE_MAX } from "../domain/profile";
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
 export const localDate = z
   .string()
@@ -111,6 +112,9 @@ export const profileSchema = z
       }
     }, "Zona horaria no válida"),
     avatarVersion: id.optional(),
+    avatarColor: z.enum(avatarColors).optional(),
+    showcase: z.array(id).max(SHOWCASE_MAX).optional(),
+    onboardingDone: z.boolean().optional(),
   })
   .strict();
 export const listSchema = z

@@ -31,6 +31,15 @@ async function chooseStatus(
     })
     .click();
 }
+// El perfil (con los ajustes) se abre desde el avatar.
+async function openProfile(page: Page) {
+  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
+  if (mobile)
+    await page.getByRole("button", { name: "Perfil", exact: true }).click();
+  else await page.locator(".profile-button").click();
+  await expect(page).toHaveURL(/\/perfil/);
+  return mobile;
+}
 function demoData(page: Page) {
   return page.evaluate(() =>
     JSON.parse(localStorage.getItem("archivario-demo-v1") ?? "{}"),
@@ -111,10 +120,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem("partida-demo-v1")))
     .toBeNull();
-  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
-  if (mobile)
-    await page.getByRole("button", { name: "Ajustes", exact: true }).click();
-  else await page.locator(".profile-button").click();
+  await openProfile(page);
   const backup = await page.evaluate(() =>
     JSON.stringify({
       version: 1,
@@ -512,7 +518,7 @@ test("saga: consultar un juego sin tenerlo y añadirlo desde su ficha", async ({
     .getByRole("button", { name: "Añadir a mi biblioteca", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Registrar actividad", exact: true }),
+    page.getByRole("button", { name: "He jugado hoy", exact: true }),
   ).toBeVisible();
   await expect
     .poll(async () =>
@@ -790,10 +796,7 @@ test("importa juegos desde un CSV sin duplicar los existentes", async ({
   page,
 }) => {
   await openDemo(page);
-  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
-  if (mobile)
-    await page.getByRole("button", { name: "Ajustes", exact: true }).click();
-  else await page.locator(".profile-button").click();
+  const mobile = await openProfile(page);
   await page
     .locator('input[type="file"][accept=".csv,text/csv"]')
     .setInputFiles({
@@ -808,7 +811,10 @@ test("importa juegos desde un CSV sin duplicar los existentes", async ({
   await expect(preview).toContainText("1 ya estaba en tu biblioteca");
   await preview.getByRole("button", { name: "Importar 2 juegos" }).click();
   await expect(page.getByText(/2 juegos importados/)).toBeVisible();
-  await page.keyboard.press("Escape");
+  await page
+    .locator(mobile ? ".bottom-nav" : ".sidebar nav")
+    .getByRole("button", { name: /^Biblioteca/ })
+    .click();
   await page.getByLabel("Buscar en mi biblioteca").fill("Pentiment");
   await expect(
     page.getByRole("button", { name: "Abrir Pentiment", exact: true }),
@@ -879,4 +885,117 @@ test("el diario se agrupa por meses y se filtra por juego", async ({
   ]);
   await page.getByRole("button", { name: "Quitar filtros" }).click();
   await expect(page.locator(".activity-row")).toHaveCount(total);
+});
+
+test("el perfil muestra tu resumen, tu escaparate y tu año", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await openProfile(page);
+  await expect(
+    page.getByRole("heading", { name: "Alex", level: 1 }),
+  ).toBeVisible();
+  await expect(page.locator(".profile-stats")).toContainText(
+    "en la biblioteca",
+  );
+  await expect(page.locator(".heatmap [role=status]")).toContainText(
+    /\d+ días? jugados?/,
+  );
+  await page.getByRole("button", { name: "Elegir destacados" }).click();
+  const picker = page.locator(".showcase-picker");
+  const checked = picker.getByRole("checkbox", { checked: true });
+  while ((await checked.count()) > 0) await checked.first().uncheck();
+  await picker.getByRole("checkbox", { name: "Outer Wilds" }).check();
+  await picker.getByRole("button", { name: "Guardar escaparate" }).click();
+  await expect(page.locator(".showcase-game")).toHaveCount(1);
+  await expect
+    .poll(async () => (await demoData(page)).profile.showcase)
+    .toEqual(["outer"]);
+  await page.getByRole("radio", { name: "Verde" }).click();
+  await expect(page.locator(".profile-hero .avatar")).toHaveClass(
+    /avatar-verde/,
+  );
+  await expect
+    .poll(async () => (await demoData(page)).profile.avatarColor)
+    .toBe("verde");
+});
+
+test("la ficha permite registrar hoy con una nota y cambiar el estado", async ({
+  page,
+}) => {
+  await page.goto("/juegos/disco?demo=1");
+  await page
+    .getByRole("button", { name: "He jugado hoy", exact: true })
+    .click();
+  await expect(page.getByText("Jugado hoy", { exact: true })).toBeVisible();
+  await page.getByLabel(/Una nota rápida de hoy/).fill("Primer interrogatorio");
+  await page.getByRole("button", { name: "Guardar nota" }).click();
+  await expect
+    .poll(async () =>
+      (await demoData(page)).activities
+        .filter((a: { gameId: string }) => a.gameId === "disco")
+        .map((a: { note: string }) => a.note),
+    )
+    .toContain("Primer interrogatorio");
+  await page
+    .getByRole("button", { name: /^Estado de la partida principal/ })
+    .click();
+  await page.getByRole("menuitemradio", { name: "Jugando" }).click();
+  await expect(
+    page.getByRole("button", {
+      name: /^Estado de la partida principal: Jugando/,
+    }),
+  ).toBeVisible();
+});
+
+test("una biblioteca vacía muestra los primeros pasos y se pueden ocultar", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "archivario-demo-v1",
+      JSON.stringify({
+        revision: 1,
+        games: [],
+        runs: [],
+        activities: [],
+        profile: { name: "", bio: "", timezone: "Europe/Madrid" },
+      }),
+    ),
+  );
+  await page.reload();
+  const steps = page.getByRole("region", { name: "Tus primeros pasos" });
+  await expect(steps).toBeVisible();
+  await expect(steps.getByRole("progressbar")).toHaveAccessibleName(
+    "0 de 4 pasos hechos",
+  );
+  await steps.getByRole("button", { name: "Añadir juego" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await steps
+    .getByRole("button", { name: "Ocultar los primeros pasos" })
+    .click();
+  await expect(steps).toBeHidden();
+  await expect
+    .poll(async () => (await demoData(page)).profile.onboardingDone)
+    .toBe(true);
+});
+
+test("en el móvil el botón + abre las acciones rápidas", async ({ page }) => {
+  test.skip((page.viewportSize()?.width ?? 1440) > 640, "Solo en móvil");
+  await openDemo(page);
+  await page
+    .locator(".bottom-nav")
+    .getByRole("button", { name: "Añadir" })
+    .click();
+  await expect(
+    page.getByRole("menuitem", { name: "Registrar hoy" }),
+  ).toBeVisible();
+  await page.getByRole("menuitem", { name: "Añadir juego" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Tu próxima aventura", exact: true }),
+  ).toBeVisible();
 });

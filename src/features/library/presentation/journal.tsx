@@ -4,8 +4,10 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  NotebookPen,
   Sparkles,
 } from "lucide-react";
+import { Heatmap } from "./heatmap";
 import { Button } from "@/components/ui/button";
 import { monthlySummary, type Activity, type Library } from "../domain/model";
 import { Cover } from "./shared";
@@ -249,6 +251,7 @@ export function CalendarView({
   onMonth,
   onDay,
   onBulk,
+  onJournal,
 }: {
   state: Library;
   today: string;
@@ -256,6 +259,7 @@ export function CalendarView({
   onMonth: (month: string) => void;
   onDay: (date: string) => void;
   onBulk: () => void;
+  onJournal: () => void;
 }) {
   const summary = monthlySummary(state, month);
   const titles = useMemo(
@@ -273,6 +277,13 @@ export function CalendarView({
     <section className="panel">
       <div className="section-header">
         <h2>Calendario</h2>
+        <Button
+          variant="ghost"
+          onClick={onJournal}
+          className="calendar-bulk calendar-journal"
+        >
+          <NotebookPen size={16} /> Ver diario
+        </Button>
         <Button variant="secondary" onClick={onBulk} className="calendar-bulk">
           Registrar varios días
         </Button>
@@ -353,6 +364,15 @@ export function CalendarView({
           },
         )}
       </div>
+      <h3 className="calendar-year-title">Tu año de un vistazo</h3>
+      <Heatmap
+        state={state}
+        year={month.slice(0, 4)}
+        onDay={(date) => {
+          onMonth(date.slice(0, 7));
+          onDay(date);
+        }}
+      />
       <p className="muted text-sm mt-5">
         Las fechas siguen tu zona horaria: {state.profile.timezone}. Toca un día
         para añadir o editar actividad.

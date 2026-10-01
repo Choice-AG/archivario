@@ -1,7 +1,16 @@
 "use client";
 import { DateText, StatusOptions, statusLabel } from "./format";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Heart, Pencil, Plus, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarPlus,
+  Check,
+  Heart,
+  Pencil,
+  Plus,
+  Star,
+} from "lucide-react";
+import { StatusMenu } from "./status-menu";
 import { GameGallery } from "./game-gallery";
 import { Button } from "@/components/ui/button";
 import { Cover, Modal, type ApiRequest, type Execute } from "./shared";
@@ -13,7 +22,7 @@ import { useCatalogDetails, useCatalogTimes } from "./use-api";
 import { CriticScore } from "./critic-score";
 import { Markdown } from "./markdown";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
-import { type Game, type Library, type Run } from "../domain/model";
+import { activityId, type Game, type Library, type Run } from "../domain/model";
 export function GamePage({
   game,
   state,
@@ -55,6 +64,10 @@ export function GamePage({
     if (latest) onCritic?.(latest);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latest?.score, latest?.count]);
+  const playedToday = state.activities.find(
+    (a) => a.gameId === game.id && a.date === today,
+  );
+  const [todayNote, setTodayNote] = useState(playedToday?.note ?? "");
   const remoteTimes = timesQuery.data,
     loading = timesQuery.loading,
     timeError = timesQuery.error;
@@ -101,9 +114,46 @@ export function GamePage({
             <span>Tu valoración</span>
             <CriticScore critic={critic} />
           </div>
+          <div className="game-hero-status">
+            <StatusMenu
+              label="Estado de la partida principal"
+              status={run.status}
+              disabled={busy}
+              onChange={(status) =>
+                mutate({
+                  type: "save-run",
+                  run: changeRunStatus(run, status, today),
+                  primary: true,
+                })
+              }
+            />
+          </div>
           <div className="game-hero-actions">
-            <Button onClick={onActivity}>
-              <Plus size={16} /> Registrar actividad
+            {playedToday ? (
+              <span className="played-today" role="status">
+                <Check size={16} /> Jugado hoy
+              </span>
+            ) : (
+              <Button
+                disabled={busy}
+                onClick={() =>
+                  mutate({
+                    type: "save-activity",
+                    activity: {
+                      id: activityId(game.id, today),
+                      gameId: game.id,
+                      runId: game.primaryRunId,
+                      date: today,
+                      note: "",
+                    },
+                  })
+                }
+              >
+                <Plus size={16} /> He jugado hoy
+              </Button>
+            )}
+            <Button variant="secondary" onClick={onActivity}>
+              <CalendarPlus size={16} /> Otro día
             </Button>
             <Button variant="secondary" onClick={() => setEditor("Ficha")}>
               <Pencil size={16} /> Editar juego
@@ -126,6 +176,34 @@ export function GamePage({
           </div>
         </div>
       </header>
+      {playedToday && (
+        <form
+          className="today-note"
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutate({
+              type: "save-activity",
+              activity: { ...playedToday, note: todayNote.trim() },
+            });
+          }}
+        >
+          <label>
+            Una nota rápida de hoy <small>Opcional</small>
+            <input
+              value={todayNote}
+              maxLength={1000}
+              placeholder="¿Qué ha pasado en esta sesión?"
+              onChange={(e) => setTodayNote(e.target.value)}
+            />
+          </label>
+          <Button
+            variant="secondary"
+            disabled={busy || todayNote.trim() === playedToday.note}
+          >
+            Guardar nota
+          </Button>
+        </form>
+      )}
       {error && (
         <p role="alert" className="form-error">
           {error}
