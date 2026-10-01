@@ -79,7 +79,9 @@ Las pruebas de Firebase usan adaptadores simulados: no equivalen a una verificac
 
 ## Límites de la primera versión
 
-Agregado transaccional privado por usuario: hasta 200 juegos, 600 partidas, 3.000 actividades y 450 KB UTF-8. La UI pagina juegos y diario; la sincronización carga el agregado completo. Antes de bibliotecas grandes, migrar el repositorio a colecciones y consultas con cursor.
+Agregado transaccional privado por usuario, guardado en bloques de hasta 400 KB (`users/{uid}/libraryChunks`) más un documento índice (`users/{uid}/private/library-v2`). Solo se reescriben los bloques que cambian. Límites: 1.000 juegos, 3.000 partidas, 15.000 actividades y 3,5 MB en total, para que la respuesta completa quepa en el límite de Vercel.
+
+Las bibliotecas del formato anterior (`users/{uid}/private/library`) se migran solas en la primera escritura; el documento antiguo se conserva intacto como copia de seguridad.
 
 La importación omite juegos duplicados completos o reemplaza la biblioteca explícitamente. Los antiguos campos de versión de avatar se aceptan por compatibilidad con exportaciones v1, pero no se accede a Storage.
 

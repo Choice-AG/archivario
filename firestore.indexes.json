@@ -35,6 +35,11 @@
       "collectionGroup": "catalogCache",
       "fieldPath": "value",
       "indexes": []
+    },
+    {
+      "collectionGroup": "libraryChunks",
+      "fieldPath": "items",
+      "indexes": []
     }
   ]
 }

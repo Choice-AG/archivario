@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   activityId,
   assertLibrary,
+  LIMITS,
   statuses,
   type Activity,
   type Game,
@@ -110,7 +111,7 @@ export const listSchema = z
     id,
     name: text(80).trim().min(1),
     description: text(1000),
-    gameIds: z.array(id).max(200),
+    gameIds: z.array(id).max(LIMITS.games),
   })
   .strict();
 export const sagaSchema = z
@@ -162,9 +163,9 @@ export const librarySchema = z
     sagas: z.array(sagaSchema).max(30).optional(),
     lists: z.array(listSchema).max(50).optional(),
     revision: z.number().int().nonnegative(),
-    games: z.array(gameSchema).max(200),
-    runs: z.array(runSchema).max(600),
-    activities: z.array(activitySchema).max(3000),
+    games: z.array(gameSchema).max(LIMITS.games),
+    runs: z.array(runSchema).max(LIMITS.runs),
+    activities: z.array(activitySchema).max(LIMITS.activities),
     profile: profileSchema,
   })
   .strict()
@@ -186,7 +187,7 @@ export const commandSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("batch-status"),
-      gameIds: z.array(id).min(1).max(200),
+      gameIds: z.array(id).min(1).max(LIMITS.games),
       status: z.enum(statuses),
       date: localDate,
     })
@@ -194,7 +195,7 @@ export const commandSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("batch-list"),
-      gameIds: z.array(id).min(1).max(200),
+      gameIds: z.array(id).min(1).max(LIMITS.games),
       listId: id,
     })
     .strict(),
