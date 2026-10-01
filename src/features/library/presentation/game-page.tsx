@@ -63,7 +63,9 @@ export function GamePage({
   onJournal,
   onCritic,
   onGame,
+  celebrating = false,
 }: {
+  celebrating?: boolean;
   onGame: (id: string) => void;
   game: Game;
   state: Library;
@@ -80,6 +82,12 @@ export function GamePage({
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const [tab, setTab] = useHashTab();
+  // Al celebrar que se ha completado, se cierra el editor que esté abierto.
+  const [wasCelebrating, setWasCelebrating] = useState(celebrating);
+  if (celebrating !== wasCelebrating) {
+    setWasCelebrating(celebrating);
+    if (celebrating) setEditor(undefined);
+  }
   const linked = !!game.catalogId;
   const run = state.runs.find((r) => r.id === game.primaryRunId)!,
     runs = state.runs.filter((r) => r.gameId === game.id),

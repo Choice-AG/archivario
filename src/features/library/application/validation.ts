@@ -115,6 +115,7 @@ export const profileSchema = z
     avatarColor: z.enum(avatarColors).optional(),
     showcase: z.array(id).max(SHOWCASE_MAX).optional(),
     onboardingDone: z.boolean().optional(),
+    celebrate: z.boolean().optional(),
   })
   .strict();
 export const listSchema = z

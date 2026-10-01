@@ -35,7 +35,7 @@ import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Avatar, Modal, type Execute } from "./shared";
 import { Onboarding, showOnboarding } from "./onboarding";
-import { Celebration, completedBy } from "./celebration";
+import { Celebration, completedBy, type Completion } from "./celebration";
 import {
   gamePath,
   parsePath,
@@ -205,11 +205,16 @@ function Dashboard({
     return () => clearTimeout(timer);
   }, [notice]);
 
-  const [celebrating, setCelebrating] = useState<string>();
+  const [celebrating, setCelebrating] = useState<Completion>();
   const safeExecute: Execute = async (c) => {
-    const completed = completedBy(state, c);
+    const completed =
+      state.profile.celebrate === false ? undefined : completedBy(state, c);
     await execute(c);
-    if (completed) setCelebrating(completed);
+    if (completed) {
+      // La celebración sustituye a cualquier ventana abierta.
+      setModal(null);
+      setCelebrating(completed);
+    }
     setNotice(
       c.type === "save-saga"
         ? "Guía guardada en Sagas → Mis sagas" +
@@ -435,6 +440,7 @@ function Dashboard({
             ) : ownedGame &&
               state.runs.some((r) => r.id === ownedGame.primaryRunId) ? (
               <GamePage
+                celebrating={!!celebrating}
                 onGame={openGame}
                 key={gameId}
                 game={ownedGame}
@@ -694,28 +700,22 @@ function Dashboard({
           )}
         </div>
       )}
-      {(() => {
-        const g = celebrating
-          ? state.games.find((x) => x.id === celebrating)
-          : undefined;
-        return (
-          g && (
-            <Celebration
-              game={g}
-              onClose={() => setCelebrating(undefined)}
-              onReview={() => {
-                setCelebrating(undefined);
-                // En la propia ficha basta con cambiar de pestaña.
-                if (gameId === g.id) window.location.hash = "resena";
-                else {
-                  setModal(null);
-                  router.push(gamePath(g.id) + suffix + "#resena");
-                }
-              }}
-            />
-          )
-        );
-      })()}
+      {celebrating && (
+        <Celebration
+          state={state}
+          completion={celebrating}
+          today={today}
+          execute={safeExecute}
+          onClose={() => setCelebrating(undefined)}
+          onReview={() => {
+            const id = celebrating.gameId;
+            setCelebrating(undefined);
+            // En la propia ficha basta con cambiar de pestaña.
+            if (gameId === id) window.location.hash = "resena";
+            else router.push(gamePath(id) + suffix + "#resena");
+          }}
+        />
+      )}
       {modal?.kind === "add" && (
         <Modal
           title="Tu próxima aventura"
@@ -728,6 +728,7 @@ function Dashboard({
             execute={safeExecute}
             request={api.request}
             onClose={() => setModal(null)}
+            onOpen={openGame}
           />
         </Modal>
       )}
