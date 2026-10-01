@@ -12,6 +12,10 @@ const sentryHost = (() => {
     return "";
   }
 })();
+// Pruebas con el emulador de Auth (http://127.0.0.1:9099).
+const authEmulator = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR
+  ? " " + process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR
+  : "";
 const images = "https://images.igdb.com https://cdn.cloudflare.steamstatic.com";
 const csp = [
   "default-src 'self'",
@@ -20,17 +24,19 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${images}`,
   "font-src 'self' data:",
-  `connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com${sentryHost}`,
+  `connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com${sentryHost}${authEmulator}`,
   `frame-src ${authDomain ? "https://" + authDomain : "'none'"}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  ...(dev ? [] : ["upgrade-insecure-requests"]),
+  ...(dev || authEmulator ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const config: NextConfig = {
   poweredByHeader: false,
+  // Las pruebas con emuladores compilan aparte para no pisar la build normal.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   async headers() {
     return [
       {

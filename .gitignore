@@ -12,3 +12,6 @@ firebase-debug.log*
 *firebase-adminsdk*.json
 work/
 *.zip
+.next-emulators/
+firestore-debug.log
+ui-debug.log

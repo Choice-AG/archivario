@@ -34,3 +34,29 @@ jobs:
             playwright-report
             test-results
           retention-days: 7
+
+  emulators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Auth y Firestore emulados con un proyecto demo-*: sin credenciales reales.
+      - run: npm run test:e2e:emulators
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-emulators-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

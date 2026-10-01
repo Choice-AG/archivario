@@ -4597,3 +4597,20 @@ select:focus {
   background: var(--c-ffffff0d);
   font-size: 13px;
 }
+
+/* Campo con etiqueta separada (p. ej., contraseña con botón de mostrar) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 17px;
+  font-size: 13px;
+  color: var(--c-c5c8d8);
+}
+.field > label {
+  margin: 0;
+}
+.field > small {
+  font-size: 11px;
+  color: var(--muted);
+}

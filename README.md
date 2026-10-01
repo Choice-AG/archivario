@@ -78,6 +78,7 @@ Exportación JSON v1 e importación validada con vista previa y política de dup
 - npm run typecheck
 - npm test
 - npm run test:e2e (compila antes de probar; requiere npx playwright install chromium)
+- npm run test:e2e:emulators (registro, verificación de correo, sincronización entre pestañas y modo sin conexión contra los emuladores de Auth y Firestore; requiere Java 21. Usa el proyecto `demo-archivario`, que nunca contacta con Firebase real)
 - npm audit
 
 GitHub Actions ejecuta estas comprobaciones en cada push a main y en cada pull request (.github/workflows/ci.yml). Las pruebas e2e usan la demostración, sin credenciales.

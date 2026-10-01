@@ -101,14 +101,18 @@ export function Login({ onDemo }: { onDemo: () => void }) {
               onChange={(e) => setEmail(e.target.value)}
             />
           </label>
-          <label>
-            Contraseña
+          <div className="field">
+            {/* El botón queda fuera de la etiqueta para que el campo se llame
+                solo «Contraseña». */}
+            <label htmlFor="login-password">Contraseña</label>
             <span className="password-field">
               <input
+                id="login-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 minLength={8}
                 autoComplete={signup ? "new-password" : "current-password"}
+                aria-describedby={signup ? "password-hint" : undefined}
                 required
               />
               <button
@@ -122,8 +126,8 @@ export function Login({ onDemo }: { onDemo: () => void }) {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </span>
-            {signup && <small>Al menos 8 caracteres.</small>}
-          </label>
+            {signup && <small id="password-hint">Al menos 8 caracteres.</small>}
+          </div>
           <Button disabled={pending} className="w-full">
             {signup ? "Crear cuenta" : "Entrar"}
           </Button>

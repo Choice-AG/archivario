@@ -5,3 +5,4 @@ playwright-report
 work
 package-lock.json
 src/features/library/infrastructure/*.json
+.next-emulators
