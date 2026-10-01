@@ -19,6 +19,7 @@ import {
 import type { ApiRequest, Execute } from "./shared";
 import { list, RatingOptions, value } from "./form-utils";
 import { ThemePicker } from "./theme";
+import { ImportGames } from "./import-games";
 function FormError({ message }: { message: string }) {
   return message ? (
     <p className="form-error" role="alert">
@@ -901,6 +902,13 @@ export function SettingsPanel({
           </Button>
         </div>
       )}
+      <div className="divider" />
+      <ImportGames
+        state={state}
+        execute={execute}
+        request={request}
+        demo={demo}
+      />
       <div className="danger-area">
         <h3>
           {demo

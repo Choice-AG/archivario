@@ -785,3 +785,32 @@ test("cada vista tiene su propia URL y título", async ({ page }) => {
     page.getByRole("heading", { name: "Lo que has estado jugando." }),
   ).toBeVisible();
 });
+
+test("importa juegos desde un CSV sin duplicar los existentes", async ({
+  page,
+}) => {
+  await openDemo(page);
+  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
+  if (mobile)
+    await page.getByRole("button", { name: "Ajustes", exact: true }).click();
+  else await page.locator(".profile-button").click();
+  await page
+    .locator('input[type="file"][accept=".csv,text/csv"]')
+    .setInputFiles({
+      name: "juegos.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(
+        "Título;Plataforma;Estado;Nota\nHades;Switch;jugando;9\nPentiment;PC;completado;8,5\nTunic;PC;;\n",
+      ),
+    });
+  const preview = page.locator(".import-preview");
+  await expect(preview).toContainText("2 juegos nuevos");
+  await expect(preview).toContainText("1 ya estaba en tu biblioteca");
+  await preview.getByRole("button", { name: "Importar 2 juegos" }).click();
+  await expect(page.getByText(/2 juegos importados/)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByLabel("Buscar en mi biblioteca").fill("Pentiment");
+  await expect(
+    page.getByRole("button", { name: "Abrir Pentiment", exact: true }),
+  ).toBeVisible();
+});
