@@ -101,6 +101,13 @@ export class FirebaseLibraryRepository implements LibraryRepository {
       refs.map((r, i) => ({ key: r.key, snap: snaps[i] })),
     );
   }
+  async revision(uid: string) {
+    const meta = (await metaRef(uid).get()).data() as Meta | undefined;
+    if (meta) return meta.revision;
+    return (
+      ((await stateRef(uid).get()).data() as Library | undefined)?.revision ?? 0
+    );
+  }
   async transact(
     uid: string,
     revision: number,

@@ -151,3 +151,27 @@ it("exige correo confirmado a las cuentas nuevas para usar el catálogo", async 
   // Las cuentas antiguas siguen sin necesitar confirmación.
   expect((await call("token-a")).status).toBe(400);
 });
+
+it("responde sin datos cuando el cliente ya tiene la revisión actual", async () => {
+  await POST(
+    request("token-a", {
+      revision: 0,
+      command: {
+        type: "profile",
+        profile: { name: "Ana", bio: "", timezone: "UTC" },
+      },
+    }),
+  );
+  const same = await GET(
+    new Request("http://localhost/api/library?since=1", {
+      headers: { Authorization: "Bearer token-a" },
+    }),
+  );
+  expect(await same.json()).toEqual({ unchanged: true, revision: 1 });
+  const older = await GET(
+    new Request("http://localhost/api/library?since=0", {
+      headers: { Authorization: "Bearer token-a" },
+    }),
+  );
+  expect((await older.json()).profile.name).toBe("Ana");
+});

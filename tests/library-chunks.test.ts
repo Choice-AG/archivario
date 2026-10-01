@@ -130,3 +130,12 @@ it("rechaza revisiones antiguas también con el formato nuevo", async () => {
     /otro dispositivo/,
   );
 });
+
+it("lee la revisión con un solo documento en ambos formatos", async () => {
+  const legacy = { ...demoLibrary(), revision: 7 };
+  f.store.set("users/alice/private/library", structuredClone(legacy));
+  expect(await repo.revision("alice")).toBe(7);
+  await save(legacy, (s) => ({ ...s, revision: 8 }));
+  expect(await repo.revision("alice")).toBe(8);
+  expect(await repo.revision("nadie")).toBe(0);
+});

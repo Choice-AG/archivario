@@ -32,7 +32,8 @@ export function useLibrary(user: User | null) {
   }>();
   const current = useRef(state),
     locked = useRef(false),
-    mounted = useRef(true);
+    mounted = useRef(true),
+    loadedOnce = useRef(false);
   const uid = user?.uid;
   const update = useCallback(
     (s: Library) => {
@@ -138,8 +139,16 @@ export function useLibrary(user: User | null) {
     if (locked.current) return;
     if (uid && loadQueue(uid).length) return flush();
     try {
-      const s = await (await request("/api/library")).json();
+      // Tras la primera carga solo se pide la biblioteca si ha cambiado.
+      const known = current.current.revision;
+      const s = await (
+        await request(
+          "/api/library" + (loadedOnce.current ? "?since=" + known : ""),
+        )
+      ).json();
       setOffline(false);
+      if (s.unchanged) return;
+      loadedOnce.current = true;
       if (!locked.current && s.revision >= current.current.revision) update(s);
     } catch (e) {
       if (e instanceof OfflineError) setOffline(true);
