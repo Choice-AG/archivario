@@ -1,6 +1,6 @@
 import { beforeEach, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const storage = vi.hoisted(() => new Map<string, unknown>());
+const fake = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("@/server/firebase", () => ({
   adminAuth: () => ({
     verifyIdToken: async (token: string) => {
@@ -9,34 +9,16 @@ vi.mock("@/server/firebase", () => ({
       throw new Error("invalid");
     },
   }),
-  db: () => ({
-    collection: (name: string) => ({
-      doc: (uid: string) => ({
-        collection: (sub: string) => ({
-          doc: (id: string) => ({
-            key: [name, uid, sub, id].join("/"),
-            get: async () => ({
-              data: () => storage.get([name, uid, sub, id].join("/")),
-            }),
-          }),
-        }),
-      }),
-    }),
-    runTransaction: async (fn: (tx: unknown) => unknown) =>
-      fn({
-        get: async (ref: { key: string }) => ({
-          exists: storage.has(ref.key),
-          data: () => storage.get(ref.key),
-        }),
-        set: (ref: { key: string }, data: unknown) =>
-          storage.set(ref.key, data),
-      }),
-  }),
+  db: () => (fake.current as { db: unknown }).db,
 }));
 vi.mock("@/server/lifecycle", () => ({
-  isDeleting: async (uid: string) => storage.has("locks/" + uid),
-  deletionRef: (uid: string) => ({ key: "locks/" + uid }),
+  isDeleting: async (uid: string) => storage().has("locks/" + uid),
+  deletionRef: (uid: string) => ({ path: "locks/" + uid }),
 }));
+import { createFakeFirestore } from "./support/fake-firestore";
+let firestore = createFakeFirestore();
+fake.current = firestore;
+const storage = () => firestore.store;
 import { GET, POST } from "../src/app/api/library/route";
 const request = (token: string, body?: unknown) =>
   new Request("http://localhost/api/library", {
@@ -47,7 +29,10 @@ const request = (token: string, body?: unknown) =>
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
-beforeEach(() => storage.clear());
+beforeEach(() => {
+  firestore = createFakeFirestore();
+  fake.current = firestore;
+});
 it("rechaza llamadas sin identidad", async () => {
   expect((await GET(new Request("http://localhost/api/library"))).status).toBe(
     401,
@@ -69,7 +54,10 @@ it("separa datos incluso usando Admin SDK", async () => {
     "Alice privada",
   );
   expect((await (await GET(request("token-b"))).json()).profile.name).toBe("");
-  expect(storage.has("users/alice/private/library")).toBe(true);
+  expect(storage().has("users/alice/private/library-v2")).toBe(true);
+  expect([...storage().keys()].some((k) => k.startsWith("users/bob/"))).toBe(
+    false,
+  );
 });
 it("rechaza uid suministrado en el cuerpo", async () => {
   const r = await POST(
@@ -102,7 +90,7 @@ it("evita caché compartida", async () => {
 });
 
 it("bloquea operaciones tras empezar a eliminar la cuenta", async () => {
-  storage.set("locks/alice", { deleting: true });
+  storage().set("locks/alice", { deleting: true });
   expect((await GET(request("token-a"))).status).toBe(409);
   expect((await GET(request("token-b"))).status).toBe(200);
 });
