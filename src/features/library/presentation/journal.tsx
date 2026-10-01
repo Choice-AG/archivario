@@ -11,7 +11,7 @@ import { Heatmap } from "./heatmap";
 import { Button } from "@/components/ui/button";
 import { monthlySummary, type Activity, type Library } from "../domain/model";
 import { Cover } from "./shared";
-import { monthLabel, plural } from "./format";
+import { formatDate, monthLabel, plural } from "./format";
 
 export function shiftMonth(month: string, n: number) {
   const d = new Date(month + "-15T12:00:00");
@@ -271,8 +271,8 @@ export function CalendarView({
   onJournal: () => void;
 }) {
   const summary = monthlySummary(state, month);
-  const titles = useMemo(
-    () => new Map(state.games.map((g) => [g.id, g.title])),
+  const games = useMemo(
+    () => new Map(state.games.map((g) => [g.id, g])),
     [state.games],
   );
   const byDate = useMemo(() => {
@@ -360,14 +360,35 @@ export function CalendarView({
                 className={"calendar-day " + (date === today ? "today" : "")}
                 onClick={() => onDay(date)}
                 aria-label={
-                  date + (items.length ? ", " + items.length + " juegos" : "")
+                  formatDate(date) +
+                  (items.length
+                    ? ": " +
+                      items.map((a) => games.get(a.gameId)?.title).join(", ")
+                    : "")
                 }
               >
                 <span>{i + 1}</span>
-                {items.slice(0, 3).map((a) => (
-                  <small key={a.id}>{titles.get(a.gameId)}</small>
-                ))}
-                {items.length > 3 && <small>+{items.length - 3} más</small>}
+                {/* Portadas pequeñas: el mes se lee de un vistazo. */}
+                <span className="calendar-covers" aria-hidden="true">
+                  {items.slice(0, 3).map((a) => {
+                    const g = games.get(a.gameId);
+                    return g?.cover ? (
+                      <img
+                        key={a.id}
+                        src={g.cover}
+                        alt=""
+                        title={g.title}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <i key={a.id} title={g?.title}>
+                        {g?.title.slice(0, 1)}
+                      </i>
+                    );
+                  })}
+                  {items.length > 3 && <b>+{items.length - 3}</b>}
+                </span>
               </button>
             );
           },

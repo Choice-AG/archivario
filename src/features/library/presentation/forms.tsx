@@ -1,5 +1,6 @@
 "use client";
-import { formatDate, StatusOptions, statusLabel } from "./format";
+import { formatDate, statusLabel } from "./format";
+import { StatusMenu } from "./status-menu";
 import { GameTimeForm } from "./game-times";
 import { CatalogDetails } from "./catalog-details";
 import { useState } from "react";
@@ -19,7 +20,9 @@ import {
 import { Avatar, type ApiRequest, type Execute } from "./shared";
 import { avatarColors, type AvatarColor } from "../domain/profile";
 
-import { list, RatingOptions, value } from "./form-utils";
+import { list, value } from "./form-utils";
+import { RatingInput } from "./rating-input";
+import { TimezoneField } from "./timezone-field";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
 import { markdownHint } from "./markdown";
@@ -137,12 +140,14 @@ export function GameDetails({
             <input name="genres" defaultValue={game.genres.join(", ")} />
           </label>
           <div className="form-grid">
-            <label>
-              Tu valoración
-              <select name="rating" defaultValue={game.rating ?? ""}>
-                <RatingOptions />
-              </select>
-            </label>
+            <div className="rating-field">
+              <span className="rating-label">Tu valoración</span>
+              <RatingInput
+                name="rating"
+                label="Tu valoración"
+                defaultValue={game.rating}
+              />
+            </div>
             <label>
               Duración aproximada (h)
               <input
@@ -433,15 +438,14 @@ function RunForm({
         </label>
       </div>
       <div className="form-grid">
-        <label>
-          Estado
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Run["status"])}
-          >
-            <StatusOptions />
-          </select>
-        </label>
+        <div className="rating-field">
+          <span className="rating-label">Estado</span>
+          <StatusMenu
+            label="Estado de esta partida"
+            status={status}
+            onChange={setStatus}
+          />
+        </div>
         <label>
           Grado de finalización
           <select
@@ -488,12 +492,14 @@ function RunForm({
           placeholder="El siguiente paso, una misión, algo por explorar…"
         />
       </label>
-      <label>
-        Valoración de esta partida
-        <select name="runRating" defaultValue={run?.rating ?? ""}>
-          <RatingOptions />
-        </select>
-      </label>
+      <div className="rating-field">
+        <span className="rating-label">Valoración de esta partida</span>
+        <RatingInput
+          name="runRating"
+          label="Valoración de esta partida"
+          defaultValue={run?.rating}
+        />
+      </div>
       <label>
         Reseña de esta partida
         <textarea
@@ -810,29 +816,7 @@ export function SettingsPanel({
             maxLength={300}
           />
         </label>
-        <label>
-          Zona horaria
-          <input
-            name="timezone"
-            list="timezones"
-            defaultValue={state.profile.timezone}
-            required
-          />
-          <datalist id="timezones">
-            {[
-              "Europe/Madrid",
-              "Atlantic/Canary",
-              "America/Mexico_City",
-              "America/Argentina/Buenos_Aires",
-              "America/Bogota",
-              "America/Lima",
-              "America/Santiago",
-              "UTC",
-            ].map((z) => (
-              <option key={z}>{z}</option>
-            ))}
-          </datalist>
-        </label>
+        <TimezoneField name="timezone" defaultValue={state.profile.timezone} />
         <p className="info-note">
           Cambiar la zona horaria afecta a «hoy». Las fechas ya registradas no
           se desplazan.

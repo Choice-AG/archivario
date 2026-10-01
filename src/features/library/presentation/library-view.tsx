@@ -4,7 +4,9 @@ import {
   BookOpen,
   CalendarRange,
   Layers3,
+  LayoutGrid,
   Link2,
+  List,
   ListChecks,
   Search,
   SlidersHorizontal,
@@ -26,7 +28,7 @@ import {
 } from "../domain/daily";
 import type { GameSort } from "../domain/insights";
 import { BatchLibrary, ContinuePlaying } from "./library-improvements";
-import { GameCard } from "./game-card";
+import { GameCard, GameRow } from "./game-card";
 import { Welcome } from "./welcome";
 import { MonthCard, Recent } from "./journal";
 import {
@@ -39,6 +41,16 @@ import type { Execute } from "./shared";
 import { statusLabel } from "./format";
 
 const PAGE = 12;
+const LAYOUT_KEY = "archivario-library-layout";
+type Layout = "grid" | "list";
+// Preferencia de este navegador; sin almacenamiento se usan las portadas.
+function savedLayout(): Layout {
+  try {
+    return localStorage.getItem(LAYOUT_KEY) === "list" ? "list" : "grid";
+  } catch {
+    return "grid";
+  }
+}
 
 export function LibraryView({
   state,
@@ -98,6 +110,15 @@ export function LibraryView({
     () => [...new Set(state.games.flatMap((g) => g.genres))].sort(),
     [state.games],
   );
+  const [layout, setLayout] = useState<Layout>(savedLayout);
+  const chooseLayout = (next: Layout) => {
+    setLayout(next);
+    try {
+      localStorage.setItem(LAYOUT_KEY, next);
+    } catch {
+      // Sin almacenamiento la elección dura esta visita.
+    }
+  };
   const playedToday = useMemo(
     () =>
       new Set(
@@ -129,6 +150,33 @@ export function LibraryView({
     });
   };
   const visible = filtered.slice((page - 1) * PAGE, page * PAGE);
+  const itemProps = (g: Game) => {
+    const r = runOf(g)!;
+    return {
+      game: g,
+      run: r,
+      hours: estimatedHours(g, f.timeMode),
+      showCritic: f.showCritic,
+      playedToday: playedToday.has(g.id),
+      busy,
+      selecting,
+      selected: selectedIds.includes(g.id),
+      onSelect: (checked: boolean) =>
+        setSelectedIds((ids) =>
+          checked ? [...ids, g.id] : ids.filter((id) => id !== g.id),
+        ),
+      onOpen: () => onGame(g.id),
+      onFavorite: () =>
+        run({ type: "save-game", game: { ...g, favorite: !g.favorite } }),
+      onStatus: (status: Run["status"]) =>
+        run({
+          type: "save-run",
+          run: changeRunStatus(r, status, today),
+          primary: true,
+        }),
+      onToday: () => markToday(g),
+    };
+  };
   if (!state.games.length)
     return (
       <Welcome
@@ -338,6 +386,28 @@ export function LibraryView({
             </button>
           ))}
         </div>
+        <div
+          className="segmented layout-toggle"
+          role="group"
+          aria-label="Cómo ver los juegos"
+        >
+          {(
+            [
+              ["grid", "Portadas", LayoutGrid],
+              ["list", "Lista", List],
+            ] as const
+          ).map(([value, label, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={layout === value}
+              className={layout === value ? "selected" : ""}
+              onClick={() => chooseLayout(value)}
+            >
+              <Icon size={15} aria-hidden="true" /> {label}
+            </button>
+          ))}
+        </div>
         <select
           aria-label="Ordenar biblioteca"
           value={f.sort}
@@ -375,45 +445,19 @@ export function LibraryView({
         </>
       )}
       {filtered.length ? (
-        <div className="game-grid">
-          {visible.map((g) => {
-            const r = runOf(g)!;
-            return (
-              <GameCard
-                key={g.id}
-                game={g}
-                run={r}
-                hours={estimatedHours(g, f.timeMode)}
-                timeMode={f.timeMode}
-                showCritic={f.showCritic}
-                playedToday={playedToday.has(g.id)}
-                busy={busy}
-                selecting={selecting}
-                selected={selectedIds.includes(g.id)}
-                onSelect={(checked) =>
-                  setSelectedIds((ids) =>
-                    checked ? [...ids, g.id] : ids.filter((id) => id !== g.id),
-                  )
-                }
-                onOpen={() => onGame(g.id)}
-                onFavorite={() =>
-                  run({
-                    type: "save-game",
-                    game: { ...g, favorite: !g.favorite },
-                  })
-                }
-                onStatus={(status: Run["status"]) =>
-                  run({
-                    type: "save-run",
-                    run: changeRunStatus(r, status, today),
-                    primary: true,
-                  })
-                }
-                onToday={() => markToday(g)}
-              />
-            );
-          })}
-        </div>
+        layout === "list" ? (
+          <ul className="game-list" aria-label="Juegos">
+            {visible.map((g) => (
+              <GameRow key={g.id} {...itemProps(g)} />
+            ))}
+          </ul>
+        ) : (
+          <div className="game-grid">
+            {visible.map((g) => (
+              <GameCard key={g.id} {...itemProps(g)} timeMode={f.timeMode} />
+            ))}
+          </div>
+        )
       ) : (
         <div className="empty-state">
           <BookOpen size={36} />

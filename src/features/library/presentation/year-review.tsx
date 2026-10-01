@@ -3,6 +3,7 @@ import { formatDate, plural } from "./format";
 import { useState } from "react";
 import type { Library } from "../domain/model";
 import { annualSummary } from "../domain/insights";
+import { Stars } from "./rating-input";
 export function YearReview({
   state,
   today,
@@ -178,7 +179,7 @@ export function YearReview({
                   onClick={() => onGame(g.id)}
                 >
                   <span>{g.title}</span>
-                  <strong>{g.rating?.toLocaleString("es")}/10</strong>
+                  <Stars value={g.rating!} size={12} />
                 </button>
               ))}
             </>

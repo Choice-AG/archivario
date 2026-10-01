@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Pencil, Settings, Sparkles, Star } from "lucide-react";
+import { BarChart3, Pencil, Settings, Sparkles } from "lucide-react";
+import { Stars } from "./rating-input";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
 import {
@@ -228,11 +229,8 @@ export function ProfilePage({
               <span>
                 <strong>{stats.lastCompleted.game.title}</strong>
                 <small>{formatDate(stats.lastCompleted.date)}</small>
-                {stats.lastCompleted.game.rating && (
-                  <small>
-                    <Star size={12} />{" "}
-                    {stats.lastCompleted.game.rating.toLocaleString("es")}/10
-                  </small>
+                {stats.lastCompleted.game.rating !== undefined && (
+                  <Stars value={stats.lastCompleted.game.rating} size={12} />
                 )}
               </span>
             </button>

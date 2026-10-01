@@ -53,6 +53,14 @@ async function openTab(page: Page, name: string) {
     page.getByRole("tab", { name: new RegExp("^" + name) }),
   ).toHaveAttribute("aria-selected", "true");
 }
+// La valoración se elige con estrellas; con teclado va de media en media.
+async function setRating(page: Page, label: string, value: number) {
+  const stars = page.getByRole("slider", { name: label });
+  await stars.focus();
+  await stars.press("Home");
+  for (let n = 1; n < value; n += 0.5) await stars.press("ArrowRight");
+  await expect(stars).toHaveAttribute("aria-valuenow", String(value));
+}
 function demoData(page: Page) {
   return page.evaluate(() =>
     JSON.parse(localStorage.getItem("archivario-demo-v1") ?? "{}"),
@@ -253,7 +261,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await page
     .getByRole("button", { name: "Gestionar partidas", exact: true })
     .click();
-  await page.getByLabel("Valoración de esta partida").selectOption("8.5");
+  await setRating(page, "Valoración de esta partida", 8.5);
   await page.getByLabel("Reseña de esta partida").fill("Me ha gustado aún más");
   await page
     .getByRole("button", { name: "Guardar partida", exact: true })
@@ -289,9 +297,9 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
   await expect(page.getByLabel("Reseña de esta partida")).toHaveValue(
     "Me ha gustado aún más",
   );
-  await expect(page.getByLabel("Valoración de esta partida")).toHaveValue(
-    "8.5",
-  );
+  await expect(
+    page.getByRole("slider", { name: "Valoración de esta partida" }),
+  ).toHaveAttribute("aria-valuenow", "8.5");
   await page.getByRole("button", { name: "Cerrar", exact: true }).click();
   await page
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
@@ -1067,4 +1075,116 @@ test("en el resumen se edita dónde lo dejaste", async ({ page }) => {
         .map((r: { whereLeft: string }) => r.whereLeft),
     )
     .toContain("Frente a la puerta del Rey");
+});
+
+test("la valoración se elige con estrellas y medias", async ({ page }) => {
+  await page.goto("/juegos/disco?demo=1");
+  await page.getByRole("button", { name: "Editar juego", exact: true }).click();
+  const stars = page.getByRole("slider", { name: "Tu valoración" });
+  await expect(stars).toHaveAttribute("aria-valuetext", "Sin valorar");
+  // Mitad izquierda de la octava estrella: 7,5.
+  const eighth = stars.locator(".rating-star").nth(7);
+  const box = (await eighth.boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.25, box.y + box.height / 2);
+  await expect(stars).toHaveAttribute("aria-valuenow", "7.5");
+  await stars.press("ArrowRight");
+  await expect(stars).toHaveAttribute("aria-valuetext", "8 de 10");
+  await page
+    .getByRole("button", { name: "Guardar ficha", exact: true })
+    .click();
+  await expect
+    .poll(
+      async () =>
+        (await demoData(page)).games?.find(
+          (g: { id: string }) => g.id === "disco",
+        )?.rating,
+    )
+    .toBe(8);
+});
+
+test("se valora desde la cabecera de la ficha", async ({ page }) => {
+  await page.goto("/juegos/disco?demo=1");
+  const stars = page.getByRole("slider", { name: "Tu valoración" });
+  await stars.focus();
+  await stars.press("End");
+  await stars.press("ArrowLeft");
+  await expect(stars).toHaveAttribute("aria-valuetext", "9,5 de 10");
+  await expect
+    .poll(
+      async () =>
+        (await demoData(page)).games?.find(
+          (g: { id: string }) => g.id === "disco",
+        )?.rating,
+    )
+    .toBe(9.5);
+});
+
+test("la biblioteca se puede ver como lista y se recuerda", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
+  await expect(page.locator(".game-row").first()).toBeVisible();
+  await expect(page.locator(".game-card")).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator(".game-row").first()).toBeVisible();
+  const row = page.locator(".game-row").filter({ hasText: "Disco Elysium" });
+  await row.getByRole("button", { name: /^Estado de Disco Elysium/ }).click();
+  await page.getByRole("menuitemradio", { name: "Jugando" }).click();
+  await expect(
+    row.getByRole("button", { name: /^Estado de Disco Elysium: Jugando/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Portadas", exact: true }).click();
+  await expect(page.locator(".game-card").first()).toBeVisible();
+});
+
+test("el estado de una partida se elige con el menú de colores", async ({
+  page,
+}) => {
+  await page.goto("/juegos/disco?demo=1");
+  await openTab(page, "Partidas");
+  await page
+    .getByRole("button", { name: "Gestionar partidas", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .getByRole("button", { name: /^Estado de esta partida/ })
+    .first()
+    .click();
+  await page.getByRole("menuitemradio", { name: "Completado" }).click();
+  await expect(
+    dialog.getByRole("button", { name: /^Estado de esta partida: Completado/ }),
+  ).toHaveCount(1);
+  await expect(dialog).toBeVisible();
+});
+
+test("la zona horaria se busca por ciudad", async ({ page }) => {
+  await page.goto("/perfil/ajustes?demo=1");
+  const zone = page.getByRole("combobox", { name: "Zona horaria" });
+  await zone.click();
+  await zone.fill("bogo");
+  await page.getByRole("option", { name: /^Bogota/ }).click();
+  await expect(zone).toHaveValue("Bogota · America");
+  await page.getByRole("button", { name: "Guardar perfil" }).click();
+  await expect
+    .poll(async () => (await demoData(page)).profile.timezone)
+    .toBe("America/Bogota");
+});
+
+test("el calendario muestra portadas y el aviso no tapa el buscador", async ({
+  page,
+}) => {
+  await page.goto("/calendario?demo=1");
+  await expect(
+    page.locator(".calendar-day.today .calendar-covers img").first(),
+  ).toBeVisible();
+  test.skip((page.viewportSize()?.width ?? 1440) <= 640, "Solo en escritorio");
+  await page.goto("/juegos/disco?demo=1");
+  await page
+    .getByRole("button", { name: "He jugado hoy", exact: true })
+    .click();
+  const toast = page.locator(".toast");
+  await expect(toast).toBeVisible();
+  const box = (await toast.boundingBox())!;
+  expect(box.y).toBeGreaterThan((page.viewportSize()?.height ?? 900) / 2);
 });
