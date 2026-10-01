@@ -9,10 +9,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:e2e:emulators": "npx -y firebase-tools@15.32.0 emulators:exec --only auth,firestore --project demo-archivario \"playwright test -c playwright.emulators.config.ts\""
+    "test:e2e:emulators": "npx -y firebase-tools@15.32.0 emulators:exec --only auth,firestore --project demo-archivario \"playwright test -c playwright.emulators.config.ts\"",
+    "cleanup:legacy": "node scripts/cleanup-legacy-libraries.mjs",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",

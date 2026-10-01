@@ -236,6 +236,28 @@ export const commandSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("delete-game"), id }).strict(),
   z
     .object({
+      type: z.literal("link-catalog"),
+      items: z
+        .array(
+          z
+            .object({
+              gameId: id,
+              catalogId: z.number().int().positive(),
+              cover: gameSchema.shape.cover,
+              genres: z.array(text(60)).max(12).optional(),
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(LIMITS.games)
+        .refine(
+          (items) => new Set(items.map((i) => i.gameId)).size === items.length,
+          "Juegos repetidos",
+        ),
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal("save-run"),
       run: runSchema,
       primary: z.boolean(),

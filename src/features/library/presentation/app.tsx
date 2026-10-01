@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   BookOpen,
@@ -22,17 +23,10 @@ import { Button } from "@/components/ui/button";
 import { configured, clientAuth } from "@/features/account/firebase-client";
 import { useLibrary } from "./use-library";
 import { dateInZone, type Activity } from "../domain/model";
-import { CatalogGamePage } from "./catalog-game-page";
 import { GlobalSearch } from "./library-improvements";
-import { DayActivity } from "./day-activity";
-import { Sagas } from "./sagas";
-import { GamePage } from "./game-page";
-import { BulkActivity } from "./bulk-activity";
-import { Planning } from "./planning";
-import { YearReview } from "./year-review";
-import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
+import { ShortcutList, useShortcuts } from "./shortcuts";
 import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
@@ -40,10 +34,47 @@ import { useLibraryFilters, viewDefaults } from "./library-filters";
 import { Modal, type Execute } from "./shared";
 import { gamePath, parsePath, sagaPath, viewPaths } from "./routes";
 
+// Lo que solo se usa al abrir una vista o un modal se descarga bajo demanda,
+// para que la primera carga sea más ligera.
+function load<P>(loader: () => Promise<React.ComponentType<P>>) {
+  return dynamic<P>(loader, {
+    loading: () => <p className="loading-inline">Cargando…</p>,
+  });
+}
+const CatalogGamePage = load(() =>
+  import("./catalog-game-page").then((m) => m.CatalogGamePage),
+);
+const DayActivity = load(() =>
+  import("./day-activity").then((m) => m.DayActivity),
+);
+const Sagas = load(() => import("./sagas").then((m) => m.Sagas));
+const GamePage = load(() => import("./game-page").then((m) => m.GamePage));
+const BulkActivity = load(() =>
+  import("./bulk-activity").then((m) => m.BulkActivity),
+);
+const Planning = load(() => import("./planning").then((m) => m.Planning));
+const YearReview = load(() =>
+  import("./year-review").then((m) => m.YearReview),
+);
+const BulkLink = load(() => import("./bulk-link").then((m) => m.BulkLink));
+const ImportGames = load(() =>
+  import("./import-games").then((m) => m.ImportGames),
+);
+const AddGame = load(() => import("./add-game").then((m) => m.AddGame));
+const SettingsPanel = load(() =>
+  import("./forms").then((m) => m.SettingsPanel),
+);
+
 export function ArchivarioApp() {
   const [user, setUser] = useState<User | null>(null),
     [authReady, setAuthReady] = useState(!configured),
-    [demo, setDemo] = useState(!configured);
+    // ?demo=1 abre la demostración aunque Firebase esté configurado.
+    [demo, setDemo] = useState(
+      () =>
+        !configured ||
+        (typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("demo") === "1"),
+    );
   useEffect(() => {
     if (!configured) return;
     return onAuthStateChanged(clientAuth(), (u) => {
@@ -51,10 +82,6 @@ export function ArchivarioApp() {
       setAuthReady(true);
       if (u) setDemo(false);
     });
-  }, []);
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("demo") === "1")
-      setDemo(true);
   }, []);
   if (!authReady)
     return <div className="loading">Preparando tu biblioteca…</div>;
@@ -69,7 +96,17 @@ export function ArchivarioApp() {
 }
 
 type ModalState = {
-  kind: "add" | "activity" | "settings" | "year" | "planning" | "bulk";
+  kind:
+    | "add"
+    | "activity"
+    | "settings"
+    | "year"
+    | "planning"
+    | "bulk"
+    | "link"
+    | "import"
+    | "shortcuts";
+  source?: "steam" | "csv";
   id?: string;
   activity?: Activity;
   date?: string;
@@ -135,9 +172,11 @@ function Dashboard({
     navigate(viewPaths[name] ?? "/");
   };
   // Atrás/adelante del navegador también cierra los modales abiertos.
-  useEffect(() => {
+  const [seenPath, setSeenPath] = useState(pathname);
+  if (seenPath !== pathname) {
+    setSeenPath(pathname);
     setModal(null);
-  }, [pathname]);
+  }
   useEffect(() => {
     if (gameId) document.querySelector<HTMLElement>(".game-hero h1")?.focus();
   }, [gameId]);
@@ -157,6 +196,25 @@ function Dashboard({
         : "Guardado en " + (user ? "tu biblioteca" : "la demostración local"),
     );
   };
+  useShortcuts(ready && !modal, {
+    n: () => setModal({ kind: "add" }),
+    d: () => setModal({ kind: "activity", date: today }),
+    "?": () => setModal({ kind: "shortcuts" }),
+    "/": () => {
+      const focus = () =>
+        document
+          .querySelector<HTMLInputElement>(
+            '[aria-label="Buscar en mi biblioteca"]',
+          )
+          ?.focus();
+      if (["Biblioteca", "Favoritos", "Próximos"].includes(view) && !gameId)
+        focus();
+      else {
+        goTo("Biblioteca");
+        setTimeout(focus, 150);
+      }
+    },
+  });
   if (!ready) return <div className="loading">Abriendo tu biblioteca…</div>;
   const ownedGame = gameId
     ? state.games.find((g) => g.id === gameId)
@@ -409,6 +467,9 @@ function Dashboard({
                   }
                   onJournal={() => goTo("Diario")}
                   onView={goTo}
+                  onBulkLink={() => setModal({ kind: "link" })}
+                  onImport={(source) => setModal({ kind: "import", source })}
+                  demo={!user}
                 />
               ) : view === "Diario" ? (
                 <section className="panel">
@@ -455,6 +516,12 @@ function Dashboard({
               <span className="muted">· Tus juegos, a tu ritmo.</span>
             </span>
             <span>
+              <button
+                className="text-link shortcut-link"
+                onClick={() => setModal({ kind: "shortcuts" })}
+              >
+                Atajos: pulsa <kbd>?</kbd>
+              </button>
               <ShieldCheck size={13} /> Solo para ti
             </span>
           </footer>
@@ -550,6 +617,44 @@ function Dashboard({
           onClose={() => setModal(null)}
         >
           <Planning state={state} execute={safeExecute} onGame={openGame} />
+        </Modal>
+      )}
+      {modal?.kind === "shortcuts" && (
+        <Modal
+          title="Atajos de teclado"
+          description="Funcionan cuando no estás escribiendo en un campo."
+          onClose={() => setModal(null)}
+        >
+          <ShortcutList />
+        </Modal>
+      )}
+      {modal?.kind === "import" && (
+        <Modal
+          title="Importar juegos"
+          description="Los juegos que ya tienes no se duplican y entran como pendientes."
+          onClose={() => setModal(null)}
+        >
+          <ImportGames
+            state={state}
+            execute={safeExecute}
+            request={api.request}
+            demo={!user}
+            initialSource={modal.source}
+          />
+        </Modal>
+      )}
+      {modal?.kind === "link" && (
+        <Modal
+          title="Completar fichas con IGDB"
+          description="Vincula los juegos añadidos a mano o importados con su ficha del catálogo."
+          onClose={() => setModal(null)}
+        >
+          <BulkLink
+            state={state}
+            request={api.request}
+            execute={safeExecute}
+            onDone={() => setModal(null)}
+          />
         </Modal>
       )}
       {modal?.kind === "year" && (

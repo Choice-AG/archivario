@@ -77,3 +77,21 @@ it("convierte los candidatos en una importación válida para el dominio", () =>
   );
   expect(next.games).toHaveLength(state.games.length + 2);
 });
+
+it("exporta un CSV que se vuelve a importar igual y no ejecuta fórmulas", async () => {
+  const { libraryToCsv } =
+    await import("../src/features/library/domain/import-sources");
+  const state = demoLibrary();
+  state.games[0].title = '=HYPERLINK("x") "trampa"';
+  const csv = libraryToCsv(state);
+  expect(csv.startsWith("\uFEFFTítulo;Plataforma;")).toBe(true);
+  expect(csv).toContain(`"'=HYPERLINK(""x"") ""trampa"""`);
+  const again = candidatesFromCsv(csv);
+  expect(again.map((c) => c.title)).toEqual(state.games.map((g) => g.title));
+  expect(again.map((c) => c.status)).toEqual(
+    state.games.map(
+      (g) => state.runs.find((r) => r.id === g.primaryRunId)!.status,
+    ),
+  );
+  expect(again[0].platforms).toEqual(state.games[0].platforms);
+});

@@ -20,6 +20,7 @@ import type { ApiRequest, Execute } from "./shared";
 import { list, RatingOptions, value } from "./form-utils";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
+import { libraryToCsv } from "../domain/import-sources";
 function FormError({ message }: { message: string }) {
   return message ? (
     <p className="form-error" role="alert">
@@ -739,6 +740,17 @@ export function SettingsPanel({
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  function downloadCsv() {
+    const url = URL.createObjectURL(
+        new Blob([libraryToCsv(state)], { type: "text/csv;charset=utf-8" }),
+      ),
+      a = document.createElement("a");
+    a.href = url;
+    a.download =
+      "archivario-" + dateInZone(new Date(), state.profile.timezone) + ".csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   return (
     <div>
       <form
@@ -828,6 +840,9 @@ export function SettingsPanel({
       <div className="form-actions">
         <Button variant="secondary" onClick={download}>
           <Download size={16} /> Exportar JSON
+        </Button>
+        <Button variant="secondary" onClick={downloadCsv}>
+          <Download size={16} /> Exportar CSV
         </Button>
         <label className="upload-label">
           <Upload size={16} /> Importar JSON

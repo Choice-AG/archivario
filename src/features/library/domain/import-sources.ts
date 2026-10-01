@@ -115,7 +115,9 @@ export function candidatesFromCsv(text: string) {
     throw new Error(
       "El CSV necesita una columna de título («Título», «Title» o «Nombre»).",
     );
-  const cell = (row: string[], i: number) => (i >= 0 ? (row[i] ?? "") : "");
+  // Quita el apóstrofo que añade la exportación ante fórmulas (='…).
+  const cell = (row: string[], i: number) =>
+    (i >= 0 ? (row[i] ?? "") : "").replace(/^'(?=[=+\-@])/, "");
   return rows
     .map((row): ImportCandidate | undefined => {
       const title = cell(row, idx.title).slice(0, 160);
@@ -233,4 +235,54 @@ export function libraryFromCandidates(
     sagas: [],
     profile: state.profile,
   };
+}
+
+// --- Exportación ---------------------------------------------------------
+
+// Celda CSV con comillas cuando hace falta. Las que empiezan por = + - @ se
+// prefijan con un apóstrofo para que una hoja de cálculo no las ejecute.
+function csvCell(value: string | number | undefined) {
+  let text = value === undefined ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return /[";\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+// CSV compatible con la importación (separador «;» para Excel en español).
+export function libraryToCsv(state: Library) {
+  const header = [
+    "Título",
+    "Plataforma",
+    "Tienda",
+    "Estado",
+    "Nota",
+    "Horas",
+    "Géneros",
+    "Favorito",
+    "Lista de deseos",
+    "Completado el",
+    "Reseña",
+  ];
+  const rows = state.games.map((g) => {
+    const run = state.runs.find((r) => r.id === g.primaryRunId);
+    return [
+      g.title,
+      g.platforms.join(", "),
+      g.stores.join(", "),
+      run?.status ?? "",
+      g.rating?.toString().replace(".", ","),
+      (g.times?.main?.hours ?? g.approximateHours)
+        ?.toString()
+        .replace(".", ","),
+      g.genres.join(", "),
+      g.favorite ? "sí" : "",
+      g.wishlist ? "sí" : "",
+      run?.completedOn ?? "",
+      g.review,
+    ];
+  });
+  return (
+    "\uFEFF" +
+    [header, ...rows].map((r) => r.map(csvCell).join(";")).join("\r\n") +
+    "\r\n"
+  );
 }

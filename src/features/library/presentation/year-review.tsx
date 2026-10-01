@@ -1,4 +1,5 @@
 "use client";
+import { formatDate, plural } from "./format";
 import { useState } from "react";
 import type { Library } from "../domain/model";
 import { annualSummary } from "../domain/insights";
@@ -38,6 +39,20 @@ export function YearReview({
     "Oct",
     "Nov",
     "Dic",
+  ];
+  const fullMonths = [
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
   ];
   return (
     <section className="year-review">
@@ -86,6 +101,59 @@ export function YearReview({
                 <strong>{days}</strong>
               </div>
             ))}
+          </div>
+          {summary.busiestMonth !== undefined && (
+            <p className="muted text-sm mt-3">
+              Tu mes con más actividad fue{" "}
+              <strong>{fullMonths[summary.busiestMonth]}</strong>, con{" "}
+              {plural(
+                summary.months[summary.busiestMonth],
+                "día de juego",
+                "días de juego",
+              )}
+              .
+            </p>
+          )}
+          {summary.first && summary.last && (
+            <div className="year-bookends">
+              {(
+                [
+                  ["Primer día de juego", summary.first],
+                  ["Último día de juego", summary.last],
+                ] as const
+              ).map(([label, a]) => {
+                const g = state.games.find((x) => x.id === a.gameId);
+                return (
+                  <button key={label} onClick={() => g && onGame(g.id)}>
+                    <span>{label}</span>
+                    <strong>{g?.title ?? "Juego eliminado"}</strong>
+                    <small>{formatDate(a.date)}</small>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="year-breakdown">
+            {(
+              [
+                ["Plataformas", summary.platforms],
+                ["Géneros", summary.genres],
+              ] as const
+            ).map(([title, rows]) =>
+              rows.length ? (
+                <div key={title}>
+                  <h3>{title}</h3>
+                  <ul>
+                    {rows.map((r) => (
+                      <li key={r.name}>
+                        <span>{r.name}</span>
+                        <strong>{plural(r.count, "juego", "juegos")}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null,
+            )}
           </div>
           <h3>Tus juegos mejor valorados del año</h3>
           <p className="muted text-xs">

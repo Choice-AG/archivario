@@ -120,6 +120,15 @@ export type Command =
   | { type: "delete-list"; id: string }
   | { type: "save-game"; game: Game; run?: Run }
   | { type: "delete-game"; id: string }
+  | {
+      type: "link-catalog";
+      items: {
+        gameId: string;
+        catalogId: number;
+        cover?: string;
+        genres?: string[];
+      }[];
+    }
   | { type: "save-run"; run: Run; primary: boolean }
   | { type: "save-activity"; activity: Activity; previousId?: string }
   | { type: "delete-activity"; id: string }
@@ -388,6 +397,19 @@ export function applyCommand(
       touch(command.game.id);
       break;
     }
+    case "link-catalog":
+      // Vincula juegos manuales con su ficha de IGDB sin pisar lo que ya
+      // tenían: la portada y los géneros solo se completan si faltaban.
+      for (const item of command.items) {
+        const game = s.games.find((g) => g.id === item.gameId);
+        if (!game) throw new DomainError("Juego no encontrado.");
+        game.catalogId = item.catalogId;
+        if (!game.cover && item.cover) game.cover = item.cover;
+        if (!game.genres.length && item.genres?.length)
+          game.genres = item.genres.slice(0, 12);
+        touch(game.id);
+      }
+      break;
     case "delete-game":
       touch(command.id);
       s.games = s.games.filter((g) => g.id !== command.id);

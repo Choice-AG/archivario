@@ -1,6 +1,7 @@
 "use client";
 import { StatusOptions } from "./format";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+const noSubscribe = () => () => {};
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCatalogSearch } from "./use-catalog-search";
@@ -22,9 +23,12 @@ export function GlobalSearch({
   onSaga: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [shortcut, setShortcut] = useState("Ctrl K");
+  const shortcut = useSyncExternalStore(
+    noSubscribe,
+    () => (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ K" : "Ctrl K"),
+    () => "Ctrl K",
+  );
   useEffect(() => {
-    if (/Mac|iPhone|iPad/.test(navigator.platform)) setShortcut("⌘ K");
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();

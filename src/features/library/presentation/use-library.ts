@@ -25,14 +25,17 @@ export function useLibrary(user: User | null) {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [offline, setOffline] = useState(false),
-    [pendingSync, setPendingSync] = useState(0);
+    [pendingSync, setPendingSync] = useState(() =>
+      user ? loadQueue(user.uid).length : 0,
+    );
   const [undoEntry, setUndoEntry] = useState<{
     before: Library;
     revision: number;
   }>();
   const current = useRef(state),
     locked = useRef(false),
-    mounted = useRef(true);
+    mounted = useRef(true),
+    loadedOnce = useRef(false);
   const uid = user?.uid;
   const update = useCallback(
     (s: Library) => {
@@ -138,18 +141,28 @@ export function useLibrary(user: User | null) {
     if (locked.current) return;
     if (uid && loadQueue(uid).length) return flush();
     try {
-      const s = await (await request("/api/library")).json();
+      // Tras la primera carga solo se pide la biblioteca si ha cambiado.
+      const known = current.current.revision;
+      const s = await (
+        await request(
+          "/api/library" + (loadedOnce.current ? "?since=" + known : ""),
+        )
+      ).json();
       setOffline(false);
+      if (s.unchanged) return;
+      loadedOnce.current = true;
       if (!locked.current && s.revision >= current.current.revision) update(s);
     } catch (e) {
       if (e instanceof OfflineError) setOffline(true);
       throw e;
     }
   }, [uid, request, update, flush]);
+  // Sincroniza con sistemas externos (la API y, en la demo, localStorage, que
+  // solo existe en el navegador): por eso la primera carga va en un efecto.
   useEffect(() => {
     mounted.current = true;
     if (user) {
-      setPendingSync(loadQueue(user.uid).length);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       reload()
         .then(() => setReady(true))
         .catch((e) => {

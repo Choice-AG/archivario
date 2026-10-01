@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+const noSubscribe = () => () => {};
 
 export type ThemeChoice = "system" | "light" | "dark";
 const KEY = "archivario-theme";
@@ -20,11 +21,17 @@ function apply(choice: ThemeChoice) {
 }
 
 export function ThemePicker() {
-  const [choice, setChoice] = useState<ThemeChoice>("system");
-  useEffect(() => {
-    const t = document.documentElement.dataset.theme;
-    if (t === "light" || t === "dark") setChoice(t);
-  }, []);
+  // El tema guardado ya está aplicado en <html> antes de pintar.
+  const saved = useSyncExternalStore(
+    noSubscribe,
+    (): ThemeChoice => {
+      const t = document.documentElement.dataset.theme;
+      return t === "light" || t === "dark" ? t : "system";
+    },
+    (): ThemeChoice => "system",
+  );
+  const [picked, setChoice] = useState<ThemeChoice>();
+  const choice = picked ?? saved;
   return (
     <fieldset className="theme-picker">
       <legend>Apariencia</legend>

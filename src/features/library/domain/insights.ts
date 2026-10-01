@@ -47,7 +47,29 @@ export function annualSummary(state: Library, year: string) {
       activities.filter((a) => a.date.startsWith(prefix)).map((a) => a.date),
     ).size;
   });
+  // Reparto por plataforma y género de los juegos jugados en el año.
+  const tally = (pick: (g: (typeof state.games)[number]) => string[]) => {
+    const counts = new Map<string, number>();
+    for (const g of state.games)
+      if (played.has(g.id))
+        for (const key of new Set(pick(g)))
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+    return [...counts]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "es"))
+      .slice(0, 5);
+  };
+  const sorted = [...activities].sort((a, b) => a.date.localeCompare(b.date));
+  const busiest = months.reduce(
+    (best, days, i) => (days > (months[best] ?? 0) ? i : best),
+    0,
+  );
   return {
+    platforms: tally((g) => g.platforms),
+    genres: tally((g) => g.genres),
+    busiestMonth: months[busiest] ? busiest : undefined,
+    first: sorted[0],
+    last: sorted[sorted.length - 1],
     games: played.size,
     days: new Set(activities.map((a) => a.date)).size,
     completed: completed.length,

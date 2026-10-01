@@ -21,6 +21,8 @@ type Meta = {
   revision: number;
   profile: Library["profile"];
   chunks: Record<ChunkKey, string[]>;
+  // Cuándo se migró desde el formato 1 (solo si existía un documento antiguo).
+  migratedAt?: string;
 };
 
 function userRef(uid: string) {
@@ -101,6 +103,13 @@ export class FirebaseLibraryRepository implements LibraryRepository {
       refs.map((r, i) => ({ key: r.key, snap: snaps[i] })),
     );
   }
+  async revision(uid: string) {
+    const meta = (await metaRef(uid).get()).data() as Meta | undefined;
+    if (meta) return meta.revision;
+    return (
+      ((await stateRef(uid).get()).data() as Library | undefined)?.revision ?? 0
+    );
+  }
   async transact(
     uid: string,
     revision: number,
@@ -109,13 +118,13 @@ export class FirebaseLibraryRepository implements LibraryRepository {
     return db().runTransaction(async (tx) => {
       if ((await tx.get(deletionRef(uid))).exists)
         throw new ConflictError("La cuenta se está eliminando.");
-      const { current, meta } = await readInTransaction(tx, uid);
+      const { current, meta, legacy } = await readInTransaction(tx, uid);
       if (current.revision !== revision)
         throw new ConflictError(
           "Tu biblioteca cambió en otro dispositivo. Se ha actualizado; vuelve a guardar.",
         );
       const next = update(current);
-      writeChunks(tx, uid, next, meta);
+      writeChunks(tx, uid, next, meta, legacy);
       return next;
     });
   }
@@ -130,6 +139,7 @@ async function readInTransaction(tx: Transaction, uid: string) {
     return {
       current: legacy.exists ? (legacy.data() as Library) : emptyLibrary(),
       meta: undefined,
+      legacy: legacy.exists,
     };
   }
   const refs = refsFor(uid, meta);
@@ -142,6 +152,7 @@ async function readInTransaction(tx: Transaction, uid: string) {
       refs.map((r, i) => ({ key: r.key, snap: snaps[i] })),
     ),
     meta,
+    legacy: false,
   };
 }
 
@@ -150,6 +161,7 @@ function writeChunks(
   uid: string,
   next: Library,
   previous: Meta | undefined,
+  migratedFromLegacy: boolean,
 ) {
   const chunks = {} as Record<ChunkKey, string[]>;
   for (const key of KEYS) {
@@ -168,6 +180,11 @@ function writeChunks(
     revision: next.revision,
     profile: next.profile,
     chunks,
+    ...(previous?.migratedAt
+      ? { migratedAt: previous.migratedAt }
+      : !previous && migratedFromLegacy
+        ? { migratedAt: new Date().toISOString() }
+        : {}),
   };
   tx.set(metaRef(uid), meta);
 }

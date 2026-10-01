@@ -5,9 +5,7 @@ const config = [
   ...nextVitals,
   ...nextTs,
   {
-    // Patrones existentes de carga en efectos; se revisarán poco a poco.
     rules: {
-      "react-hooks/set-state-in-effect": "warn",
       // Portadas externas con <img>: next/image consumiría la cuota de
       // optimización de imágenes del plan Hobby de Vercel.
       "@next/next/no-img-element": "off",
