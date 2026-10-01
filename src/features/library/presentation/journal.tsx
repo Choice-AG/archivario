@@ -17,6 +17,20 @@ export function shiftMonth(month: string, n: number) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
 }
 
+// Agrupa actividades (ya ordenadas) por mes, conservando el orden.
+export function groupByMonth(items: Activity[]) {
+  const groups: { month: string; items: Activity[] }[] = [];
+  for (const a of items) {
+    const month = a.date.slice(0, 7);
+    const last = groups[groups.length - 1];
+    if (last?.month === month) last.items.push(a);
+    else groups.push({ month, items: [a] });
+  }
+  return groups;
+}
+
+const PAGE = 30;
+
 export function Recent({
   state,
   onEdit,
@@ -28,7 +42,10 @@ export function Recent({
   onAll?: () => void;
   full?: boolean;
 }) {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(1),
+    [gameId, setGameId] = useState(""),
+    [from, setFrom] = useState(""),
+    [to, setTo] = useState("");
   const games = useMemo(
     () => new Map(state.games.map((g) => [g.id, g])),
     [state.games],
@@ -36,10 +53,45 @@ export function Recent({
   const items = useMemo(
     () =>
       state.activities
-        .filter((a) => games.has(a.gameId))
+        .filter(
+          (a) =>
+            games.has(a.gameId) &&
+            (!full ||
+              ((!gameId || a.gameId === gameId) &&
+                (!from || a.date >= from) &&
+                (!to || a.date <= to))),
+        )
         .sort((a, b) => b.date.localeCompare(a.date)),
-    [state.activities, games],
+    [state.activities, games, full, gameId, from, to],
   );
+  const filtering = !!(gameId || from || to);
+  const visible = items.slice(
+    full ? (page - 1) * PAGE : 0,
+    full ? page * PAGE : 3,
+  );
+  const row = (a: Activity) => {
+    const g = games.get(a.gameId)!;
+    return (
+      <button className="activity-row" key={a.id} onClick={() => onEdit(a)}>
+        <Cover game={g} />
+        <span>
+          <strong>{g.title}</strong>
+          <small>
+            {new Intl.DateTimeFormat("es", {
+              day: "numeric",
+              month: "short",
+            }).format(new Date(a.date + "T12:00:00"))}{" "}
+            <span>·</span> {a.note || "Una nueva aventura"}
+          </small>
+        </span>
+        <ChevronRight size={17} />
+      </button>
+    );
+  };
+  const reset = (change: () => void) => {
+    change();
+    setPage(1);
+  };
   return (
     <section className={full ? "" : "recent-panel"}>
       {!full && (
@@ -50,36 +102,86 @@ export function Recent({
           </button>
         </div>
       )}
-      {items.length ? (
-        items
-          .slice(full ? (page - 1) * 20 : 0, full ? page * 20 : 3)
-          .map((a) => {
-            const g = games.get(a.gameId)!;
-            return (
-              <button
-                className="activity-row"
-                key={a.id}
-                onClick={() => onEdit(a)}
-              >
-                <Cover game={g} />
-                <span>
-                  <strong>{g.title}</strong>
-                  <small>
-                    {new Intl.DateTimeFormat("es", {
-                      day: "numeric",
-                      month: "short",
-                    }).format(new Date(a.date + "T12:00:00"))}{" "}
-                    <span>·</span> {a.note || "Una nueva aventura"}
-                  </small>
-                </span>
-                <ChevronRight size={17} />
-              </button>
-            );
-          })
-      ) : (
-        <p className="muted py-8">Tu próximo día de juego aparecerá aquí.</p>
+      {full && (
+        <div className="journal-filters">
+          <label>
+            Juego
+            <select
+              value={gameId}
+              onChange={(e) => reset(() => setGameId(e.target.value))}
+            >
+              <option value="">Todos los juegos</option>
+              {[...state.games]
+                .sort((a, b) => a.title.localeCompare(b.title, "es"))
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Desde
+            <input
+              type="date"
+              value={from}
+              max={to || undefined}
+              onChange={(e) => reset(() => setFrom(e.target.value))}
+            />
+          </label>
+          <label>
+            Hasta
+            <input
+              type="date"
+              value={to}
+              min={from || undefined}
+              onChange={(e) => reset(() => setTo(e.target.value))}
+            />
+          </label>
+          {filtering && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                reset(() => {
+                  setGameId("");
+                  setFrom("");
+                  setTo("");
+                })
+              }
+            >
+              Quitar filtros
+            </Button>
+          )}
+          <span className="muted text-xs" role="status">
+            {plural(items.length, "día registrado", "días registrados")}
+          </span>
+        </div>
       )}
-      {full && items.length > 20 && (
+      {items.length ? (
+        full ? (
+          groupByMonth(visible).map((group) => (
+            <div className="journal-month" key={group.month}>
+              <h3>
+                {monthLabel(group.month)}
+                <small>
+                  {plural(group.items.length, "registro", "registros")}
+                </small>
+              </h3>
+              {group.items.map(row)}
+            </div>
+          ))
+        ) : (
+          visible.map(row)
+        )
+      ) : (
+        <p className="muted py-8">
+          {filtering
+            ? "No hay días registrados con estos filtros."
+            : "Tu próximo día de juego aparecerá aquí."}
+        </p>
+      )}
+      {full && items.length > PAGE && (
         <div className="pagination">
           <Button
             variant="secondary"
@@ -88,10 +190,12 @@ export function Recent({
           >
             Anterior
           </Button>
-          <span>Página {page}</span>
+          <span>
+            {page} / {Math.ceil(items.length / PAGE)}
+          </span>
           <Button
             variant="secondary"
-            disabled={page * 20 >= items.length}
+            disabled={page * PAGE >= items.length}
             onClick={() => setPage(page + 1)}
           >
             Siguiente
