@@ -10,7 +10,13 @@ export const viewPaths: Record<string, string> = {
   Perfil: "/perfil",
 };
 
-export type Route = { view: string; gameId?: string; sagaId?: string };
+export type Route = {
+  view: string;
+  gameId?: string;
+  sagaId?: string;
+  settings?: boolean;
+};
+export const settingsPath = "/perfil/ajustes";
 
 export function parsePath(pathname: string): Route {
   const game = pathname.match(/^\/juegos\/([^/]+)\/?$/);
@@ -21,6 +27,8 @@ export function parsePath(pathname: string): Route {
       view: "Sagas",
       sagaId: saga[1] ? decodeURIComponent(saga[1]) : undefined,
     };
+  if (/^\/perfil\/ajustes\/?$/.test(pathname))
+    return { view: "Perfil", settings: true };
   const view = Object.entries(viewPaths).find(
     ([, path]) => path !== "/" && pathname.replace(/\/$/, "") === path,
   );

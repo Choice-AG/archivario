@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BarChart3, Pencil, Settings, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
@@ -9,8 +9,7 @@ import {
   SHOWCASE_MAX,
   showcaseGames,
 } from "../domain/profile";
-import { Avatar, Cover, type ApiRequest, type Execute } from "./shared";
-import { SettingsPanel } from "./forms";
+import { Avatar, Cover, type Execute } from "./shared";
 import { Heatmap } from "./heatmap";
 import { Markdown } from "./markdown";
 import { formatDate, plural } from "./format";
@@ -21,23 +20,21 @@ const decimal = (n: number) =>
 export function ProfilePage({
   state,
   execute,
-  request,
-  demo,
   today,
   onGame,
   onDay,
   onYear,
   onLibrary,
+  onSettings,
 }: {
   state: Library;
   execute: Execute;
-  request: ApiRequest;
-  demo: boolean;
   today: string;
   onGame: (id: string) => void;
   onDay: (date: string) => void;
   onYear: () => void;
   onLibrary: () => void;
+  onSettings: () => void;
 }) {
   const stats = useMemo(() => profileStats(state), [state]);
   const showcase = showcaseGames(state);
@@ -56,17 +53,18 @@ export function ProfilePage({
     [state.activities, today],
   );
   const [picking, setPicking] = useState(false);
-  const toSettings = () =>
-    document
-      .getElementById("profile-settings")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  // La página se carga bajo demanda: el foco se mueve al montarla.
+  const title = useRef<HTMLHeadingElement>(null);
+  useEffect(() => title.current?.focus(), []);
   return (
     <div className="profile-page">
       <header className="profile-hero">
         <Avatar profile={state.profile} className="avatar-xl" />
         <div>
           <p className="eyebrow">TU PERFIL</p>
-          <h1 tabIndex={-1}>{state.profile.name || "Tu perfil"}</h1>
+          <h1 tabIndex={-1} ref={title}>
+            {state.profile.name || "Tu perfil"}
+          </h1>
           <p className="profile-bio">
             {state.profile.bio || "Añade una frase sobre ti en los ajustes."}
           </p>
@@ -80,7 +78,7 @@ export function ProfilePage({
           <Button variant="secondary" onClick={onYear}>
             <BarChart3 size={16} /> Tu año en juegos
           </Button>
-          <Button variant="ghost" onClick={toSettings}>
+          <Button variant="ghost" onClick={onSettings}>
             <Settings size={16} /> Ajustes
           </Button>
         </div>
@@ -268,20 +266,6 @@ export function ProfilePage({
           )}
         </section>
       </div>
-
-      <section className="panel" id="profile-settings">
-        <h2>Ajustes</h2>
-        <p className="muted text-sm mb-4">
-          Tu perfil y tus notas son privados.
-        </p>
-        <SettingsPanel
-          state={state}
-          execute={execute}
-          request={request}
-          demo={demo}
-          onClose={onLibrary}
-        />
-      </section>
     </div>
   );
 }
