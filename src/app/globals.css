@@ -4540,3 +4540,24 @@ select:focus {
   margin-bottom: 8px;
   color: var(--c-c5c8d8);
 }
+
+.verify-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-a58add44);
+  border-radius: 12px;
+  background: var(--c-9882e21b);
+  font-size: 13px;
+}
+.verify-banner span {
+  flex: 1;
+  min-width: 200px;
+}
+.verify-banner small {
+  display: block;
+  color: var(--muted);
+}

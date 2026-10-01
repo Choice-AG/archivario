@@ -6,8 +6,19 @@ vi.mock("@/server/firebase", () => ({
     verifyIdToken: async (token: string) => {
       if (token === "token-a") return { uid: "alice" };
       if (token === "token-b") return { uid: "bob" };
+      if (token === "token-new") return { uid: "newbie" };
+      if (token === "token-new-verified")
+        return { uid: "newbie", email_verified: true };
       throw new Error("invalid");
     },
+    getUser: async (uid: string) => ({
+      metadata: {
+        creationTime:
+          uid === "newbie"
+            ? "Mon, 01 Jan 2035 00:00:00 GMT"
+            : "Thu, 01 Jan 2026 00:00:00 GMT",
+      },
+    }),
   }),
   db: () => ({
     collection: (name: string) => ({
@@ -136,4 +147,19 @@ it("mantiene las listas privadas y protege también la ficha de IGDB", async () 
       )
     ).status,
   ).toBe(400);
+});
+
+it("exige correo confirmado a las cuentas nuevas para usar el catálogo", async () => {
+  const { GET: details } = await import("../src/app/api/catalog/details/route");
+  const call = (token: string) =>
+    details(
+      new Request("http://localhost/api/catalog/details?id=oops", {
+        headers: { Authorization: "Bearer " + token },
+      }),
+    );
+  expect((await call("token-new")).status).toBe(403);
+  // Con el correo confirmado pasa la verificación y llega a validar el id.
+  expect((await call("token-new-verified")).status).toBe(400);
+  // Las cuentas antiguas siguen sin necesitar confirmación.
+  expect((await call("token-a")).status).toBe(400);
 });

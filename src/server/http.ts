@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { adminAuth } from "./firebase";
 import { isDeleting } from "./lifecycle";
+import { needsVerification } from "@/features/account/verification";
 import { DomainError } from "@/features/library/domain/model";
 import { ConflictError } from "@/features/library/application/ports";
 export class HttpError extends Error {
@@ -34,6 +35,24 @@ export async function authenticate(request: Request, allowDeletion = false) {
     throw new HttpError(
       409,
       "La cuenta se está eliminando. Puedes reintentar su eliminación desde ajustes.",
+    );
+  return user;
+}
+// El catálogo consume la cuota compartida de IGDB: las cuentas nuevas deben
+// confirmar su correo antes de usarlo.
+const creationTimes = new Map<string, string>();
+export async function authenticateCatalog(request: Request) {
+  const user = await authenticate(request);
+  if (user.email_verified) return user;
+  let created = creationTimes.get(user.uid);
+  if (!created) {
+    created = (await adminAuth().getUser(user.uid)).metadata.creationTime;
+    creationTimes.set(user.uid, created);
+  }
+  if (needsVerification(false, created))
+    throw new HttpError(
+      403,
+      "Confirma tu correo para buscar en el catálogo. Revisa tu bandeja de entrada.",
     );
   return user;
 }

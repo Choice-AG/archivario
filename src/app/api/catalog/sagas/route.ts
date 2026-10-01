@@ -1,9 +1,9 @@
-import { authenticate, json, route } from "@/server/http";
+import { authenticateCatalog, json, route } from "@/server/http";
 import { sagaCatalog } from "@/server/catalog";
 export const dynamic = "force-dynamic";
 export function GET(request: Request) {
   return route(async () => {
-    const user = await authenticate(request),
+    const user = await authenticateCatalog(request),
       url = new URL(request.url);
     return json(
       await sagaCatalog(

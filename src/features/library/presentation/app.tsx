@@ -31,6 +31,7 @@ import { Planning } from "./planning";
 import { YearReview } from "./year-review";
 import { AddGame, SettingsPanel } from "./forms";
 import { Login } from "./login";
+import { VerifyEmailBanner } from "./verify-email";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
@@ -258,6 +259,7 @@ function Dashboard({
           </div>
         </header>
         <main id="main-content">
+          {user && <VerifyEmailBanner user={user} />}
           {!user && (
             <div className="demo-banner">
               <span className="demo-dot" /> Estás explorando una demostración.
