@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { EditionPicker } from "./edition-picker";
 import { Button } from "@/components/ui/button";
 import { Modal, type ApiRequest, type Execute } from "./shared";
@@ -103,10 +103,13 @@ export function Sagas({
     savedSaga ??
     (preview?.id === selectedId ? preview : undefined) ??
     guides.find((s) => s.id === selectedId);
-  useEffect(() => {
+  // Al cambiar de saga se reinician el orden elegido y la confirmación.
+  const [seenSaga, setSeenSaga] = useState(selectedId);
+  if (seenSaga !== selectedId) {
+    setSeenSaga(selectedId);
     setRelease(false);
     setConfirm(false);
-  }, [selectedId]);
+  }
 
   const load = (id: number) => onSelect("igdb-" + id);
   function fromLibrary() {

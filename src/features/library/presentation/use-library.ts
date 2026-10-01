@@ -25,7 +25,9 @@ export function useLibrary(user: User | null) {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [offline, setOffline] = useState(false),
-    [pendingSync, setPendingSync] = useState(0);
+    [pendingSync, setPendingSync] = useState(() =>
+      user ? loadQueue(user.uid).length : 0,
+    );
   const [undoEntry, setUndoEntry] = useState<{
     before: Library;
     revision: number;
@@ -155,10 +157,12 @@ export function useLibrary(user: User | null) {
       throw e;
     }
   }, [uid, request, update, flush]);
+  // Sincroniza con sistemas externos (la API y, en la demo, localStorage, que
+  // solo existe en el navegador): por eso la primera carga va en un efecto.
   useEffect(() => {
     mounted.current = true;
     if (user) {
-      setPendingSync(loadQueue(user.uid).length);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       reload()
         .then(() => setReady(true))
         .catch((e) => {

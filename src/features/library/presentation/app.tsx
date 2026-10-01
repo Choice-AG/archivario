@@ -68,7 +68,13 @@ const SettingsPanel = load(() =>
 export function ArchivarioApp() {
   const [user, setUser] = useState<User | null>(null),
     [authReady, setAuthReady] = useState(!configured),
-    [demo, setDemo] = useState(!configured);
+    // ?demo=1 abre la demostración aunque Firebase esté configurado.
+    [demo, setDemo] = useState(
+      () =>
+        !configured ||
+        (typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("demo") === "1"),
+    );
   useEffect(() => {
     if (!configured) return;
     return onAuthStateChanged(clientAuth(), (u) => {
@@ -76,10 +82,6 @@ export function ArchivarioApp() {
       setAuthReady(true);
       if (u) setDemo(false);
     });
-  }, []);
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("demo") === "1")
-      setDemo(true);
   }, []);
   if (!authReady)
     return <div className="loading">Preparando tu biblioteca…</div>;
@@ -170,9 +172,11 @@ function Dashboard({
     navigate(viewPaths[name] ?? "/");
   };
   // Atrás/adelante del navegador también cierra los modales abiertos.
-  useEffect(() => {
+  const [seenPath, setSeenPath] = useState(pathname);
+  if (seenPath !== pathname) {
+    setSeenPath(pathname);
     setModal(null);
-  }, [pathname]);
+  }
   useEffect(() => {
     if (gameId) document.querySelector<HTMLElement>(".game-hero h1")?.focus();
   }, [gameId]);
