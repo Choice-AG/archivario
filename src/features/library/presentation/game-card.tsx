@@ -77,6 +77,25 @@ export function GameCard({
             <span className="sr-only">Próximamente</span>
           </span>
         )}
+        {/* En el móvil las acciones van sobre la portada: el estado (que abre
+            su menú) y «He jugado hoy». En escritorio están bajo el título. */}
+        <span className="card-overlay-status">
+          <StatusMenu
+            label={"Estado de " + g.title}
+            status={run.status}
+            disabled={busy}
+            onChange={onStatus}
+          />
+        </span>
+        <button
+          type="button"
+          className={"card-overlay-today " + (playedToday ? "is-today" : "")}
+          disabled={busy}
+          aria-label={playedToday ? "Registrado hoy" : "He jugado hoy"}
+          onClick={onToday}
+        >
+          {playedToday ? <Check size={14} /> : <Plus size={14} />}
+        </button>
         {showCritic && g.critic && (
           <span className="card-critic">
             <CriticScore critic={g.critic} compact />
