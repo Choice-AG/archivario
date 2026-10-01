@@ -13,7 +13,8 @@ export function POST(request: Request) {
   return route(async () => {
     const user = await authenticate(request);
     throttle("library:" + user.uid, 60);
-    const input = mutationSchema.parse(await body(request));
+    // Importar o deshacer envía la biblioteca completa.
+    const input = mutationSchema.parse(await body(request, 4_000_000));
     return json(await library.execute(user.uid, input.revision, input.command));
   });
 }

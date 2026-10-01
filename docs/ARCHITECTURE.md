@@ -41,4 +41,6 @@ Cada vista tiene su URL (`/`, `/diario`, `/calendario`, `/favoritos`, `/proximos
 
 ## Evolución
 
-El agregado por usuario hace pequeños y fiables los cambios atómicos de v0.1; sus límites se validan antes de escribir. Para escalar, cambiar el adaptador a colecciones, paginación real con cursores y comandos transaccionales por entidad. Añadir emuladores y considerar exigir correo verificado antes del lanzamiento público.
+El agregado por usuario mantiene atómicos y sencillos los cambios; sus límites se validan antes de escribir. Se guarda repartido en bloques de tamaño acotado (formato 2) en lugar de un único documento: leer la biblioteca cuesta unas pocas lecturas (una por bloque) y cada cambio reescribe solo los bloques afectados. Se descartó un documento por entidad porque multiplicaría las lecturas de Firestore en cada sincronización (una por juego, partida y actividad) y agotaría la cuota gratuita.
+
+La migración desde el formato 1 es perezosa: ocurre en la primera escritura de cada usuario, dentro de la misma transacción, y conserva el documento antiguo como copia.

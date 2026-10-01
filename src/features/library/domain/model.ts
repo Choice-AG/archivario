@@ -126,6 +126,14 @@ export type Command =
   | { type: "profile"; profile: Profile }
   | { type: "import"; data: Library; policy: "skip" | "replace" };
 export class DomainError extends Error {}
+// Límites del agregado. El almacenamiento por bloques admite más, pero la
+// respuesta completa debe caber holgadamente en el límite de 4,5 MB de Vercel.
+export const LIMITS = {
+  games: 1000,
+  runs: 3000,
+  activities: 15000,
+  bytes: 3_500_000,
+};
 const validRating = (rating: number | undefined) =>
   rating === undefined ||
   (rating >= 1 && rating <= 10 && (rating * 2) % 1 === 0);
@@ -245,13 +253,13 @@ export function assertLibrary(s: Library) {
       );
   }
   if (
-    s.games.length > 200 ||
-    s.runs.length > 600 ||
-    s.activities.length > 3000 ||
-    new TextEncoder().encode(JSON.stringify(s)).length > 450000
+    s.games.length > LIMITS.games ||
+    s.runs.length > LIMITS.runs ||
+    s.activities.length > LIMITS.activities ||
+    new TextEncoder().encode(JSON.stringify(s)).length > LIMITS.bytes
   )
     throw new DomainError(
-      "Se ha alcanzado el límite de esta primera versión. Exporta tu biblioteca.",
+      "Se ha alcanzado el tamaño máximo de la biblioteca. Exporta una copia y archiva juegos antiguos.",
     );
 }
 export function importPreview(current: Library, incoming: Library) {
