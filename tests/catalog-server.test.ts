@@ -73,7 +73,13 @@ it("sirve la caché sin gastar el límite y descarta image_id no válidos", asyn
     url.includes("twitch")
       ? tokenResponse()
       : ok([
-          { id: 1, name: "Hades", cover: { image_id: "abc123" } },
+          {
+            id: 1,
+            name: "Hades",
+            cover: { image_id: "abc123" },
+            aggregated_rating: 93.4,
+            aggregated_rating_count: 61,
+          },
           { id: 2, name: "Raro", cover: { image_id: "../x" } },
         ]),
   );
@@ -82,6 +88,8 @@ it("sirve la caché sin gastar el límite y descarta image_id no válidos", asyn
     "https://images.igdb.com/igdb/image/upload/t_cover_big/abc123.jpg",
   );
   expect(first[1].cover).toBeUndefined();
+  expect(first[0].critic).toEqual({ score: 93, count: 61 });
+  expect(first[1].critic).toBeUndefined();
   expect(store.get("catalogLimits/alice")?.count).toBe(1);
   expect(await searchCatalog("alice", "hades", 1)).toEqual(first);
   expect(store.get("catalogLimits/alice")?.count).toBe(1);

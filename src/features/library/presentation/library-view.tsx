@@ -299,6 +299,14 @@ export function LibraryView({
           <label className="checkbox-label">
             <input
               type="checkbox"
+              checked={f.showCritic}
+              onChange={(e) => set("showCritic", e.target.checked)}
+            />{" "}
+            Mostrar la nota de la crítica
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
               checked={f.searchSpoilers}
               onChange={(e) => set("searchSpoilers", e.target.checked)}
             />{" "}
@@ -338,6 +346,7 @@ export function LibraryView({
           <option value="recent">Última actividad</option>
           <option value="title">Título A–Z</option>
           <option value="rating">Mi nota: mayor primero</option>
+          <option value="critic">Crítica: mayor primero</option>
           <option value="shortest">Duración: más cortos primero</option>
         </select>
       </div>
@@ -376,6 +385,7 @@ export function LibraryView({
                 run={r}
                 hours={estimatedHours(g, f.timeMode)}
                 timeMode={f.timeMode}
+                showCritic={f.showCritic}
                 playedToday={playedToday.has(g.id)}
                 busy={busy}
                 selecting={selecting}

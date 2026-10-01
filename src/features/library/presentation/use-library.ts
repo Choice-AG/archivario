@@ -231,7 +231,9 @@ export function useLibrary(user: User | null) {
     setOffline(true);
     update(next);
   }
-  async function execute(command: Command) {
+  // silent: cambios automáticos (p. ej., refrescar la nota de la crítica)
+  // que no deben sustituir la opción de deshacer el último cambio del usuario.
+  async function execute(command: Command, { silent = false } = {}) {
     if (locked.current) throw new Error("Espera a que termine el guardado.");
     locked.current = true;
     setBusy(true);
@@ -258,11 +260,17 @@ export function useLibrary(user: User | null) {
         localStorage.setItem(key, JSON.stringify(next));
         update(next);
       }
-      setUndoEntry(
-        command.type === "import"
-          ? undefined
-          : { before, revision: current.current.revision },
-      );
+      if (silent) {
+        // Si había algo que deshacer, sigue apuntando a la revisión nueva.
+        setUndoEntry((entry) =>
+          entry ? { ...entry, revision: current.current.revision } : entry,
+        );
+      } else
+        setUndoEntry(
+          command.type === "import"
+            ? undefined
+            : { before, revision: current.current.revision },
+        );
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "No se ha podido guardar.";

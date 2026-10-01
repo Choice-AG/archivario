@@ -1,6 +1,6 @@
 import { estimatedHours, type TimeMode } from "./daily";
 import type { Game, Library } from "./model";
-export type GameSort = "recent" | "title" | "rating" | "shortest";
+export type GameSort = "recent" | "title" | "rating" | "critic" | "shortest";
 export function sortGames(
   games: Game[],
   state: Library,
@@ -15,6 +15,8 @@ export function sortGames(
     if (sort === "title") return title();
     if (sort === "rating")
       return (b.rating ?? -1) - (a.rating ?? -1) || title();
+    if (sort === "critic")
+      return (b.critic?.score ?? -1) - (a.critic?.score ?? -1) || title();
     if (sort === "shortest")
       return (
         (estimatedHours(a, mode) ?? Infinity) -

@@ -190,6 +190,7 @@ export function BulkLink({
                   gameId: r.game.id,
                   catalogId: o.catalogId,
                   ...(o.cover ? { cover: o.cover } : {}),
+                  ...(o.critic ? { critic: o.critic } : {}),
                   genres: o.genres.slice(0, 12),
                 };
               }),

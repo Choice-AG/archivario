@@ -11,7 +11,18 @@ export type CatalogGame = {
   cover?: string;
   genres: string[];
   platforms: string[];
+  critic?: { score: number; count: number };
 };
+// Nota media de la crítica profesional según IGDB (0-100), si existe.
+function critic(score?: number, count?: number) {
+  return score !== undefined &&
+    Number.isFinite(score) &&
+    score >= 0 &&
+    score <= 100 &&
+    count
+    ? { critic: { score: Math.round(score), count: Math.round(count) } }
+    : {};
+}
 const DAY = 86400000;
 // Solo cuentan las consultas que llegan a IGDB (fallos de caché).
 const USER_LIMIT = 20;
@@ -187,7 +198,7 @@ export async function searchCatalog(
   assertConfigured();
   return cached(
     uid,
-    hash("games-v3:" + q.toLowerCase() + ":" + page),
+    hash("games-v4:" + q.toLowerCase() + ":" + page),
     async () => {
       const rows = await igdb<{
         id: number;
@@ -195,9 +206,11 @@ export async function searchCatalog(
         cover?: { image_id: string };
         genres?: { name: string }[];
         platforms?: { name: string }[];
+        aggregated_rating?: number;
+        aggregated_rating_count?: number;
       }>(
         "games",
-        `search "${q.replace(/["\\]/g, " ")}"; fields name,cover.image_id,genres.name,platforms.name; where game_type != 5; limit 20; offset ${(page - 1) * 20};`,
+        `search "${q.replace(/["\\]/g, " ")}"; fields name,cover.image_id,genres.name,platforms.name,aggregated_rating,aggregated_rating_count; where game_type != 5; limit 20; offset ${(page - 1) * 20};`,
         "El catálogo no está disponible temporalmente.",
       );
       return rows.map((g) => ({
@@ -206,6 +219,7 @@ export async function searchCatalog(
         genres: g.genres?.map((x) => x.name) ?? [],
         platforms: g.platforms?.map((x) => x.name) ?? [],
         ...cover(g.cover?.image_id),
+        ...critic(g.aggregated_rating, g.aggregated_rating_count),
       }));
     },
   );
@@ -214,7 +228,7 @@ export async function searchCatalog(
 export async function catalogDetails(uid: string, id: number) {
   assertId(id);
   assertConfigured();
-  return cached(uid, "details-v4-" + id, async () => {
+  return cached(uid, "details-v5-" + id, async () => {
     const [g] = await igdb<{
       name: string;
       screenshots?: { image_id: string }[];
@@ -228,9 +242,11 @@ export async function catalogDetails(uid: string, id: number) {
         company?: { name: string };
       }[];
       videos?: { name: string; video_id: string }[];
+      aggregated_rating?: number;
+      aggregated_rating_count?: number;
     }>(
       "games",
-      `fields name,cover.image_id,screenshots.image_id,genres.name,platforms.name,summary,first_release_date,involved_companies.company.name,involved_companies.developer,videos.name,videos.video_id; where id = ${id}; limit 1;`,
+      `fields name,aggregated_rating,aggregated_rating_count,cover.image_id,screenshots.image_id,genres.name,platforms.name,summary,first_release_date,involved_companies.company.name,involved_companies.developer,videos.name,videos.video_id; where id = ${id}; limit 1;`,
       "No se ha podido cargar la ficha de IGDB.",
     );
     if (!g) throw new HttpError(404, "Ficha no encontrada.");
@@ -245,6 +261,7 @@ export async function catalogDetails(uid: string, id: number) {
       genres: g.genres?.map((x) => x.name) ?? [],
       platforms: g.platforms?.map((x) => x.name) ?? [],
       summary: g.summary ?? "",
+      ...critic(g.aggregated_rating, g.aggregated_rating_count),
       releaseDate: releaseDate(g.first_release_date),
       developers: [
         ...new Set(

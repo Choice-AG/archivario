@@ -862,3 +862,21 @@ test("atajos de una tecla para añadir, buscar, registrar y ver la ayuda", async
     page.getByRole("heading", { name: "Tu día de juego" }),
   ).toBeVisible();
 });
+
+test("el diario se agrupa por meses y se filtra por juego", async ({
+  page,
+}) => {
+  await page.goto("/diario?demo=1");
+  await expect(page.locator(".journal-month h3").first()).toContainText(
+    /^[A-ZÁÉÍÓÚ][a-záéíóú]+ de \d{4}/,
+  );
+  const total = await page.locator(".activity-row").count();
+  await page
+    .locator(".journal-filters select")
+    .selectOption({ label: "Hollow Knight" });
+  await expect(page.locator(".activity-row strong")).toHaveText([
+    "Hollow Knight",
+  ]);
+  await page.getByRole("button", { name: "Quitar filtros" }).click();
+  await expect(page.locator(".activity-row")).toHaveCount(total);
+});

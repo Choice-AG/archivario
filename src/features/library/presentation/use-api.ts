@@ -13,6 +13,7 @@ export type CatalogDetailsData = {
   genres: string[];
   platforms: string[];
   summary: string;
+  critic?: { score: number; count: number };
   releaseDate: string;
   developers: string[];
   videos: { name: string; url: string }[];
