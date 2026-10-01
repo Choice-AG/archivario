@@ -99,3 +99,27 @@ it("formats hours in Spanish and reports missing data", () => {
   expect(formatHours(undefined)).toBe("Sin datos");
   expect(formatHours(12.5)).toBe("12,5 h");
 });
+it("reparte el año por plataforma y género, y marca el mes más activo", () => {
+  const state = emptyLibrary();
+  state.games = [
+    game("a", { platforms: ["PC", "Switch"], genres: ["RPG"] }),
+    game("b", { platforms: ["PC"], genres: ["RPG", "Acción"] }),
+    game("c", { platforms: ["PS5"], genres: [] }),
+  ];
+  state.activities = [
+    { id: "1", gameId: "a", date: "2026-03-02", note: "" },
+    { id: "2", gameId: "b", date: "2026-03-05", note: "" },
+    { id: "3", gameId: "a", date: "2026-07-01", note: "" },
+    { id: "4", gameId: "c", date: "2025-12-31", note: "" },
+  ];
+  const s = annualSummary(state, "2026");
+  expect(s.platforms).toEqual([
+    { name: "PC", count: 2 },
+    { name: "Switch", count: 1 },
+  ]);
+  expect(s.genres[0]).toEqual({ name: "RPG", count: 2 });
+  expect(s.busiestMonth).toBe(2);
+  expect(s.first?.date).toBe("2026-03-02");
+  expect(s.last?.date).toBe("2026-07-01");
+  expect(annualSummary(emptyLibrary(), "2026").busiestMonth).toBeUndefined();
+});
