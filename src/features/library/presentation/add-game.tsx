@@ -352,6 +352,7 @@ function GameSetup({
                 catalogId: game.catalogId,
                 ...(game.cover ? { cover: game.cover } : {}),
                 ...(game.critic ? { critic: game.critic } : {}),
+                ...(game.releaseDate ? { releaseDate: game.releaseDate } : {}),
               }
             : {}),
           ...(duration ? { approximateHours: Number(duration) } : {}),

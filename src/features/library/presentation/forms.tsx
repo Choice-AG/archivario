@@ -18,6 +18,7 @@ import type { ApiRequest, Execute } from "./shared";
 import { list, value } from "./form-utils";
 import { RatingInput } from "./rating-input";
 import { markdownHint } from "./markdown";
+import { DurationInput } from "./duration-input";
 
 function FormError({ message }: { message: string }) {
   return message ? (
@@ -557,6 +558,13 @@ export function ActivityForm({
     ),
     activity = initial ?? existing;
   const [confirm, setConfirm] = useState(false);
+  // El tiempo sigue al registro que se está editando (juego y día).
+  const [minutes, setMinutes] = useState(activity?.minutes),
+    [minutesFor, setMinutesFor] = useState(activity?.id);
+  if (minutesFor !== activity?.id) {
+    setMinutesFor(activity?.id);
+    setMinutes(activity?.minutes);
+  }
   if (!state.games.length)
     return (
       <p className="info-note">
@@ -580,6 +588,7 @@ export function ActivityForm({
               date: selectedDate,
               note: value(f, "note"),
               ...(value(f, "runId") ? { runId: value(f, "runId") } : {}),
+              ...(minutes ? { minutes } : {}),
             },
           });
           onClose();
@@ -641,6 +650,11 @@ export function ActivityForm({
             ))}
         </select>
       </label>
+      <DurationInput
+        label="Tiempo jugado"
+        value={minutes}
+        onChange={setMinutes}
+      />
       <label>
         Algo para recordar <small>Opcional · privado</small>
         <textarea

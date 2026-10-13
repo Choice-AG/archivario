@@ -44,6 +44,7 @@ import {
 import { Onboarding, showOnboarding } from "./onboarding";
 import { SidebarPlaying } from "./sidebar-playing";
 import { Celebration, completedBy, type Completion } from "./celebration";
+import { SessionBar } from "./session-timer";
 import {
   gamePath,
   parsePath,
@@ -75,6 +76,13 @@ const YearReview = load(() =>
   import("./year-review").then((m) => m.YearReview),
 );
 const BulkLink = load(() => import("./bulk-link").then((m) => m.BulkLink));
+const Tonight = load(() => import("./tonight").then((m) => m.Tonight));
+const PriorityEditor = load(() =>
+  import("./priority-editor").then((m) => m.PriorityEditor),
+);
+const StopSession = load(() =>
+  import("./stop-session").then((m) => m.StopSession),
+);
 const ImportGames = load(() =>
   import("./import-games").then((m) => m.ImportGames),
 );
@@ -145,8 +153,13 @@ type ModalState = {
     | "bulk"
     | "link"
     | "import"
-    | "shortcuts";
+    | "shortcuts"
+    | "tonight"
+    | "priority"
+    | "stop";
   source?: "steam" | "csv";
+  // Momento en que se paró la sesión.
+  at?: number;
   id?: string;
   activity?: Activity;
   date?: string;
@@ -166,6 +179,18 @@ const nav = [
 const mobileNav = nav.filter((n) =>
   ["Biblioteca", "Sagas", "Diario", "Calendario"].includes(n.name),
 );
+// Accesos directos de la app instalada: /?accion=registrar, etc.
+function shortcutModal(): ModalState {
+  if (typeof window === "undefined") return null;
+  const action = new URLSearchParams(window.location.search).get("accion");
+  return action === "registrar"
+    ? { kind: "activity" }
+    : action === "anadir"
+      ? { kind: "add" }
+      : action === "esta-noche"
+        ? { kind: "tonight" }
+        : null;
+}
 
 function Dashboard({
   user,
@@ -177,7 +202,7 @@ function Dashboard({
   const pathname = usePathname(),
     router = useRouter();
   const { view, gameId, sagaId, settings, handle } = parsePath(pathname);
-  const [modal, setModal] = useState<ModalState>(null),
+  const [modal, setModal] = useState<ModalState>(shortcutModal),
     [notice, setNotice] = useState(""),
     // Juego con el que se abre el diario desde una ficha.
     [journalGame, setJournalGame] = useState<string>();
@@ -186,7 +211,7 @@ function Dashboard({
     view: sagaId !== undefined ? "Sagas" : "Biblioteca",
     sagaId,
   });
-  const filterState = useLibraryFilters();
+  const filterState = useLibraryFilters(viewDefaults(view));
   const api = useLibrary(user),
     { state, execute, ready, busy, error, setError } = api;
   const social = useSocial<SocialMe>(
@@ -226,6 +251,9 @@ function Dashboard({
     setJournalGame(undefined);
     filterState.setPage(1);
     if (name === "Próximos") filterState.reset(viewDefaults("Próximos"));
+    // El orden de prioridad solo tiene sentido en Próximos.
+    else if (filterState.filters.sort === "priority")
+      filterState.set("sort", "recent");
     navigate(viewPaths[name] ?? "/");
   };
   // Atrás/adelante del navegador también cierra los modales abiertos.
@@ -237,6 +265,12 @@ function Dashboard({
   useEffect(() => {
     if (gameId) document.querySelector<HTMLElement>(".game-hero h1")?.focus();
   }, [gameId]);
+  // El acceso directo ya ha abierto su ventana: se limpia la dirección.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("accion"))
+      router.replace(pathname + (user ? "" : "?demo=1"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (!notice) return;
     // Tiempo suficiente para pulsar "Deshacer" sin que el aviso estorbe.
@@ -258,12 +292,22 @@ function Dashboard({
       c.type === "save-saga"
         ? "Guía guardada en Sagas → Mis sagas" +
             (user ? "" : " · Solo en este navegador")
-        : "Guardado en " + (user ? "tu biblioteca" : "la demostración local"),
+        : c.type === "timer"
+          ? c.timer
+            ? "Sesión en marcha. Párala cuando termines de jugar."
+            : "Sesión descartada."
+          : c.type === "log-session"
+            ? "Sesión apuntada en el diario."
+            : c.type === "save-priority"
+              ? "Orden de prioridad guardado."
+              : "Guardado en " +
+                (user ? "tu biblioteca" : "la demostración local"),
     );
   };
   useShortcuts(ready && !modal, {
     n: () => setModal({ kind: "add" }),
     d: () => setModal({ kind: "activity", date: today }),
+    t: () => setModal({ kind: "tonight" }),
     "?": () => setModal({ kind: "shortcuts" }),
     "/": () => {
       const focus = () =>
@@ -281,6 +325,7 @@ function Dashboard({
     },
   });
   if (!ready) return <div className="loading">Abriendo tu biblioteca…</div>;
+  const stopSession = () => setModal({ kind: "stop", at: Date.now() });
   const ownedGame = gameId
     ? state.games.find((g) => g.id === gameId)
     : undefined;
@@ -536,6 +581,7 @@ function Dashboard({
                 }}
                 demo={!user}
                 today={today}
+                onStopSession={stopSession}
                 onBack={backToLibrary}
                 onActivity={() =>
                   setModal({ kind: "activity", id: gameId, date: today })
@@ -615,6 +661,18 @@ function Dashboard({
                   onSagas={() => openSaga()}
                   onAdd={() => setModal({ kind: "add" })}
                   onPlanning={() => setModal({ kind: "planning" })}
+                  onTonight={() => setModal({ kind: "tonight" })}
+                  onPriority={() => setModal({ kind: "priority" })}
+                  onStopSession={stopSession}
+                  request={api.request}
+                  onReleaseDates={(items) =>
+                    api
+                      .execute(
+                        { type: "link-catalog", items },
+                        { silent: true },
+                      )
+                      .catch(() => {})
+                  }
                   onYear={() => setModal({ kind: "year" })}
                   onEditActivity={(a) =>
                     setModal({ kind: "activity", activity: a })
@@ -739,6 +797,9 @@ function Dashboard({
           </Fragment>
         ))}
       </nav>
+      {modal?.kind !== "stop" && (
+        <SessionBar state={state} onStop={stopSession} onGame={openGame} />
+      )}
       {notice && (
         <div className="toast" role="status">
           <Check size={17} />
@@ -832,6 +893,47 @@ function Dashboard({
           onClose={() => setModal(null)}
         >
           <Planning state={state} execute={safeExecute} onGame={openGame} />
+        </Modal>
+      )}
+      {modal?.kind === "tonight" && (
+        <Modal
+          title="¿A qué juego esta noche?"
+          description="Dime cuánto tiempo tienes y lo que te apetece, y te propongo tres juegos."
+          onClose={() => setModal(null)}
+        >
+          <Tonight
+            state={state}
+            today={today}
+            execute={safeExecute}
+            onGame={openGame}
+          />
+        </Modal>
+      )}
+      {modal?.kind === "priority" && (
+        <Modal
+          title="Tu orden de prioridad"
+          description="Ordena tus pendientes y próximos como quieras jugarlos."
+          onClose={() => setModal(null)}
+        >
+          <PriorityEditor
+            state={state}
+            execute={safeExecute}
+            onClose={() => setModal(null)}
+          />
+        </Modal>
+      )}
+      {modal?.kind === "stop" && (
+        <Modal
+          title="Parar la sesión"
+          description="Revisa el tiempo y apúntalo en tu diario."
+          onClose={() => setModal(null)}
+        >
+          <StopSession
+            state={state}
+            stoppedAt={modal.at ?? 0}
+            execute={safeExecute}
+            onClose={() => setModal(null)}
+          />
         </Modal>
       )}
       {modal?.kind === "shortcuts" && (

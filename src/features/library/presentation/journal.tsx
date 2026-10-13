@@ -5,11 +5,14 @@ import {
   ChevronLeft,
   ChevronRight,
   NotebookPen,
+  Rocket,
   Sparkles,
 } from "lucide-react";
 import { Heatmap } from "./heatmap";
 import { Button } from "@/components/ui/button";
 import { monthlySummary, type Activity, type Library } from "../domain/model";
+import { formatMinutes, minutesIn } from "../domain/session";
+import { releasesIn } from "../domain/releases";
 import { Cover } from "./shared";
 import { formatDate, monthLabel, plural } from "./format";
 
@@ -92,6 +95,11 @@ export function Recent({
               day: "numeric",
               month: "short",
             }).format(new Date(a.date + "T12:00:00"))}{" "}
+            {a.minutes ? (
+              <>
+                <span>·</span> {formatMinutes(a.minutes)}{" "}
+              </>
+            ) : null}
             <span>·</span> {a.note || "Una nueva aventura"}
           </small>
         </span>
@@ -219,6 +227,7 @@ export function Recent({
 
 export function MonthCard({ state, today }: { state: Library; today: string }) {
   const summary = monthlySummary(state, today.slice(0, 7));
+  const minutes = minutesIn(state, today.slice(0, 7));
   return (
     <section className="month-card">
       <p className="eyebrow">PEQUEÑOS GRANDES VIAJES</p>
@@ -245,6 +254,12 @@ export function MonthCard({ state, today }: { state: Library; today: string }) {
               : "partidas completadas"}
           </span>
         </div>
+        {minutes > 0 && (
+          <div>
+            <strong>{formatMinutes(minutes)}</strong>
+            <span>jugados según tu diario</span>
+          </div>
+        )}
       </div>
       <p className="month-foot">
         <Sparkles size={15} /> Cada aventura cuenta, dure lo que dure.
@@ -271,6 +286,14 @@ export function CalendarView({
   onJournal: () => void;
 }) {
   const summary = monthlySummary(state, month);
+  const minutes = minutesIn(state, month);
+  // Lanzamientos de lo que esperas, marcados en su día.
+  const launches = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const g of releasesIn(state, month))
+      map.set(g.releaseDate!, [...(map.get(g.releaseDate!) ?? []), g.title]);
+    return map;
+  }, [state, month]);
   const games = useMemo(
     () => new Map(state.games.map((g) => [g.id, g])),
     [state.games],
@@ -331,6 +354,7 @@ export function CalendarView({
           "partida completada",
           "partidas completadas",
         )}
+        {minutes > 0 && " · " + formatMinutes(minutes) + " jugados"}
       </p>
       <div className="calendar-grid">
         {["L", "M", "X", "J", "V", "S", "D"].map((d, i) => (
@@ -353,7 +377,8 @@ export function CalendarView({
           },
           (_, i) => {
             const date = month + "-" + String(i + 1).padStart(2, "0"),
-              items = byDate.get(date) ?? [];
+              items = byDate.get(date) ?? [],
+              launch = launches.get(date);
             return (
               <button
                 key={date}
@@ -364,10 +389,21 @@ export function CalendarView({
                   (items.length
                     ? ": " +
                       items.map((a) => games.get(a.gameId)?.title).join(", ")
-                    : "")
+                    : "") +
+                  (launch ? ". Sale " + launch.join(", ") : "")
                 }
               >
                 <span>{i + 1}</span>
+                {launch && (
+                  <span
+                    className="calendar-launch"
+                    title={"Sale " + launch.join(", ")}
+                    aria-hidden="true"
+                  >
+                    <Rocket size={11} />{" "}
+                    {launch.length > 1 ? launch.length : ""}
+                  </span>
+                )}
                 {/* Portadas pequeñas: el mes se lee de un vistazo. */}
                 <span className="calendar-covers" aria-hidden="true">
                   {items.slice(0, 3).map((a) => {

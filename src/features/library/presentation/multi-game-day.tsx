@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
 import type { Execute } from "./shared";
+import { DurationInput } from "./duration-input";
 export function MultiGameDay({
   state,
   date,
@@ -15,7 +16,7 @@ export function MultiGameDay({
   onDone: () => void;
 }) {
   const [items, setItems] = useState<
-      Record<string, { runId: string; note: string }>
+      Record<string, { runId: string; note: string; minutes?: number }>
     >({}),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -72,6 +73,9 @@ export function MultiGameDay({
                           [g.id]: {
                             runId: existing?.runId ?? g.primaryRunId,
                             note: existing?.note ?? "",
+                            ...(existing?.minutes
+                              ? { minutes: existing.minutes }
+                              : {}),
                           },
                         });
                       else {
@@ -106,6 +110,18 @@ export function MultiGameDay({
                           ))}
                       </select>
                     </label>
+                    <DurationInput
+                      label={"Tiempo de " + g.title}
+                      value={item.minutes}
+                      onChange={(minutes) => {
+                        const next = { ...item };
+                        delete next.minutes;
+                        setItems({
+                          ...items,
+                          [g.id]: minutes ? { ...next, minutes } : next,
+                        });
+                      }}
+                    />
                     <label>
                       Nota para {g.title}
                       <textarea

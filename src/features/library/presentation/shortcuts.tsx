@@ -5,6 +5,7 @@ export const shortcuts = [
   ["N", "Añadir un juego"],
   ["/", "Buscar en tu biblioteca"],
   ["D", "Registrar el día de hoy"],
+  ["T", "¿A qué juego esta noche?"],
   ["Ctrl K", "Buscar en todo Archivario"],
   ["?", "Ver estos atajos"],
 ] as const;
@@ -13,7 +14,7 @@ export const shortcuts = [
 // abierto ni con teclas modificadoras (salvo Mayús para «?»).
 export function useShortcuts(
   enabled: boolean,
-  actions: Record<"n" | "/" | "d" | "?", () => void>,
+  actions: Record<"n" | "/" | "d" | "t" | "?", () => void>,
 ) {
   const latest = useRef(actions);
   useEffect(() => {

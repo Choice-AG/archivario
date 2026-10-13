@@ -97,7 +97,7 @@ export function ProfilePage({
             [stats.completed, "completados"],
             [stats.playing, "jugando ahora"],
             [stats.days, "días jugados"],
-            [stats.hours, "horas en partidas completadas"],
+            [stats.hours, "horas jugadas"],
             [stats.reviews, "reseñas escritas"],
           ] as const
         ).map(([n, label]) => (

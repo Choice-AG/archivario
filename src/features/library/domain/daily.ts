@@ -52,11 +52,13 @@ export function matchesGame(
   const texts = [
     game.title,
     game.review,
+    game.notesBefore ?? "",
     ...state.runs
       .filter((r) => r.gameId === game.id)
       .flatMap((r) => [r.review ?? "", r.whereLeft]),
     ...state.activities.filter((a) => a.gameId === game.id).map((a) => a.note),
-    ...(spoilers ? [game.spoilerNote] : []),
+    // La nota para el final puede destripar el juego, como la de spoilers.
+    ...(spoilers ? [game.spoilerNote, game.notesAfter ?? ""] : []),
   ];
   const needle = normalize(query.trim());
   return texts.some((text) => normalize(text).includes(needle));

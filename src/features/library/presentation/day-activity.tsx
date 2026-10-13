@@ -6,6 +6,7 @@ import { Cover, type Execute } from "./shared";
 import { MultiGameDay } from "./multi-game-day";
 import { ActivityForm } from "./forms";
 import type { Activity, Library } from "../domain/model";
+import { formatMinutes } from "../domain/session";
 export function DayActivity({
   state,
   date,
@@ -121,6 +122,7 @@ export function DayActivity({
                   {run
                     ? run.label + " · " + run.platform
                     : "Sin partida asociada"}
+                  {a.minutes ? " · " + formatMinutes(a.minutes) : ""}
                 </p>
                 <p className="game-prose">
                   {a.note || "Sin nota para este día."}

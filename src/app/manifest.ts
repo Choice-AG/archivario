@@ -22,9 +22,27 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
+    // Al mantener pulsado el icono de la app instalada.
     shortcuts: [
+      {
+        name: "Registrar hoy",
+        short_name: "Registrar",
+        url: "/?accion=registrar",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+      },
+      {
+        name: "Añadir juego",
+        short_name: "Añadir",
+        url: "/?accion=anadir",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+      },
+      {
+        name: "¿A qué juego esta noche?",
+        short_name: "Esta noche",
+        url: "/?accion=esta-noche",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+      },
       { name: "Diario", url: "/diario" },
-      { name: "Calendario", url: "/calendario" },
     ],
   };
 }

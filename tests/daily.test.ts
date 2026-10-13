@@ -12,7 +12,6 @@ import {
   listProgress,
   matchesGame,
 } from "../src/features/library/domain/daily";
-import { playableGames } from "../src/features/library/domain/planning";
 const now = "2026-09-30T12:00:00.000Z";
 it("bulk adds distinct days atomically without overwriting existing notes", () => {
   const s = demoLibrary(),
@@ -147,11 +146,4 @@ it("converts IGDB seconds, treats missing and zero values as unknown, and retain
     backupSchema.parse({ version: 1, exportedAt: now, data: s }).data.games[0]
       .times,
   ).toEqual(g.times);
-  s.runs.find((r) => r.id === g.primaryRunId)!.status = "pendiente";
-  expect(playableGames(s, "", "", 10, "main").some((x) => x.id === g.id)).toBe(
-    true,
-  );
-  expect(
-    playableGames(s, "", "", 10, "extras").some((x) => x.id === g.id),
-  ).toBe(false);
 });

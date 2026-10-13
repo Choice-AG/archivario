@@ -24,6 +24,8 @@ import { useCatalogDetails, useCatalogTimes } from "./use-api";
 import { CriticScore } from "./critic-score";
 import { Markdown } from "./markdown";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
+import { formatMinutes, playedTime } from "../domain/session";
+import { SessionButton } from "./session-timer";
 import { activityId, type Game, type Library } from "../domain/model";
 
 const tabIds = ["resumen", "partidas", "resena", "diario", "juego"] as const;
@@ -41,8 +43,10 @@ export function GamePage({
   onJournal,
   onCritic,
   onGame,
+  onStopSession,
   celebrating = false,
 }: {
+  onStopSession: () => void;
   celebrating?: boolean;
   onGame: (id: string) => void;
   game: Game;
@@ -107,6 +111,7 @@ export function GamePage({
           },
         ];
   });
+  const played = playedTime(state, game.id);
   const mutate = async (command: Parameters<Execute>[0]) => {
     setBusy(true);
     setError("");
@@ -224,6 +229,13 @@ export function GamePage({
                 <Plus size={16} /> He jugado hoy
               </Button>
             )}
+            <SessionButton
+              game={game}
+              state={state}
+              execute={execute}
+              busy={busy}
+              onStop={onStopSession}
+            />
             <Button variant="secondary" onClick={onActivity}>
               <CalendarPlus size={16} /> Otro día
             </Button>
@@ -382,6 +394,35 @@ export function GamePage({
                 </>
               )}
             </div>
+            <NoteRow
+              title="Antes de empezar"
+              empty="Algo que conviene saber antes de jugar: un mod, un parche, esperar una oferta…"
+              value={game.notesBefore ?? ""}
+              busy={busy}
+              onSave={(text) => {
+                const rest = { ...game };
+                delete rest.notesBefore;
+                return mutate({
+                  type: "save-game",
+                  game: text ? { ...rest, notesBefore: text } : rest,
+                });
+              }}
+            />
+            <NoteRow
+              title="Para cuando lo termines"
+              empty="Lo que quieres leer o ver al acabar, aunque tenga spoilers."
+              value={game.notesAfter ?? ""}
+              hidden={run.status !== "completado"}
+              busy={busy}
+              onSave={(text) => {
+                const rest = { ...game };
+                delete rest.notesAfter;
+                return mutate({
+                  type: "save-game",
+                  game: text ? { ...rest, notesAfter: text } : rest,
+                });
+              }}
+            />
             <div className="summary-row">
               <h2>Duración</h2>
               {times.length ? (
@@ -406,6 +447,20 @@ export function GamePage({
                   </button>
                 </p>
               )}
+              <p className={played.minutes ? "played-time" : "muted"}>
+                {played.minutes ? (
+                  <>
+                    Has jugado <strong>{formatMinutes(played.minutes)}</strong>{" "}
+                    en{" "}
+                    {played.sessions === 1
+                      ? "1 día registrado"
+                      : played.sessions + " días registrados"}
+                    .
+                  </>
+                ) : (
+                  "Apunta cuánto juegas en el diario o con «Empezar sesión»."
+                )}
+              </p>
               <button
                 className="text-link"
                 onClick={() => setEditor("Tiempos")}
@@ -420,7 +475,10 @@ export function GamePage({
                   {activities.slice(0, 3).map((a) => (
                     <li key={a.id}>
                       <DateText date={a.date} />
-                      <span>{a.note || "Un día de juego"}</span>
+                      <span>
+                        {a.minutes ? formatMinutes(a.minutes) + " · " : ""}
+                        {a.note || "Un día de juego"}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -594,7 +652,14 @@ export function GamePage({
               activities.slice(0, 10).map((a) => (
                 <div className="game-journal-row" key={a.id}>
                   <DateText date={a.date} />
-                  <p>{a.note || "Un día de juego"}</p>
+                  <p>
+                    {a.minutes ? (
+                      <span className="journal-minutes">
+                        {formatMinutes(a.minutes)}
+                      </span>
+                    ) : null}
+                    {a.note || "Un día de juego"}
+                  </p>
                 </div>
               ))
             ) : (
@@ -679,6 +744,95 @@ export function GamePage({
             }}
           />
         </Modal>
+      )}
+    </div>
+  );
+}
+
+// Una nota privada que se edita en el sitio. Con «hidden», el texto se
+// guarda tras un desplegable (puede tener spoilers).
+function NoteRow({
+  title,
+  empty,
+  value,
+  hidden = false,
+  busy,
+  onSave,
+}: {
+  title: string;
+  empty: string;
+  value: string;
+  hidden?: boolean;
+  busy: boolean;
+  onSave: (text: string) => Promise<boolean>;
+}) {
+  const [draft, setDraft] = useState<string>();
+  return (
+    <div className="summary-row">
+      <h2>{title}</h2>
+      {draft !== undefined ? (
+        <form
+          className="where-form"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (await onSave(draft.trim())) setDraft(undefined);
+          }}
+        >
+          <label>
+            <span className="sr-only">{title}</span>
+            <textarea
+              autoFocus
+              rows={3}
+              maxLength={2000}
+              value={draft}
+              placeholder={empty}
+              onChange={(e) => setDraft(e.target.value)}
+            />
+          </label>
+          <div className="form-actions">
+            <Button size="sm" disabled={busy}>
+              Guardar
+            </Button>
+            <Button
+              size="sm"
+              type="button"
+              variant="ghost"
+              onClick={() => setDraft(undefined)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <>
+          {!value ? (
+            <p className="muted">{empty}</p>
+          ) : hidden ? (
+            <details className="spoiler">
+              <summary>Mostrar la nota</summary>
+              <Markdown className="game-prose" text={value} />
+            </details>
+          ) : (
+            <Markdown className="game-prose" text={value} />
+          )}
+          <button
+            className="text-link"
+            aria-label={
+              (value ? "Editar la nota: " : "Añadir una nota: ") + title
+            }
+            onClick={() => setDraft(value)}
+          >
+            {value ? (
+              <>
+                <Pencil size={13} /> Editar la nota
+              </>
+            ) : (
+              <>
+                <Plus size={13} /> Añadir una nota
+              </>
+            )}
+          </button>
+        </>
       )}
     </div>
   );

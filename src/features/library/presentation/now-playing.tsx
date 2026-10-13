@@ -3,7 +3,8 @@ import { useRef } from "react";
 import { Check, ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Game, Library } from "../domain/model";
-import { Cover } from "./shared";
+import { Cover, type Execute } from "./shared";
+import { SessionButton } from "./session-timer";
 import { formatDate } from "./format";
 
 // Lo que estás jugando, arriba de la biblioteca: dónde lo dejaste, cuándo
@@ -12,6 +13,8 @@ export function NowPlaying({
   state,
   playedToday,
   busy,
+  execute,
+  onStopSession,
   onGame,
   onToday,
   onResume,
@@ -19,6 +22,8 @@ export function NowPlaying({
   state: Library;
   playedToday: Set<string>;
   busy: boolean;
+  execute: Execute;
+  onStopSession: () => void;
   onGame: (id: string) => void;
   onToday: (game: Game) => void;
   onResume: (game: Game) => void;
@@ -127,6 +132,14 @@ export function NowPlaying({
                       {today ? <Check size={15} /> : <Plus size={15} />}{" "}
                       {today ? "Registrado hoy" : "He jugado hoy"}
                     </Button>
+                    <SessionButton
+                      game={g}
+                      state={state}
+                      execute={execute}
+                      busy={busy}
+                      onStop={onStopSession}
+                      compact
+                    />
                   </div>
                 </div>
               </article>
