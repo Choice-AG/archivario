@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   activityId,
   assertLibrary,
+  DAY_MINUTES,
   LIMITS,
   sagaStatuses,
   statuses,
@@ -63,6 +64,9 @@ export const gameSchema = z
     stores: z.array(text(60)).max(12),
     wishlist: z.boolean().optional(),
     hidden: z.boolean().optional(),
+    releaseDate: localDate.optional(),
+    notesBefore: text(2000).optional(),
+    notesAfter: text(2000).optional(),
     favorite: z.boolean(),
     next: z.boolean(),
     rating: z.number().min(1).max(10).multipleOf(0.5).optional(),
@@ -89,6 +93,10 @@ export const runSchema = z
     shareNote: text(200).optional(),
   })
   .strict();
+const minutes = z.number().int().min(1).max(DAY_MINUTES);
+export const timerSchema = z
+  .object({ gameId: id, runId: id, startedAt: z.iso.datetime() })
+  .strict();
 export const activitySchema = z
   .object({
     id,
@@ -96,6 +104,7 @@ export const activitySchema = z
     date: localDate,
     runId: id.optional(),
     note: text(1000),
+    minutes: minutes.optional(),
   })
   .strict()
   .refine(
@@ -119,6 +128,8 @@ export const profileSchema = z
     showcase: z.array(id).max(SHOWCASE_MAX).optional(),
     onboardingDone: z.boolean().optional(),
     celebrate: z.boolean().optional(),
+    priority: z.array(id).max(LIMITS.games).optional(),
+    timer: timerSchema.optional(),
   })
   .strict();
 export const listSchema = z
@@ -220,7 +231,16 @@ export const commandSchema = z.discriminatedUnion("type", [
       type: z.literal("save-day"),
       date: localDate,
       items: z
-        .array(z.object({ gameId: id, runId: id, note: text(1000) }).strict())
+        .array(
+          z
+            .object({
+              gameId: id,
+              runId: id,
+              note: text(1000),
+              minutes: minutes.optional(),
+            })
+            .strict(),
+        )
         .min(1)
         .max(200)
         .refine(
@@ -262,6 +282,7 @@ export const commandSchema = z.discriminatedUnion("type", [
               cover: gameSchema.shape.cover,
               genres: z.array(text(60)).max(12).optional(),
               critic: criticSchema.optional(),
+              releaseDate: z.union([localDate, z.literal("")]).optional(),
             })
             .strict(),
         )
@@ -288,6 +309,25 @@ export const commandSchema = z.discriminatedUnion("type", [
     })
     .strict(),
   z.object({ type: z.literal("delete-activity"), id }).strict(),
+  z
+    .object({
+      type: z.literal("save-priority"),
+      gameIds: z.array(id).max(LIMITS.games),
+    })
+    .strict(),
+  z
+    .object({ type: z.literal("timer"), timer: timerSchema.optional() })
+    .strict(),
+  z
+    .object({
+      type: z.literal("log-session"),
+      gameId: id,
+      runId: id,
+      date: localDate,
+      minutes,
+      note: text(1000).optional(),
+    })
+    .strict(),
   z.object({ type: z.literal("profile"), profile: profileSchema }).strict(),
   z
     .object({

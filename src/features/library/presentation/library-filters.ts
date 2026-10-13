@@ -33,7 +33,7 @@ export const defaultFilters: LibraryFilters = {
 
 export function viewDefaults(view: string): LibraryFilters {
   return view === "Próximos"
-    ? { ...defaultFilters, ownership: "all" }
+    ? { ...defaultFilters, ownership: "all", sort: "priority" }
     : defaultFilters;
 }
 // Filtros del panel que difieren del valor por defecto de la vista.
@@ -52,8 +52,9 @@ export function countActiveFilters(f: LibraryFilters, view = "Biblioteca") {
   ).filter((key) => f[key] !== defaults[key]).length;
 }
 
-export function useLibraryFilters() {
-  const [filters, setFilters] = useState(defaultFilters),
+// Se empieza con los valores de la vista en la que se abre la app.
+export function useLibraryFilters(initial = defaultFilters) {
+  const [filters, setFilters] = useState(initial),
     [page, setPage] = useState(1);
   // Cualquier cambio de filtro vuelve a la primera página.
   const set = <K extends keyof LibraryFilters>(

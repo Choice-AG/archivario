@@ -7485,6 +7485,381 @@ button.heat:focus-visible {
   scrollbar-width: thin;
 }
 
+/* Resumen de la ficha: seis bloques en dos columnas */
+@media (min-width: 761px) {
+  .summary-row:not(:nth-last-child(-n + 2)) {
+    border-bottom: 1px solid var(--line);
+  }
+}
+.summary-row .played-time {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-c5c8d8);
+}
+.summary-row .spoiler {
+  width: 100%;
+}
+
+/* Tiempo jugado: horas, minutos y atajos */
+.duration-input {
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.duration-input legend {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.duration-input legend small {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.duration-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.duration-input .duration-fields > label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.duration-fields input {
+  width: 64px;
+  text-align: right;
+}
+.duration-presets.choice-chips {
+  gap: 6px;
+}
+.duration-presets.choice-chips button {
+  min-height: 32px;
+  padding: 5px 11px;
+}
+.journal-minutes {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--c-a58add22);
+  color: var(--c-e4d6ff);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Sesión en marcha */
+.session-bar {
+  position: fixed;
+  z-index: 60;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--c-a58add55);
+  border-radius: 99px;
+  background: var(--c-272238);
+  box-shadow: 0 12px 40px var(--c-0008);
+  color: var(--c-e4d9fa);
+  font-size: 13px;
+}
+.session-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c-85c3af);
+  box-shadow: 0 0 0 4px var(--c-85c3af12);
+  animation: session-pulse 1.6s ease-in-out infinite;
+}
+@keyframes session-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .session-dot {
+    animation: none;
+  }
+}
+.session-game {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  text-align: left;
+}
+.session-game strong {
+  font-weight: 650;
+}
+.session-clock {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--c-e4d6ff);
+}
+.session-running .session-clock {
+  margin-left: 4px;
+}
+/* Si la barra está, el aviso de guardado sube un poco */
+body:has(.session-bar) .toast {
+  bottom: 86px;
+}
+@media (max-width: 640px) {
+  .session-bar {
+    left: 12px;
+    right: 12px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    max-width: none;
+  }
+  body:has(.session-bar) .toast {
+    bottom: auto;
+  }
+  body:has(.session-bar) main {
+    padding-bottom: 150px;
+  }
+}
+.stop-session-game {
+  margin: 0 0 14px;
+  color: var(--c-c5c8d8);
+}
+.stop-session textarea {
+  width: 100%;
+}
+
+/* ¿A qué juego esta noche? */
+.tonight-question {
+  margin-bottom: 14px;
+}
+.tonight-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.tonight-card {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--c-ffffff05);
+}
+.tonight-cover {
+  align-self: start;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+}
+.tonight-cover img,
+.tonight-cover > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tonight-card h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+.tonight-reasons {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 10px;
+  padding-left: 18px;
+  color: var(--c-c5c8d8);
+  font-size: 13px;
+}
+.tonight-card .form-actions {
+  margin: 0;
+}
+.tonight-more {
+  margin-bottom: 6px;
+}
+
+/* Próximos lanzamientos */
+.releases {
+  margin-bottom: 22px;
+}
+.releases h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.release-list {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 2px 2px 8px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+}
+.release-list li {
+  flex: 0 0 min(260px, 78vw);
+  scroll-snap-align: start;
+}
+.release-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--c-ffffff05);
+  color: inherit;
+  text-align: left;
+}
+.release-item:hover {
+  background: var(--c-ffffff0a);
+}
+.release-item > :first-child {
+  width: 52px;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.release-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.release-item span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.release-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.release-item small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.release-item em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-c4b5fd);
+}
+.release-item em.released {
+  color: var(--c-85c3af);
+}
+.calendar-launch {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 5px;
+  border-radius: 99px;
+  background: var(--c-a58add22);
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--c-c4b5fd);
+}
+.calendar-day {
+  position: relative;
+}
+
+/* Orden de prioridad */
+.priority-list {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+.priority-list li {
+  display: grid;
+  grid-template-columns: 26px 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--c-ffffff05);
+}
+.priority-list li > :nth-child(2) {
+  width: 34px;
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.priority-list img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.priority-place {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-b49cfa);
+  text-align: center;
+}
+.priority-title {
+  display: grid;
+  min-width: 0;
+  font-size: 14px;
+}
+.priority-title small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.priority-actions {
+  display: flex;
+}
+.priority-save {
+  position: sticky;
+  bottom: -1px;
+  padding: 10px 0 2px;
+  background: var(--c-121620);
+}
+
+/* Nota para el final en la celebración */
+.celebration-later {
+  margin: 4px 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-a58add44);
+  border-radius: 12px;
+  background: var(--c-a58add0a);
+}
+.celebration-later .eyebrow {
+  margin: 0 0 6px;
+}
+.celebration-later .game-prose {
+  margin: 0;
+}
+/* En el tema claro, el verde de «Ya disponible» necesita más contraste */
+:root[data-theme="light"] .release-item em.released {
+  color: #2a5e4d;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .release-item em.released {
+    color: #2a5e4d;
+  }
+}
+.stop-session > p.muted {
+  margin: -8px 0 16px;
+}
+
 /* Capa entre la portada difuminada y el texto de la cabecera: con portadas
    muy claras (o muy oscuras en el tema claro) el texto sigue leyéndose. */
 :root {

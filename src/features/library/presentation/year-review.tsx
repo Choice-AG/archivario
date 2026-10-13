@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Library } from "../domain/model";
 import { annualSummary } from "../domain/insights";
 import { Stars } from "./rating-input";
+import { formatMinutes } from "../domain/session";
 export function YearReview({
   state,
   today,
@@ -78,6 +79,12 @@ export function YearReview({
           <strong>{summary.completed}</strong>
           <span>partidas completadas</span>
         </div>
+        {summary.minutes > 0 && (
+          <div>
+            <strong>{formatMinutes(summary.minutes)}</strong>
+            <span>jugados según tu diario</span>
+          </div>
+        )}
       </div>
       {summary.games === 0 ? (
         <p className="info-note">

@@ -10,6 +10,8 @@ const pages = [
   ["saga", "/sagas/guide-kingdom-hearts?demo=1"],
   ["ficha", "/juegos/hollow?demo=1"],
   ["catalogo", "/juegos/igdb-1219?demo=1"],
+  ["proximos", "/proximos?demo=1"],
+  ["esta noche", "/?accion=esta-noche&demo=1"],
 ] as const;
 
 for (const [name, path] of pages)

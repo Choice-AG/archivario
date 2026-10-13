@@ -4,6 +4,8 @@ import { PenLine, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Command, Library, Run } from "../domain/model";
 import { estimatedHours, formatHours } from "../domain/daily";
+import { formatMinutes, playedTime } from "../domain/session";
+import { Markdown } from "./markdown";
 import { Cover, Modal, type Execute } from "./shared";
 import { RatingInput } from "./rating-input";
 import { formatDate, plural } from "./format";
@@ -65,6 +67,7 @@ export function Celebration({
     state.activities.filter((a) => a.gameId === game.id).map((a) => a.date),
   ).size;
   const hours = estimatedHours(game, "main");
+  const logged = playedTime(state, game.id, run.id).minutes;
   const act = (command: Command) =>
     execute(command).catch((e: Error) => setError(e.message));
   const close = (then?: () => void) => {
@@ -110,6 +113,12 @@ export function Celebration({
               <dd>{plural(days, "día", "días")}</dd>
             </div>
           )}
+          {logged > 0 && (
+            <div>
+              <dt>Tiempo apuntado</dt>
+              <dd>{formatMinutes(logged)}</dd>
+            </div>
+          )}
           {hours !== undefined && (
             <div>
               <dt>Duración estimada</dt>
@@ -148,6 +157,12 @@ export function Celebration({
           />
         </div>
       </div>
+      {game.notesAfter?.trim() && (
+        <div className="celebration-later">
+          <p className="eyebrow">TE DEJASTE ESTO PARA EL FINAL</p>
+          <Markdown className="game-prose" text={game.notesAfter} />
+        </div>
+      )}
       {social && (
         <label className="celebration-note">
           Una frase para tus seguidores <small>Opcional, sin spoilers</small>

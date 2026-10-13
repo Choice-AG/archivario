@@ -59,6 +59,7 @@ export function CatalogGamePage({
         platforms: data.platforms,
         ...(data.cover ? { cover: data.cover } : {}),
         ...(data.critic ? { critic: data.critic } : {}),
+        ...(data.releaseDate ? { releaseDate: data.releaseDate } : {}),
       }
     : entry
       ? {

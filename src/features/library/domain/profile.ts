@@ -37,7 +37,21 @@ export function profileStats(state: Library) {
     runs.filter((r) => r.status === "jugando").map((r) => r.gameId),
   );
   const activities = state.activities.filter((a) => ids.has(a.gameId));
-  const minutes = runs.reduce((s, r) => s + (r.completionMinutes ?? 0), 0);
+  // Por partida, lo mayor entre su tiempo final y lo apuntado en el diario;
+  // los días sin partida se suman aparte.
+  const logged = new Map<string, number>();
+  let loose = 0;
+  for (const a of activities) {
+    if (!a.minutes) continue;
+    if (a.runId) logged.set(a.runId, (logged.get(a.runId) ?? 0) + a.minutes);
+    else loose += a.minutes;
+  }
+  const minutes =
+    loose +
+    runs.reduce(
+      (s, r) => s + Math.max(r.completionMinutes ?? 0, logged.get(r.id) ?? 0),
+      0,
+    );
   // Tu nota (1-10) frente a la de la crítica (0-100) en los mismos juegos.
   const both = state.games.filter(
     (g) => g.rating !== undefined && g.critic !== undefined,

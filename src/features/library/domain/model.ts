@@ -30,6 +30,12 @@ export type Game = {
   wishlist?: boolean;
   // No se comparte con los seguidores.
   hidden?: boolean;
+  // Fecha de lanzamiento según IGDB (AAAA-MM-DD).
+  releaseDate?: string;
+  // Notas privadas: lo que conviene saber antes de empezar y lo que se deja
+  // para cuando lo termines (puede tener spoilers).
+  notesBefore?: string;
+  notesAfter?: string;
   favorite: boolean;
   next: boolean;
   rating?: number;
@@ -60,7 +66,11 @@ export type Activity = {
   date: string;
   runId?: string;
   note: string;
+  // Tiempo jugado ese día, en minutos.
+  minutes?: number;
 };
+// Sesión en marcha: se apunta en el diario al pararla.
+export type SessionTimer = { gameId: string; runId: string; startedAt: string };
 export type Profile = {
   name: string;
   bio: string;
@@ -73,6 +83,9 @@ export type Profile = {
   onboardingDone?: boolean;
   // false: no celebrar al completar un juego.
   celebrate?: boolean;
+  // Orden en que quieres jugar tus pendientes (identificadores de juego).
+  priority?: string[];
+  timer?: SessionTimer;
 };
 export type GameList = {
   id: string;
@@ -123,7 +136,12 @@ export type Command =
   | {
       type: "save-day";
       date: string;
-      items: { gameId: string; runId: string; note: string }[];
+      items: {
+        gameId: string;
+        runId: string;
+        note: string;
+        minutes?: number;
+      }[];
     }
   | { type: "save-saga"; saga: Saga }
   | { type: "delete-saga"; id: string }
@@ -146,7 +164,19 @@ export type Command =
         cover?: string;
         genres?: string[];
         critic?: { score: number; count: number };
+        // "" si IGDB no tiene fecha.
+        releaseDate?: string;
       }[];
+    }
+  | { type: "save-priority"; gameIds: string[] }
+  | { type: "timer"; timer?: SessionTimer }
+  | {
+      type: "log-session";
+      gameId: string;
+      runId: string;
+      date: string;
+      minutes: number;
+      note?: string;
     }
   | { type: "save-run"; run: Run; primary: boolean }
   | { type: "save-activity"; activity: Activity; previousId?: string }
@@ -154,6 +184,8 @@ export type Command =
   | { type: "profile"; profile: Profile }
   | { type: "import"; data: Library; policy: "skip" | "replace" };
 export class DomainError extends Error {}
+// Lo máximo que se puede apuntar en un día.
+export const DAY_MINUTES = 1440;
 // Límites del agregado. El almacenamiento por bloques admite más, pero la
 // respuesta completa debe caber holgadamente en el límite de 4,5 MB de Vercel.
 export const LIMITS = {
@@ -269,7 +301,24 @@ export function assertLibrary(s: Library) {
         "La finalización no puede ser anterior al comienzo.",
       );
   }
+  const priority = s.profile.priority ?? [];
+  if (
+    !unique(priority) ||
+    priority.some((id) => !s.games.some((g) => g.id === id))
+  )
+    throw new DomainError("El orden de prioridad no es válido.");
+  const timer = s.profile.timer;
+  if (
+    timer &&
+    !s.runs.some((r) => r.id === timer.runId && r.gameId === timer.gameId)
+  )
+    throw new DomainError("La sesión en marcha no pertenece a tu biblioteca.");
   for (const a of s.activities) {
+    if (
+      a.minutes !== undefined &&
+      (!Number.isInteger(a.minutes) || a.minutes < 1 || a.minutes > DAY_MINUTES)
+    )
+      throw new DomainError("El tiempo de un día va de 1 minuto a 24 horas.");
     if (
       a.id !== activityId(a.gameId, a.date) ||
       !s.games.some((g) => g.id === a.gameId) ||
@@ -343,7 +392,13 @@ export function applyCommand(
           throw new DomainError("La partida no pertenece al juego.");
         const id = activityId(item.gameId, command.date);
         s.activities = s.activities.filter((a) => a.id !== id);
-        s.activities.push({ id, date: command.date, ...item });
+        const { minutes, ...rest } = item;
+        s.activities.push({
+          id,
+          date: command.date,
+          ...rest,
+          ...(minutes ? { minutes } : {}),
+        });
       }
       break;
     }
@@ -432,8 +487,11 @@ export function applyCommand(
         if (!game.cover && item.cover) game.cover = item.cover;
         if (!game.genres.length && item.genres?.length)
           game.genres = item.genres.slice(0, 12);
-        // La nota de la crítica siempre se actualiza con la última de IGDB.
+        // La nota de la crítica y la fecha de salida siempre se actualizan
+        // con lo último de IGDB.
         if (item.critic) game.critic = item.critic;
+        if (item.releaseDate) game.releaseDate = item.releaseDate;
+        else if (item.releaseDate === "") delete game.releaseDate;
         if (linked) touch(game.id);
       }
       break;
@@ -453,7 +511,58 @@ export function applyCommand(
       }));
       s.runs = s.runs.filter((r) => r.gameId !== command.id);
       s.activities = s.activities.filter((a) => a.gameId !== command.id);
+      if (s.profile.priority)
+        s.profile.priority = s.profile.priority.filter(
+          (id) => id !== command.id,
+        );
+      if (s.profile.timer?.gameId === command.id) delete s.profile.timer;
       break;
+    case "save-priority":
+      s.profile.priority = [...new Set(command.gameIds)];
+      break;
+    case "timer":
+      if (command.timer) {
+        const { gameId, runId } = command.timer;
+        touch(gameId);
+        const index = s.runs.findIndex(
+          (r) => r.id === runId && r.gameId === gameId,
+        );
+        if (index < 0)
+          throw new DomainError("La partida no pertenece al juego.");
+        // Empezar una sesión es ponerse a jugarlo.
+        if (["pendiente", "en pausa"].includes(s.runs[index].status))
+          s.runs[index] = changeRunStatus(s.runs[index], "jugando", "");
+        s.profile.timer = command.timer;
+      } else delete s.profile.timer;
+      break;
+    case "log-session": {
+      touch(command.gameId);
+      if (
+        !s.runs.some(
+          (r) => r.id === command.runId && r.gameId === command.gameId,
+        )
+      )
+        throw new DomainError("La partida no pertenece al juego.");
+      const id = activityId(command.gameId, command.date);
+      const old = s.activities.find((a) => a.id === id);
+      const minutes = (old?.minutes ?? 0) + command.minutes;
+      if (minutes > DAY_MINUTES)
+        throw new DomainError(
+          "Con esta sesión el día pasaría de 24 horas. Revisa el tiempo.",
+        );
+      const note = [old?.note, command.note?.trim()].filter(Boolean).join("\n");
+      s.activities = s.activities.filter((a) => a.id !== id);
+      s.activities.push({
+        id,
+        gameId: command.gameId,
+        runId: old?.runId ?? command.runId,
+        date: command.date,
+        note: note.slice(0, 1000),
+        minutes,
+      });
+      if (s.profile.timer?.gameId === command.gameId) delete s.profile.timer;
+      break;
+    }
     case "save-run": {
       touch(command.run.gameId);
       const old = s.runs.find((r) => r.id === command.run.id);
@@ -496,9 +605,19 @@ export function applyCommand(
       s.activities = s.activities.filter((a) => a.id !== command.id);
       break;
     }
-    case "profile":
-      s.profile = command.profile;
+    case "profile": {
+      // El orden de prioridad y la sesión en marcha tienen sus propios comandos.
+      const { priority, timer } = s.profile;
+      const next = { ...command.profile };
+      delete next.priority;
+      delete next.timer;
+      s.profile = {
+        ...next,
+        ...(priority ? { priority } : {}),
+        ...(timer ? { timer } : {}),
+      };
       break;
+    }
     case "import": {
       assertLibrary(command.data);
       if (command.policy === "replace") {

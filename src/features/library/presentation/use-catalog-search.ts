@@ -9,6 +9,7 @@ export type CatalogGame = {
   genres: string[];
   platforms: string[];
   critic?: { score: number; count: number };
+  releaseDate?: string;
 };
 const DEBOUNCE_MS = 200;
 const CACHE_MS = 5 * 60 * 1000;

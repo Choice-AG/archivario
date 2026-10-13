@@ -1,6 +1,8 @@
 import { estimatedHours, type TimeMode } from "./daily";
 import type { Game, Library } from "./model";
-export type GameSort = "recent" | "title" | "rating" | "critic" | "shortest";
+import { priorityRank } from "./planning";
+export type GameSort =
+  "recent" | "title" | "rating" | "critic" | "shortest" | "priority";
 export function sortGames(
   games: Game[],
   state: Library,
@@ -10,9 +12,11 @@ export function sortGames(
   const last = new Map<string, string>();
   for (const a of state.activities)
     if (a.date > (last.get(a.gameId) ?? "")) last.set(a.gameId, a.date);
+  const rank = priorityRank(state);
   return [...games].sort((a, b) => {
     const title = () => a.title.localeCompare(b.title, "es");
     if (sort === "title") return title();
+    if (sort === "priority") return rank(a) - rank(b) || title();
     if (sort === "rating")
       return (b.rating ?? -1) - (a.rating ?? -1) || title();
     if (sort === "critic")
@@ -74,6 +78,7 @@ export function annualSummary(state: Library, year: string) {
     last: sorted[sorted.length - 1],
     games: played.size,
     days: new Set(activities.map((a) => a.date)).size,
+    minutes: activities.reduce((sum, a) => sum + (a.minutes ?? 0), 0),
     completed: completed.length,
     months,
     average: rated.length

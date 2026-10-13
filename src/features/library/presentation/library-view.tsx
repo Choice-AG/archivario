@@ -8,6 +8,8 @@ import {
   Link2,
   List,
   ListChecks,
+  ListOrdered,
+  Moon,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
@@ -38,8 +40,15 @@ import {
   viewDefaults,
   type useLibraryFilters,
 } from "./library-filters";
-import type { Execute } from "./shared";
+import type { ApiRequest, Execute } from "./shared";
 import { statusLabel } from "./format";
+import dynamic from "next/dynamic";
+import type { ReleaseUpdate } from "./upcoming";
+
+// Solo se usa en Próximos: se descarga al abrir esa vista.
+const UpcomingReleases = dynamic(() =>
+  import("./upcoming").then((m) => m.UpcomingReleases),
+);
 
 // Tres filas de ocho portadas.
 const PAGE = 24;
@@ -66,6 +75,11 @@ export function LibraryView({
   onSagas,
   onAdd,
   onPlanning,
+  onTonight,
+  onPriority,
+  onStopSession,
+  onReleaseDates,
+  request,
   onYear,
   onEditActivity,
   onJournal,
@@ -85,6 +99,11 @@ export function LibraryView({
   onSagas: () => void;
   onAdd: () => void;
   onPlanning: () => void;
+  onTonight: () => void;
+  onPriority: () => void;
+  onStopSession: () => void;
+  onReleaseDates: (items: ReleaseUpdate[]) => void;
+  request: ApiRequest;
   onYear: () => void;
   onEditActivity: (a: Activity) => void;
   onJournal: () => void;
@@ -99,7 +118,8 @@ export function LibraryView({
   const [showFilters, setShowFilters] = useState(false);
   const activeFilters = countActiveFilters(f, view);
   const defaults = viewDefaults(view);
-  const clearAll = () => reset({ ownership: defaults.ownership });
+  const clearAll = () =>
+    reset({ ownership: defaults.ownership, sort: defaults.sort });
   const [selecting, setSelecting] = useState(false),
     [selectedIds, setSelectedIds] = useState<string[]>([]);
   const platforms = useMemo(
@@ -205,6 +225,14 @@ export function LibraryView({
         ))}
       </div>
       <div className="library-shortcuts">
+        <Button variant="ghost" size="sm" onClick={onTonight}>
+          <Moon size={15} /> ¿A qué juego esta noche?
+        </Button>
+        {view === "Próximos" && (
+          <Button variant="ghost" size="sm" onClick={onPriority}>
+            <ListOrdered size={15} /> Ordenar prioridad
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onSagas}>
           <Layers3 size={15} /> Mis sagas ({state.sagas?.length ?? 0})
         </Button>
@@ -225,6 +253,8 @@ export function LibraryView({
           state={state}
           playedToday={playedToday}
           busy={busy}
+          execute={execute}
+          onStopSession={onStopSession}
           onGame={onGame}
           onToday={markToday}
           onResume={(g) => {
@@ -236,6 +266,16 @@ export function LibraryView({
                 primary: true,
               });
           }}
+        />
+      )}
+      {view === "Próximos" && (
+        <UpcomingReleases
+          state={state}
+          today={today}
+          request={request}
+          demo={demo}
+          onUpdate={onReleaseDates}
+          onGame={onGame}
         />
       )}
       <div className="library-tools">
@@ -429,6 +469,9 @@ export function LibraryView({
           <option value="rating">Mi nota: mayor primero</option>
           <option value="critic">Crítica: mayor primero</option>
           <option value="shortest">Duración: más cortos primero</option>
+          {view === "Próximos" && (
+            <option value="priority">Mi orden de prioridad</option>
+          )}
         </select>
       </div>
       {selecting && (

@@ -245,13 +245,6 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole("button", { name: "¿A qué juego hoy?", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Elegir un juego al azar" }).click();
-  await expect(
-    page.getByRole("button", { name: "Abrir juego elegido" }),
-  ).toBeVisible();
   await page.getByRole("button", { name: "Cerrar", exact: true }).click();
   await page.getByRole("button", { name: "Abrir Hades", exact: true }).click();
   await page.getByRole("button", { name: "Editar juego", exact: true }).click();
@@ -1461,4 +1454,190 @@ test("en la demostración, Amigos explica que hace falta una cuenta", async ({
   await expect(
     page.getByRole("region", { name: "Perfil público", exact: true }),
   ).toContainText("Inicia sesión para tener un perfil público");
+});
+
+// Fecha de hoy en la zona de la demo, desplazada unos días.
+function madridDay(offset = 0) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(
+    new Date(Date.now() + offset * 86400000),
+  );
+}
+
+test("«¿A qué juego esta noche?» propone tres juegos y empieza una sesión", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page.getByRole("button", { name: "¿A qué juego esta noche?" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Un rato (1 h o menos)" }).click();
+  await dialog.getByRole("button", { name: "Seguir con algo" }).click();
+  const list = dialog.getByRole("list", { name: "Propuestas para esta noche" });
+  await expect(list.locator(".tonight-card")).toHaveCount(3);
+  // Hollow Knight se jugó hoy y se explica el porqué.
+  await expect(list.locator(".tonight-card").first()).toContainText(
+    "Hollow Knight",
+  );
+  await expect(list.locator(".tonight-card").first()).toContainText(
+    "Lo jugaste hoy",
+  );
+  await dialog.getByRole("button", { name: "Empezar algo nuevo" }).click();
+  await expect(list.locator(".tonight-card").first()).toContainText(
+    "Lo marcaste como próximo",
+  );
+  await dialog.getByRole("button", { name: "Seguir con algo" }).click();
+  await dialog
+    .getByRole("button", { name: "Jugar ahora a Hollow Knight" })
+    .click();
+  await expect(page).toHaveURL(/\/juegos\/hollow/);
+  const bar = page.getByRole("complementary", { name: "Sesión en marcha" });
+  await expect(bar).toContainText("Hollow Knight");
+  await expect(
+    page.getByRole("button", { name: /^Parar sesión/ }),
+  ).toBeVisible();
+  // Al parar se revisa el tiempo y se suma al día de hoy.
+  await bar.getByRole("button", { name: "Parar" }).click();
+  const stop = page.getByRole("dialog", { name: "Parar la sesión" });
+  await stop
+    .getByRole("button", { name: "Tiempo de la sesión: 1 h", exact: true })
+    .click();
+  await stop.getByLabel("Algo para recordar").fill("Un buen rato");
+  await stop.getByRole("button", { name: "Guardar en el diario" }).click();
+  await expect(page.getByText("Sesión apuntada en el diario.")).toBeVisible();
+  await expect(bar).toBeHidden();
+  await expect(page.locator(".played-time")).toContainText("Has jugado 1 h");
+  await expect
+    .poll(async () =>
+      (await demoData(page)).activities.find(
+        (a: { id: string }) => a.id === "hollow_" + madridDay(),
+      ),
+    )
+    .toMatchObject({
+      minutes: 60,
+      note: "Un nuevo rincón de Hallownest.\nUn buen rato",
+    });
+});
+
+test("el cronómetro se empieza desde la ficha y se puede descartar", async ({
+  page,
+}) => {
+  await page.goto("/juegos/celeste?demo=1");
+  await page.getByRole("button", { name: "Empezar sesión de Celeste" }).click();
+  await expect(
+    page.getByText("Sesión en marcha.", { exact: false }),
+  ).toBeVisible();
+  // Empezar a jugar un pendiente lo pone en «jugando».
+  await expect(
+    page.getByRole("button", {
+      name: /^Estado de la partida principal: Jugando/,
+    }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("complementary", { name: "Sesión en marcha" }),
+  ).toContainText("Celeste");
+  await page.getByRole("button", { name: /^Parar sesión/ }).click();
+  await page.getByRole("button", { name: "Descartar la sesión" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Sesión en marcha" }),
+  ).toBeHidden();
+  await expect
+    .poll(async () => (await demoData(page)).profile.timer)
+    .toBeUndefined();
+});
+
+test("el diario guarda cuánto jugaste cada día", async ({ page }) => {
+  // El acceso directo «Registrar hoy» de la app instalada abre el día.
+  await page.goto("/?accion=registrar&demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Tu día de juego" }),
+  ).toBeVisible();
+  await expect(page).not.toHaveURL(/accion/);
+  await page
+    .getByRole("button", { name: "Editar actividad de Hollow Knight" })
+    .click();
+  await page.getByLabel("Tiempo jugado (horas)").fill("2");
+  await page.getByLabel("Tiempo jugado (minutos)").fill("15");
+  await page.getByRole("button", { name: "Guardar actividad" }).click();
+  await expect(page.locator(".day-game").first()).toContainText("2 h 15 min");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".month-card")).toContainText("2 h 15 min");
+  await expect(page.locator(".recent-panel")).toContainText("2 h 15 min");
+  await page.goto("/calendario?demo=1");
+  await expect(page.locator(".calendar-summary")).toContainText(
+    "2 h 15 min jugados",
+  );
+});
+
+test("Próximos se ordena por prioridad y muestra los lanzamientos", async ({
+  page,
+}) => {
+  await page.goto("/proximos?demo=1");
+  await expect(page.getByLabel("Ordenar biblioteca")).toHaveValue("priority");
+  await page.getByRole("button", { name: "Ordenar prioridad" }).click();
+  const dialog = page.getByRole("dialog", { name: "Tu orden de prioridad" });
+  await expect(dialog.locator(".priority-list li").first()).toContainText(
+    "Celeste",
+  );
+  await dialog
+    .getByRole("button", { name: "Poner primero Disco Elysium" })
+    .click();
+  await dialog.getByRole("button", { name: "Guardar el orden" }).click();
+  await expect(page.getByText("Orden de prioridad guardado.")).toBeVisible();
+  await expect(page.locator(".game-grid > *").first()).toContainText(
+    "Disco Elysium",
+  );
+  // Un deseo vinculado con IGDB que sale dentro de diez días.
+  const release = madridDay(10);
+  await page.evaluate((date) => {
+    const data = JSON.parse(localStorage.getItem("archivario-demo-v1")!);
+    const game = data.games.find((g: { id: string }) => g.id === "celeste");
+    Object.assign(game, { wishlist: true, catalogId: 7350, releaseDate: date });
+    localStorage.setItem("archivario-demo-v1", JSON.stringify(data));
+  }, release);
+  await page.reload();
+  const releases = page.getByRole("region", { name: "Próximos lanzamientos" });
+  await expect(releases).toContainText("Celeste");
+  await expect(releases).toContainText("Faltan 10 días");
+  await page.goto("/calendario?demo=1");
+  if (release.slice(0, 7) !== madridDay().slice(0, 7))
+    await page.getByRole("button", { name: "Mes siguiente" }).click();
+  await expect(
+    page.getByRole("button", { name: /Sale Celeste/ }),
+  ).toBeVisible();
+});
+
+test("notas para antes de empezar y para cuando lo termines", async ({
+  page,
+}) => {
+  await page.goto("/juegos/disco?demo=1");
+  await page
+    .getByRole("button", { name: "Añadir una nota: Antes de empezar" })
+    .click();
+  await page
+    .getByLabel("Antes de empezar")
+    .fill("Jugar con subtítulos grandes");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(
+    page.locator(".game-summary").getByText("Jugar con subtítulos grandes"),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Añadir una nota: Para cuando lo termines" })
+    .click();
+  await page
+    .getByLabel("Para cuando lo termines")
+    .fill("Leer el análisis del final");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  // Mientras no lo termines, queda tras un desplegable.
+  await expect(page.getByText("Leer el análisis del final")).toBeHidden();
+  await page
+    .getByRole("button", { name: /^Estado de la partida principal/ })
+    .click();
+  await page.getByRole("menuitemradio", { name: "Completado" }).click();
+  const party = page.getByRole("dialog", {
+    name: "¡Has completado Disco Elysium!",
+  });
+  await expect(party).toContainText("Te dejaste esto para el final", {
+    ignoreCase: true,
+  });
+  await expect(party).toContainText("Leer el análisis del final");
 });

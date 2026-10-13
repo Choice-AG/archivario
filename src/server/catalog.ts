@@ -12,6 +12,7 @@ export type CatalogGame = {
   genres: string[];
   platforms: string[];
   critic?: { score: number; count: number };
+  releaseDate?: string;
 };
 // Nota media de la crítica profesional según IGDB (0-100), si existe.
 function critic(score?: number, count?: number) {
@@ -198,7 +199,7 @@ export async function searchCatalog(
   assertConfigured();
   return cached(
     uid,
-    hash("games-v4:" + q.toLowerCase() + ":" + page),
+    hash("games-v5:" + q.toLowerCase() + ":" + page),
     async () => {
       const rows = await igdb<{
         id: number;
@@ -208,9 +209,10 @@ export async function searchCatalog(
         platforms?: { name: string }[];
         aggregated_rating?: number;
         aggregated_rating_count?: number;
+        first_release_date?: number;
       }>(
         "games",
-        `search "${q.replace(/["\\]/g, " ")}"; fields name,cover.image_id,genres.name,platforms.name,aggregated_rating,aggregated_rating_count; where game_type != 5; limit 20; offset ${(page - 1) * 20};`,
+        `search "${q.replace(/["\\]/g, " ")}"; fields name,cover.image_id,genres.name,platforms.name,aggregated_rating,aggregated_rating_count,first_release_date; where game_type != 5; limit 20; offset ${(page - 1) * 20};`,
         "El catálogo no está disponible temporalmente.",
       );
       return rows.map((g) => ({
@@ -220,9 +222,37 @@ export async function searchCatalog(
         platforms: g.platforms?.map((x) => x.name) ?? [],
         ...cover(g.cover?.image_id),
         ...critic(g.aggregated_rating, g.aggregated_rating_count),
+        ...(g.first_release_date
+          ? { releaseDate: releaseDate(g.first_release_date) }
+          : {}),
       }));
     },
   );
+}
+
+// Fechas de salida de varios juegos a la vez ("" si IGDB no la tiene).
+export const RELEASES_MAX = 50;
+export async function catalogReleases(uid: string, ids: number[]) {
+  const unique = [...new Set(ids)].sort((a, b) => a - b);
+  if (!unique.length || unique.length > RELEASES_MAX)
+    throw new HttpError(400, "Indica entre 1 y 50 juegos.");
+  for (const id of unique) assertId(id);
+  assertConfigured();
+  return cached(uid, hash("releases-v1:" + unique.join(",")), async () => {
+    const rows = await igdb<{ id: number; first_release_date?: number }>(
+      "games",
+      `fields first_release_date; where id = (${unique.join(",")}); limit ${RELEASES_MAX};`,
+      "No se han podido consultar las fechas de salida.",
+    );
+    const found = new Map(
+      rows.map((r) => [r.id, releaseDate(r.first_release_date)]),
+    );
+    return {
+      items: unique
+        .filter((id) => found.has(id))
+        .map((id) => ({ catalogId: id, releaseDate: found.get(id)! })),
+    };
+  });
 }
 
 export async function catalogDetails(uid: string, id: number) {

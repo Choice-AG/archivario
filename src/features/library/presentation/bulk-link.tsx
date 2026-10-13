@@ -191,6 +191,7 @@ export function BulkLink({
                   catalogId: o.catalogId,
                   ...(o.cover ? { cover: o.cover } : {}),
                   ...(o.critic ? { critic: o.critic } : {}),
+                  ...(o.releaseDate ? { releaseDate: o.releaseDate } : {}),
                   genres: o.genres.slice(0, 12),
                 };
               }),

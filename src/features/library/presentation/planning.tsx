@@ -7,9 +7,8 @@ import {
   formatHours,
   listProgress,
   timeLabels,
-  type TimeMode,
 } from "../domain/daily";
-import { moveGame, playableGames } from "../domain/planning";
+import { moveGame } from "../domain/planning";
 import type { Execute } from "./shared";
 import { statusLabel } from "./format";
 export function Planning({
@@ -25,7 +24,7 @@ export function Planning({
   return (
     <div>
       <div className="segmented planning-tabs">
-        {["Mis listas", "¿A qué juego hoy?", "Comparar"].map((t) => (
+        {["Mis listas", "Comparar"].map((t) => (
           <button
             key={t}
             aria-pressed={tab === t}
@@ -38,10 +37,8 @@ export function Planning({
       </div>
       {tab === "Mis listas" ? (
         <Lists state={state} execute={execute} onGame={onGame} />
-      ) : tab === "Comparar" ? (
-        <Compare state={state} onGame={onGame} />
       ) : (
-        <Picker state={state} onGame={onGame} />
+        <Compare state={state} onGame={onGame} />
       )}
     </div>
   );
@@ -299,147 +296,6 @@ function Lists({
             </section>
           ))}
         </>
-      )}
-    </section>
-  );
-}
-function Picker({
-  state,
-  onGame,
-}: {
-  state: Library;
-  onGame: (id: string) => void;
-}) {
-  const [platform, setPlatform] = useState(""),
-    [genre, setGenre] = useState(""),
-    [duration, setDuration] = useState(""),
-    [mode, setMode] = useState<TimeMode>("main"),
-    [acclaimed, setAcclaimed] = useState(false),
-    [chosen, setChosen] = useState("");
-  const games = playableGames(
-      state,
-      platform,
-      genre,
-      duration ? Number(duration) : undefined,
-      mode,
-      acclaimed ? 75 : undefined,
-    ),
-    game = games.find((g) => g.id === chosen);
-  function choose() {
-    const alternatives = games.filter((g) => g.id !== chosen);
-    const pool = alternatives.length ? alternatives : games;
-    // Se ejecuta en un evento de clic, no durante el render.
-    // eslint-disable-next-line react-hooks/purity
-    setChosen(pool[Math.floor(Math.random() * pool.length)]?.id ?? "");
-  }
-  return (
-    <section>
-      <p className="info-note">
-        Elige entre tus pendientes disponibles. Los juegos de deseos quedan
-        fuera. La duración es la total aproximada del juego, no la de una
-        sesión.
-      </p>
-      <label>
-        Plataforma para jugar
-        <select
-          value={platform}
-          onChange={(e) => {
-            setPlatform(e.target.value);
-            setChosen("");
-          }}
-        >
-          <option value="">Cualquiera</option>
-          {[...new Set(state.games.flatMap((g) => g.platforms))]
-            .sort()
-            .map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-        </select>
-      </label>
-      <label>
-        Género para jugar
-        <select
-          value={genre}
-          onChange={(e) => {
-            setGenre(e.target.value);
-            setChosen("");
-          }}
-        >
-          <option value="">Cualquiera</option>
-          {[...new Set(state.games.flatMap((g) => g.genres))]
-            .sort()
-            .map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-        </select>
-      </label>
-      <label>
-        Tipo de duración para jugar
-        <select
-          value={mode}
-          onChange={(e) => {
-            setMode(e.target.value as TimeMode);
-            setChosen("");
-          }}
-        >
-          {Object.entries(timeLabels).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Duración máxima del juego
-        <select
-          value={duration}
-          onChange={(e) => {
-            setDuration(e.target.value);
-            setChosen("");
-          }}
-        >
-          <option value="">Cualquiera</option>
-          <option value="10">Hasta 10 horas</option>
-          <option value="30">Hasta 30 horas</option>
-          <option value="60">Hasta 60 horas</option>
-        </select>
-      </label>
-      <label className="checkbox-label">
-        <input
-          type="checkbox"
-          checked={acclaimed}
-          onChange={(e) => {
-            setAcclaimed(e.target.checked);
-            setChosen("");
-          }}
-        />{" "}
-        Solo los bien valorados por la crítica (75 o más)
-      </label>
-      <p role="status">{games.length} juegos compatibles</p>
-      {duration && (
-        <p className="muted text-xs">
-          Se excluyen los juegos sin duración registrada.
-        </p>
-      )}
-      <Button disabled={!games.length} onClick={choose}>
-        Elegir un juego al azar
-      </Button>
-      {game && (
-        <div className="personal-list" aria-live="polite">
-          <h3>{game.title}</h3>
-          <p>
-            {game.platforms.join(" · ")} ·{" "}
-            {formatHours(estimatedHours(game, mode))}
-          </p>
-          <Button variant="secondary" onClick={() => onGame(game.id)}>
-            Abrir juego elegido
-          </Button>
-        </div>
-      )}
-      {!games.length && (
-        <p className="info-note">
-          No hay pendientes que cumplan estos filtros. Prueba ampliarlos.
-        </p>
       )}
     </section>
   );

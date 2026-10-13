@@ -8,10 +8,7 @@ import {
   commandSchema,
 } from "../src/features/library/application/validation";
 import { demoLibrary } from "../src/features/library/infrastructure/demo";
-import {
-  moveGame,
-  playableGames,
-} from "../src/features/library/domain/planning";
+import { moveGame } from "../src/features/library/domain/planning";
 const now = "2026-09-30T12:00:00.000Z";
 it("supports old backups and round-trips new lists, wishes and run reviews", () => {
   const s = demoLibrary();
@@ -132,22 +129,4 @@ it("keeps replay ratings independent and validates rating increments", () => {
       primary: false,
     }),
   ).toThrow();
-});
-it("picker excludes wishlist and non-pending games and unknown durations under a duration limit", () => {
-  const s = demoLibrary();
-  s.runs = s.runs.map((r) => ({
-    ...r,
-    status: "pendiente",
-    completedOn: undefined,
-  }));
-  s.games[0].wishlist = true;
-  s.games[1].approximateHours = 5;
-  delete s.games[2].approximateHours;
-  expect(
-    playableGames(s, "", "", undefined).some((g) => g.id === s.games[0].id),
-  ).toBe(false);
-  const pool = playableGames(s, "", "", 10);
-  expect(pool.some((g) => g.id === s.games[1].id)).toBe(true);
-  expect(pool.some((g) => g.id === s.games[2].id)).toBe(false);
-  expect(playableGames(s, "No existe", "", undefined)).toEqual([]);
 });

@@ -51,6 +51,7 @@ vi.mock("@/server/lifecycle", () => ({
 }));
 import {
   catalogDetails,
+  catalogReleases,
   cleanupCache,
   searchCatalog,
 } from "../src/server/catalog";
@@ -137,4 +138,33 @@ it("renueva el token si IGDB responde 401 y valida la forma de la respuesta", as
     status: 502,
   });
   expect(games).toBe(2);
+});
+
+it("consulta varias fechas de salida en una sola petición y las guarda en caché", async () => {
+  fetchMock.mockImplementation(async (url: string) =>
+    url.includes("twitch")
+      ? tokenResponse()
+      : ok([{ id: 7, first_release_date: 1798761600 }, { id: 3 }]),
+  );
+  const result = await catalogReleases("u1", [7, 3, 7, 99]);
+  expect(result.items).toEqual([
+    { catalogId: 3, releaseDate: "" },
+    { catalogId: 7, releaseDate: "2027-01-01" },
+  ]);
+  const query = fetchMock.mock.calls.find(([u]) =>
+    String(u).includes("igdb"),
+  )![1].body as string;
+  expect(query).toContain("where id = (3,7,99)");
+  // El mismo conjunto, en otro orden, sale de la caché.
+  await catalogReleases("u1", [99, 3, 7]);
+  expect(
+    fetchMock.mock.calls.filter(([u]) => String(u).includes("igdb")),
+  ).toHaveLength(1);
+  await expect(catalogReleases("u1", [])).rejects.toThrow("entre 1 y 50");
+  await expect(
+    catalogReleases(
+      "u1",
+      Array.from({ length: 51 }, (_, i) => i + 1),
+    ),
+  ).rejects.toThrow("entre 1 y 50");
 });
