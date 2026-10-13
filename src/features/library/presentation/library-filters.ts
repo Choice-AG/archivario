@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import type { Game, Library, Run } from "../domain/model";
+import { sameTag, type Game, type Library, type Run } from "../domain/model";
 import { estimatedHours, matchesGame, type TimeMode } from "../domain/daily";
 import { sortGames, type GameSort } from "../domain/insights";
 
@@ -16,6 +16,9 @@ export type LibraryFilters = {
   ratingFilter: string;
   sort: GameSort;
   showCritic: boolean;
+  tag: string;
+  format: string;
+  recommendedBy: string;
 };
 export const defaultFilters: LibraryFilters = {
   status: "Todos",
@@ -29,6 +32,9 @@ export const defaultFilters: LibraryFilters = {
   ratingFilter: "all",
   sort: "recent",
   showCritic: true,
+  tag: "",
+  format: "",
+  recommendedBy: "",
 };
 
 export function viewDefaults(view: string): LibraryFilters {
@@ -48,6 +54,9 @@ export function countActiveFilters(f: LibraryFilters, view = "Biblioteca") {
       "ownership",
       "ratingFilter",
       "searchSpoilers",
+      "tag",
+      "format",
+      "recommendedBy",
     ] as const
   ).filter((key) => f[key] !== defaults[key]).length;
 }
@@ -103,6 +112,13 @@ export function useFilteredGames(
           (view !== "Próximos" || g.next || run.status === "pendiente") &&
           (f.ownership === "all" ||
             (f.ownership === "wishlist" ? g.wishlist : !g.wishlist)) &&
+          (!f.tag || !!g.tags?.some((t) => sameTag(t, f.tag))) &&
+          (!f.format ||
+            (f.format === "sin indicar"
+              ? !g.format && !g.wishlist
+              : g.format === f.format)) &&
+          (!f.recommendedBy ||
+            (!!g.recommendedBy && sameTag(g.recommendedBy, f.recommendedBy))) &&
           (f.ratingFilter === "all" ||
             (f.ratingFilter === "unrated"
               ? g.rating === undefined

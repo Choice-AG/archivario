@@ -582,6 +582,10 @@ function Dashboard({
                 demo={!user}
                 today={today}
                 onStopSession={stopSession}
+                onTag={(tag) => {
+                  filterState.reset({ tag });
+                  navigate("/");
+                }}
                 onBack={backToLibrary}
                 onActivity={() =>
                   setModal({ kind: "activity", id: gameId, date: today })

@@ -12,6 +12,7 @@ import {
   Moon,
   Search,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,8 @@ import {
   timeLabels,
   type TimeMode,
 } from "../domain/daily";
+import { formats, type Format } from "../domain/model";
+import { allTags, formatLabels, recommenders } from "../domain/organize";
 import type { GameSort } from "../domain/insights";
 import { BatchLibrary } from "./library-improvements";
 import { NowPlaying } from "./now-playing";
@@ -130,6 +133,8 @@ export function LibraryView({
     () => [...new Set(state.games.flatMap((g) => g.genres))].sort(),
     [state.games],
   );
+  const tags = useMemo(() => allTags(state), [state]);
+  const friends = useMemo(() => recommenders(state), [state]);
   const [layout, setLayout] = useState<Layout>(savedLayout);
   const chooseLayout = (next: Layout) => {
     setLayout(next);
@@ -395,6 +400,54 @@ export function LibraryView({
               <option value="unreviewed">Sin reseña</option>
             </select>
           </label>
+          {tags.length > 0 && (
+            <label>
+              Etiqueta
+              <select
+                aria-label="Filtrar por etiqueta"
+                value={f.tag}
+                onChange={(e) => set("tag", e.target.value)}
+              >
+                <option value="">Todas las etiquetas</option>
+                {tags.map((t) => (
+                  <option key={t.name} value={t.name}>
+                    {t.name} ({t.count})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label>
+            Cómo lo tienes
+            <select
+              aria-label="Filtrar por formato"
+              value={f.format}
+              onChange={(e) => set("format", e.target.value)}
+            >
+              <option value="">Cualquier formato</option>
+              {formats.map((x) => (
+                <option key={x} value={x}>
+                  {formatLabels[x]}
+                </option>
+              ))}
+              <option value="sin indicar">Sin indicar</option>
+            </select>
+          </label>
+          {friends.length > 0 && (
+            <label>
+              Recomendado por
+              <select
+                aria-label="Filtrar por quién lo recomendó"
+                value={f.recommendedBy}
+                onChange={(e) => set("recommendedBy", e.target.value)}
+              >
+                <option value="">Cualquiera</option>
+                {friends.map((name) => (
+                  <option key={name}>{name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="checkbox-label">
             <input
               type="checkbox"
@@ -474,6 +527,33 @@ export function LibraryView({
           )}
         </select>
       </div>
+      {(f.tag || f.recommendedBy || f.format) && (
+        <div className="active-filters" aria-label="Filtros activos">
+          {(
+            [
+              ["tag", "Etiqueta"],
+              ["recommendedBy", "Recomendado por"],
+              ["format", "Cómo lo tienes"],
+            ] as const
+          )
+            .filter(([key]) => f[key])
+            .map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => set(key, "")}
+                aria-label={"Quitar el filtro " + label + ": " + f[key]}
+              >
+                {label}:{" "}
+                <strong>
+                  {key === "format" && f.format !== "sin indicar"
+                    ? formatLabels[f.format as Format]
+                    : f[key]}
+                </strong>{" "}
+                <X size={13} aria-hidden="true" />
+              </button>
+            ))}
+        </div>
+      )}
       {selecting && (
         <>
           <div className="form-actions">

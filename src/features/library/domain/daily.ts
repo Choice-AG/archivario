@@ -53,6 +53,9 @@ export function matchesGame(
     game.title,
     game.review,
     game.notesBefore ?? "",
+    ...(game.tags ?? []),
+    game.recommendedBy ?? "",
+    game.edition ?? "",
     ...state.runs
       .filter((r) => r.gameId === game.id)
       .flatMap((r) => [r.review ?? "", r.whereLeft]),

@@ -9,6 +9,7 @@ import { Modal, type ApiRequest, type Execute } from "./shared";
 import { type Library, type Status } from "../domain/model";
 import { useSagaGuides } from "./saga-guides";
 import { useSagaSearch } from "./use-api";
+import { allTags } from "../domain/organize";
 export function GlobalSearch({
   state,
   request,
@@ -207,16 +208,24 @@ export function BatchLibrary({
 }) {
   const [status, setStatus] = useState<Status>("pendiente"),
     [list, setList] = useState(""),
+    [tag, setTag] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  async function save(kind: "status" | "list") {
+  async function save(kind: "status" | "list" | "tag" | "untag") {
     setBusy(true);
     setError("");
     try {
       await execute(
         kind === "status"
           ? { type: "batch-status", gameIds: ids, status, date: today }
-          : { type: "batch-list", gameIds: ids, listId: list },
+          : kind === "list"
+            ? { type: "batch-list", gameIds: ids, listId: list }
+            : {
+                type: "batch-tag",
+                gameIds: ids,
+                tag: tag.trim(),
+                ...(kind === "untag" ? { remove: true } : {}),
+              },
       );
       onDone();
     } catch (e) {
@@ -267,6 +276,35 @@ export function BatchLibrary({
           Crea una lista en «Listas y planes» para agrupar la selección.
         </p>
       )}
+      <label>
+        Etiqueta para la selección
+        <input
+          aria-label="Etiqueta para la selección"
+          list="batch-tags"
+          maxLength={40}
+          value={tag}
+          placeholder="En pareja, relajante…"
+          onChange={(e) => setTag(e.target.value)}
+        />
+        <datalist id="batch-tags">
+          {allTags(state).map((t) => (
+            <option key={t.name} value={t.name} />
+          ))}
+        </datalist>
+      </label>
+      <Button
+        disabled={busy || !ids.length || !tag.trim()}
+        onClick={() => save("tag")}
+      >
+        Añadir etiqueta
+      </Button>
+      <Button
+        variant="ghost"
+        disabled={busy || !ids.length || !tag.trim()}
+        onClick={() => save("untag")}
+      >
+        Quitar etiqueta
+      </Button>
       {error && <p role="alert">{error}</p>}
     </div>
   );

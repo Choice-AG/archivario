@@ -17,6 +17,7 @@ import { TimezoneField } from "./timezone-field";
 import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
 import { SocialSettings } from "@/features/social/presentation/social-pages";
+import { TagManager } from "./tag-manager";
 
 const avatarColorLabels: Record<AvatarColor, string> = {
   violeta: "Violeta",
@@ -30,6 +31,7 @@ const sections = [
   ["perfil", "Perfil"],
   ["social", "Perfil público"],
   ["apariencia", "Apariencia"],
+  ["etiquetas", "Etiquetas"],
   ["copia", "Copia de seguridad"],
   ["importar", "Importar juegos"],
   ["cuenta", "Cuenta"],
@@ -263,6 +265,16 @@ export function SettingsPanel({
           Celebrar cuando completo un juego
         </label>
         <SectionFeedback section="apariencia" feedback={feedback} />
+      </SettingsSection>
+
+      <SettingsSection id="etiquetas" title="Etiquetas">
+        <TagManager
+          state={state}
+          execute={execute}
+          pending={pending}
+          run={(task) => run("etiquetas", task)}
+        />
+        <SectionFeedback section="etiquetas" feedback={feedback} />
       </SettingsSection>
 
       <SettingsSection id="copia" title="Copia de seguridad">

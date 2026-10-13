@@ -9,6 +9,15 @@ export const statuses = [
 ] as const;
 export type Status = (typeof statuses)[number];
 export type Completion = "sin especificar" | "historia" | "100%";
+// Cómo tienes el juego, aparte de si lo estás jugando.
+export const formats = [
+  "físico",
+  "digital",
+  "suscripción",
+  "prestado",
+] as const;
+export type Format = (typeof formats)[number];
+export const TAGS_MAX = 12;
 export type TimeEstimate = { hours: number; source: "IGDB" | "manual" };
 export type GameTimes = {
   main?: TimeEstimate;
@@ -36,6 +45,11 @@ export type Game = {
   // para cuando lo termines (puede tener spoilers).
   notesBefore?: string;
   notesAfter?: string;
+  format?: Format;
+  edition?: string;
+  // Etiquetas propias («en pareja», «relajante») y quién te lo recomendó.
+  tags?: string[];
+  recommendedBy?: string;
   favorite: boolean;
   next: boolean;
   rating?: number;
@@ -169,6 +183,9 @@ export type Command =
       }[];
     }
   | { type: "save-priority"; gameIds: string[] }
+  | { type: "batch-tag"; gameIds: string[]; tag: string; remove?: boolean }
+  // Sin «to», la etiqueta se quita de todos los juegos.
+  | { type: "rename-tag"; from: string; to?: string }
   | { type: "timer"; timer?: SessionTimer }
   | {
       type: "log-session";
@@ -197,6 +214,14 @@ export const LIMITS = {
 const validRating = (rating: number | undefined) =>
   rating === undefined ||
   (rating >= 1 && rating <= 10 && (rating * 2) % 1 === 0);
+// Las etiquetas no distinguen mayúsculas ni tildes.
+export const tagKey = (tag: string) =>
+  tag
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLocaleLowerCase("es");
+export const sameTag = (a: string, b: string) => tagKey(a) === tagKey(b);
 export function emptyLibrary(): Library {
   return {
     revision: 0,
@@ -272,6 +297,8 @@ export function assertLibrary(s: Library) {
     )
       throw new DomainError("La lista contiene datos o juegos no válidos.");
   for (const g of s.games) {
+    if (g.tags && !unique(g.tags.map(tagKey)))
+      throw new DomainError("Un juego tiene etiquetas repetidas.");
     if (!s.runs.some((r) => r.id === g.primaryRunId && r.gameId === g.id))
       throw new DomainError(
         "Cada juego necesita una partida principal propia.",
@@ -520,6 +547,37 @@ export function applyCommand(
     case "save-priority":
       s.profile.priority = [...new Set(command.gameIds)];
       break;
+    case "batch-tag": {
+      const tag = command.tag.trim();
+      if (!tag) throw new DomainError("Escribe una etiqueta.");
+      for (const id of new Set(command.gameIds)) {
+        touch(id);
+        const g = s.games.find((g) => g.id === id)!;
+        const others = (g.tags ?? []).filter((t) => !sameTag(t, tag));
+        const tags = command.remove ? others : [...others, tag];
+        if (tags.length > TAGS_MAX)
+          throw new DomainError(
+            "«" + g.title + "» ya tiene " + TAGS_MAX + " etiquetas.",
+          );
+        if (tags.length) g.tags = tags;
+        else delete g.tags;
+      }
+      break;
+    }
+    case "rename-tag": {
+      const to = command.to?.trim();
+      for (const g of s.games) {
+        if (!g.tags?.some((t) => sameTag(t, command.from))) continue;
+        touch(g.id);
+        const rest = g.tags.filter(
+          (t) => !sameTag(t, command.from) && (!to || !sameTag(t, to)),
+        );
+        const tags = to ? [...rest, to] : rest;
+        if (tags.length) g.tags = tags;
+        else delete g.tags;
+      }
+      break;
+    }
     case "timer":
       if (command.timer) {
         const { gameId, runId } = command.timer;

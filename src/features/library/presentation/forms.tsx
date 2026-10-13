@@ -19,6 +19,9 @@ import { list, value } from "./form-utils";
 import { RatingInput } from "./rating-input";
 import { markdownHint } from "./markdown";
 import { DurationInput } from "./duration-input";
+import { TagInput } from "./tag-input";
+import { formats, type Format } from "../domain/model";
+import { allTags, formatLabels, recommenders } from "../domain/organize";
 
 function FormError({ message }: { message: string }) {
   return message ? (
@@ -54,7 +57,8 @@ export function GameDetails({
   const tab = initialSection;
   const [error, setError] = useState(""),
     [pending, setPending] = useState(false),
-    [confirmDelete, setConfirmDelete] = useState(false);
+    [confirmDelete, setConfirmDelete] = useState(false),
+    [tags, setTags] = useState(game.tags ?? []);
   return (
     <div>
       <FormError message={error} />
@@ -70,6 +74,15 @@ export function GameDetails({
             delete base.rating;
             delete base.approximateHours;
             delete base.hidden;
+            delete base.format;
+            delete base.edition;
+            delete base.tags;
+            delete base.recommendedBy;
+            // Lo que aún no tienes no tiene formato ni edición.
+            const owned = !f.has("wishlist");
+            const format = value(f, "format") as Format | "";
+            const edition = value(f, "edition"),
+              recommendedBy = value(f, "recommendedBy");
             try {
               await execute({
                 type: "save-game",
@@ -83,6 +96,10 @@ export function GameDetails({
                   favorite: f.has("favorite"),
                   next: f.has("next"),
                   ...(f.has("hidden") ? { hidden: true } : {}),
+                  ...(owned && format ? { format } : {}),
+                  ...(owned && edition ? { edition } : {}),
+                  ...(tags.length ? { tags } : {}),
+                  ...(recommendedBy ? { recommendedBy } : {}),
                   ...(value(f, "rating")
                     ? { rating: Number(f.get("rating")) }
                     : {}),
@@ -146,6 +163,48 @@ export function GameDetails({
               />
             </label>
           </div>
+          <div className="form-grid">
+            <label>
+              Cómo lo tienes <small>Opcional</small>
+              <select name="format" defaultValue={game.format ?? ""}>
+                <option value="">Sin indicar</option>
+                {formats.map((x) => (
+                  <option key={x} value={x}>
+                    {formatLabels[x]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Edición <small>Opcional</small>
+              <input
+                name="edition"
+                maxLength={80}
+                defaultValue={game.edition}
+                placeholder="Coleccionista, GOTY…"
+              />
+            </label>
+          </div>
+          <TagInput
+            value={tags}
+            onChange={setTags}
+            suggestions={allTags(state).map((t) => t.name)}
+          />
+          <label>
+            Me lo recomendó <small>Opcional</small>
+            <input
+              name="recommendedBy"
+              maxLength={80}
+              defaultValue={game.recommendedBy}
+              list="recommenders"
+              placeholder="Un nombre"
+            />
+            <datalist id="recommenders">
+              {recommenders(state).map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </label>
           <div className="check-row">
             <label>
               <input
