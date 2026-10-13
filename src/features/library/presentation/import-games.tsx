@@ -3,10 +3,12 @@ import { useState } from "react";
 import { FileSpreadsheet, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  candidatesFromCsv,
   candidatesFromSteam,
+  csvSourceLabels,
   importPlan,
   libraryFromCandidates,
+  readCsv,
+  type CsvSource,
   type ImportCandidate,
   type SteamGame,
 } from "../domain/import-sources";
@@ -30,6 +32,7 @@ export function ImportGames({
 }) {
   const [source, setSource] = useState<"csv" | "steam">(initialSource),
     [candidates, setCandidates] = useState<ImportCandidate[]>(),
+    [csvSource, setCsvSource] = useState<CsvSource>(),
     [steamGames, setSteamGames] = useState<SteamGame[]>(),
     [playedOnly, setPlayedOnly] = useState(false),
     [profile, setProfile] = useState(""),
@@ -45,6 +48,7 @@ export function ImportGames({
   const plan = chosen ? importPlan(state, chosen) : undefined;
   const reset = () => {
     setCandidates(undefined);
+    setCsvSource(undefined);
     setSteamGames(undefined);
     setError("");
     setNotice("");
@@ -84,9 +88,10 @@ export function ImportGames({
       {source === "csv" ? (
         <>
           <p className="muted text-xs mt-3">
-            La primera fila debe tener los nombres de las columnas. Solo el
-            título es obligatorio; también se reconocen plataforma, tienda,
-            estado, nota y horas.
+            Reconoce las exportaciones de HowLongToBeat y Grouvee, y cualquier
+            CSV con una columna de título, como el de Archivario o el de una
+            herramienta de Backloggd. También lee plataforma, tienda, estado,
+            nota, horas, etiquetas, reseña y fecha de fin.
           </p>
           <label className="upload-label mt-3">
             <FileSpreadsheet size={16} /> Elegir archivo CSV
@@ -103,7 +108,9 @@ export function ImportGames({
                   return;
                 }
                 try {
-                  setCandidates(candidatesFromCsv(await file.text()));
+                  const read = readCsv(await file.text());
+                  setCsvSource(read.source);
+                  setCandidates(read.candidates);
                 } catch (err) {
                   setError((err as Error).message);
                 }
@@ -177,6 +184,11 @@ export function ImportGames({
       )}
       {plan && (
         <div className="import-preview" role="status">
+          {source === "csv" && csvSource && csvSource !== "generic" && (
+            <p className="accent-text">
+              Formato reconocido: {csvSourceLabels[csvSource]}
+            </p>
+          )}
           <p>
             <strong>
               {plural(plan.fresh.length, "juego nuevo", "juegos nuevos")}

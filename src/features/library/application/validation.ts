@@ -3,6 +3,8 @@ import {
   activityId,
   assertLibrary,
   DAY_MINUTES,
+  formats,
+  TAGS_MAX,
   LIMITS,
   sagaStatuses,
   statuses,
@@ -42,6 +44,7 @@ export const criticSchema = z
     count: z.number().int().min(1).max(100000),
   })
   .strict();
+const tag = z.string().trim().min(1).max(40);
 export const gameSchema = z
   .object({
     times: timesSchema.optional(),
@@ -67,6 +70,10 @@ export const gameSchema = z
     releaseDate: localDate.optional(),
     notesBefore: text(2000).optional(),
     notesAfter: text(2000).optional(),
+    format: z.enum(formats).optional(),
+    edition: text(80).optional(),
+    tags: z.array(tag).max(TAGS_MAX).optional(),
+    recommendedBy: text(80).optional(),
     favorite: z.boolean(),
     next: z.boolean(),
     rating: z.number().min(1).max(10).multipleOf(0.5).optional(),
@@ -317,6 +324,17 @@ export const commandSchema = z.discriminatedUnion("type", [
     .strict(),
   z
     .object({ type: z.literal("timer"), timer: timerSchema.optional() })
+    .strict(),
+  z
+    .object({
+      type: z.literal("batch-tag"),
+      gameIds: z.array(id).min(1).max(LIMITS.games),
+      tag,
+      remove: z.boolean().optional(),
+    })
+    .strict(),
+  z
+    .object({ type: z.literal("rename-tag"), from: tag, to: tag.optional() })
     .strict(),
   z
     .object({

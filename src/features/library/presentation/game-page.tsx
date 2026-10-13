@@ -7,6 +7,7 @@ import {
   CalendarPlus,
   Check,
   Heart,
+  ImageIcon,
   Link2,
   Pencil,
   Plus,
@@ -26,6 +27,8 @@ import { Markdown } from "./markdown";
 import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
 import { formatMinutes, playedTime } from "../domain/session";
 import { SessionButton } from "./session-timer";
+import { CoverPicker } from "./cover-picker";
+import { formatLabels } from "../domain/organize";
 import { activityId, type Game, type Library } from "../domain/model";
 
 const tabIds = ["resumen", "partidas", "resena", "diario", "juego"] as const;
@@ -44,9 +47,12 @@ export function GamePage({
   onCritic,
   onGame,
   onStopSession,
+  onTag,
   celebrating = false,
 }: {
   onStopSession: () => void;
+  // Abre la biblioteca filtrada por esa etiqueta.
+  onTag: (tag: string) => void;
   celebrating?: boolean;
   onGame: (id: string) => void;
   game: Game;
@@ -136,6 +142,9 @@ export function GamePage({
     ...game.genres,
     ...game.platforms,
     ...game.stores,
+    ...(game.format && !game.wishlist ? [formatLabels[game.format]] : []),
+    ...(game.edition && !game.wishlist ? ["Edición " + game.edition] : []),
+    ...(game.recommendedBy ? ["Te lo recomendó " + game.recommendedBy] : []),
     ...(game.wishlist ? ["En tu lista de deseos"] : []),
     ...(game.next ? ["Entre tus próximos"] : []),
   ];
@@ -157,6 +166,16 @@ export function GamePage({
         )}
         <div className="game-hero-cover">
           <Cover game={game} />
+          {linked && !demo && (
+            <button
+              className="cover-change"
+              aria-label="Cambiar la portada"
+              title="Cambiar la portada"
+              onClick={() => setEditor("Portada")}
+            >
+              <ImageIcon size={15} />
+            </button>
+          )}
         </div>
         <div className="game-hero-info">
           <div className="game-title-row">
@@ -182,6 +201,20 @@ export function GamePage({
           <p className="game-hero-meta">
             {meta.join(" · ") || "Tu próxima aventura"}
           </p>
+          {!!game.tags?.length && (
+            <ul className="game-tags" aria-label="Etiquetas">
+              {game.tags.map((t) => (
+                <li key={t}>
+                  <button
+                    aria-label={"Ver juegos con la etiqueta " + t}
+                    onClick={() => onTag(t)}
+                  >
+                    {t}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="game-hero-score">
             <RatingInput
               label="Tu valoración"
@@ -709,7 +742,21 @@ export function GamePage({
             />
           ))}
       </div>
-      {editor && (
+      {editor === "Portada" && (
+        <Modal
+          title="Elegir portada"
+          description="Otras regiones y ediciones del juego, según IGDB."
+          onClose={() => setEditor(undefined)}
+        >
+          <CoverPicker
+            game={game}
+            request={request}
+            execute={execute}
+            onClose={() => setEditor(undefined)}
+          />
+        </Modal>
+      )}
+      {editor && editor !== "Portada" && (
         <Modal
           title={
             {

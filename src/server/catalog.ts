@@ -438,3 +438,66 @@ export async function sagaCatalog(uid: string, query: string, id?: number) {
     };
   });
 }
+
+const regions: Record<string, string> = {
+  EU: "Europa",
+  NA: "Norteamérica",
+  AU: "Australia",
+  NZ: "Nueva Zelanda",
+  "ja-JP": "Japón",
+  "ko-KR": "Corea",
+  "zh-CN": "China",
+  "zh-TW": "Taiwán",
+  WW: "Internacional",
+};
+
+// Portadas alternativas de un juego: la original, las de cada región y las
+// de sus ediciones (coleccionista, GOTY…). Sin mods ni contenidos extra.
+export async function catalogCovers(uid: string, id: number) {
+  assertId(id);
+  assertConfigured();
+  return cached(uid, "covers-v1-" + id, async () => {
+    const error = "No se han podido consultar las portadas.";
+    const [[game], localized, editions] = await Promise.all([
+      igdb<{ name: string; cover?: { image_id: string } }>(
+        "games",
+        `fields name,cover.image_id; where id = ${id}; limit 1;`,
+        error,
+      ),
+      igdb<{
+        name?: string;
+        cover?: { image_id: string };
+        region?: { name?: string; identifier?: string };
+      }>(
+        "game_localizations",
+        `fields name,cover.image_id,region.name,region.identifier; where game = ${id} & cover != null; limit 20;`,
+        error,
+      ),
+      igdb<{ name: string; cover?: { image_id: string } }>(
+        "games",
+        `fields name,cover.image_id; where version_parent = ${id} & cover != null; limit 20;`,
+        error,
+      ),
+    ]);
+    if (!game) throw new HttpError(404, "Juego no encontrado.");
+    const items: { url: string; label: string }[] = [];
+    const push = (imageId: string | undefined, label: string) => {
+      const url = image("t_cover_big", imageId);
+      if (url && !items.some((i) => i.url === url)) items.push({ url, label });
+    };
+    push(game.cover?.image_id, "Original");
+    for (const l of localized)
+      push(
+        l.cover?.image_id,
+        regions[l.region?.identifier ?? ""] ?? l.region?.name ?? "Otra región",
+      );
+    // «Zelda: BotW - Explorer's Edition» se queda en «Explorer's Edition».
+    for (const e of editions) {
+      const short = e.name.startsWith(game.name)
+        ? e.name.slice(game.name.length).replace(/^[\s:–—-]+/, "")
+        : e.name;
+      push(e.cover?.image_id, (short || e.name).slice(0, 80));
+    }
+    return { items };
+  });
+}

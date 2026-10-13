@@ -1641,3 +1641,115 @@ test("notas para antes de empezar y para cuando lo termines", async ({
   });
   await expect(party).toContainText("Leer el análisis del final");
 });
+
+test("la ficha guarda cómo lo tienes, etiquetas y quién te lo recomendó", async ({
+  page,
+}) => {
+  await page.goto("/juegos/hollow?demo=1");
+  await page.getByRole("button", { name: "Editar juego", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Cómo lo tienes").selectOption("físico");
+  await dialog.getByLabel("Edición").fill("Coleccionista");
+  await dialog.getByLabel("Nueva etiqueta").fill("Relax");
+  await dialog.getByLabel("Nueva etiqueta").press("Enter");
+  await dialog.getByLabel("Nueva etiqueta").fill("En pareja,");
+  await expect(
+    dialog.getByRole("button", { name: "Quitar la etiqueta En pareja" }),
+  ).toBeVisible();
+  await dialog.getByLabel("Me lo recomendó").fill("Ana");
+  await dialog.getByRole("button", { name: "Guardar ficha" }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".game-hero-meta")).toContainText(
+    "Físico · Edición Coleccionista · Te lo recomendó Ana",
+  );
+  // Una etiqueta lleva a la biblioteca filtrada por ella.
+  await page
+    .getByRole("button", { name: "Ver juegos con la etiqueta Relax" })
+    .click();
+  await expect(page).toHaveURL(/\/\?demo=1$/);
+  await expect(
+    page.getByRole("button", { name: "Quitar el filtro Etiqueta: Relax" }),
+  ).toBeVisible();
+  await expect(page.locator(".result-count")).toHaveText("1 juegos");
+  await page
+    .getByRole("button", { name: "Quitar el filtro Etiqueta: Relax" })
+    .click();
+  await expect(page.locator(".result-count")).not.toHaveText("1 juegos");
+  await openFilters(page);
+  await page.getByLabel("Filtrar por quién lo recomendó").selectOption("Ana");
+  await expect(page.locator(".result-count")).toHaveText("1 juegos");
+});
+
+test("etiquetar en lote y renombrar o quitar etiquetas en ajustes", async ({
+  page,
+}) => {
+  await openDemo(page);
+  await page
+    .getByRole("button", { name: "Seleccionar juegos", exact: true })
+    .click();
+  await page.getByLabel("Seleccionar Hades", { exact: true }).check();
+  await page.getByLabel("Seleccionar Celeste", { exact: true }).check();
+  await page.getByLabel("Etiqueta para la selección").fill("Roguelike");
+  await page.getByRole("button", { name: "Añadir etiqueta" }).click();
+  await expect
+    .poll(async () =>
+      (await demoData(page)).games
+        .filter((g: { tags?: string[] }) => g.tags?.includes("Roguelike"))
+        .map((g: { id: string }) => g.id)
+        .sort(),
+    )
+    .toEqual(["celeste", "hades"]);
+  await openSettings(page);
+  const section = page.locator("#ajustes-etiquetas");
+  await expect(section).toContainText("Roguelike");
+  await expect(section).toContainText("2 juegos");
+  await section
+    .getByRole("button", { name: "Renombrar la etiqueta Roguelike" })
+    .click();
+  await section.getByLabel("Nuevo nombre de Roguelike").fill("Rogue");
+  await section.getByRole("button", { name: "Guardar" }).click();
+  await expect(section.getByText("Etiqueta renombrada.")).toBeVisible();
+  await section
+    .getByRole("button", { name: "Quitar la etiqueta Rogue" })
+    .click();
+  await section.getByRole("button", { name: "Quitar de 2 juegos" }).click();
+  await expect(section).toContainText("Todavía no usas etiquetas");
+});
+
+test("importa una exportación de HowLongToBeat", async ({ page }) => {
+  await openDemo(page);
+  await openSettings(page);
+  await page
+    .locator('input[type="file"][accept=".csv,text/csv"]')
+    .setInputFiles({
+      name: "hltb.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(
+        '"Title","Platform","Playing","Backlog","Replay","Stalled","Blocked","","Completed","Retired","Completed","Progress","Storefront","Review"\n' +
+          '"Pentiment","PC","","","","","","","✓","","2026-02-01","18:00:00","Steam","85"\n' +
+          '"Tunic","PC","","✓","","","","","","","","","",""\n',
+      ),
+    });
+  const preview = page.locator(".import-preview");
+  await expect(preview).toContainText("Formato reconocido: HowLongToBeat");
+  await expect(preview).toContainText("2 juegos nuevos");
+  await preview.getByRole("button", { name: "Importar 2 juegos" }).click();
+  await expect(page.getByText(/2 juegos importados/)).toBeVisible();
+  await expect
+    .poll(async () => {
+      const data = await demoData(page);
+      const game = data.games.find(
+        (g: { title: string }) => g.title === "Pentiment",
+      );
+      const run = data.runs.find(
+        (r: { id: string }) => r.id === game?.primaryRunId,
+      );
+      return [
+        game?.rating,
+        run?.status,
+        run?.completedOn,
+        run?.completionMinutes,
+      ];
+    })
+    .toEqual([8.5, "completado", "2026-02-01", 1080]);
+});

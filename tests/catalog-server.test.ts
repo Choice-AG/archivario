@@ -50,6 +50,7 @@ vi.mock("@/server/lifecycle", () => ({
   deletionRef: (uid: string) => ({ key: "locks/" + uid }),
 }));
 import {
+  catalogCovers,
   catalogDetails,
   catalogReleases,
   cleanupCache,
@@ -167,4 +168,32 @@ it("consulta varias fechas de salida en una sola petición y las guarda en cach�
       Array.from({ length: 51 }, (_, i) => i + 1),
     ),
   ).rejects.toThrow("entre 1 y 50");
+});
+
+it("reúne la portada original, las regionales y las de otras ediciones", async () => {
+  fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+    if (url.includes("twitch")) return tokenResponse();
+    if (url.endsWith("game_localizations"))
+      return ok([
+        { cover: { image_id: "jp1" }, region: { identifier: "ja-JP" } },
+        { cover: { image_id: "orig" }, region: { identifier: "EU" } },
+        { cover: { image_id: "x1" }, region: { name: "Brazil" } },
+      ]);
+    return String(init?.body).includes("version_parent")
+      ? ok([
+          { name: "Zelda - Edición coleccionista", cover: { image_id: "ce1" } },
+        ])
+      : ok([{ name: "Zelda", cover: { image_id: "orig" } }]);
+  });
+  const { items } = await catalogCovers("u1", 7346);
+  expect(items.map((i) => i.label)).toEqual([
+    "Original",
+    "Japón",
+    "Brazil",
+    "Edición coleccionista",
+  ]);
+  expect(items[1].url).toBe(
+    "https://images.igdb.com/igdb/image/upload/t_cover_big/jp1.jpg",
+  );
+  await expect(catalogCovers("u1", 0)).rejects.toThrow();
 });
