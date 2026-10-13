@@ -7859,3 +7859,72 @@ body:has(.session-bar) .toast {
 .stop-session > p.muted {
   margin: -8px 0 16px;
 }
+
+/* Capa entre la portada difuminada y el texto de la cabecera: con portadas
+   muy claras (o muy oscuras en el tema claro) el texto sigue leyéndose. */
+:root {
+  --hero-scrim: linear-gradient(
+    100deg,
+    #0c0e16e6 0%,
+    #0c0e16bf 55%,
+    #0c0e1699 100%
+  );
+}
+:root[data-theme="light"] {
+  --hero-scrim: linear-gradient(
+    100deg,
+    #f7f6fbeb 0%,
+    #f7f6fbcc 55%,
+    #f7f6fba6 100%
+  );
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --hero-scrim: linear-gradient(
+      100deg,
+      #f7f6fbeb 0%,
+      #f7f6fbcc 55%,
+      #f7f6fba6 100%
+    );
+  }
+}
+.game-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hero-scrim);
+  pointer-events: none;
+}
+.game-hero-backdrop {
+  opacity: 0.55;
+}
+/* Estrellas vacías y textos secundarios con más contraste en la cabecera. */
+.game-hero .rating-star-empty path,
+.game-hero .rating-star-empty polygon {
+  stroke: var(--c-9096ad);
+}
+.game-hero .critic-score small,
+.game-hero-meta {
+  color: var(--c-c5c8d8);
+}
+@media (max-width: 640px) {
+  /* La portada ocupa tres filas: el espacio sobrante va a la tercera (vacía)
+     y el título queda pegado a su línea de géneros. */
+  .game-hero {
+    grid-template-rows: auto auto 1fr;
+    row-gap: 4px;
+  }
+  .game-hero-info > .game-hero-actions {
+    margin-top: 6px;
+  }
+}
+@media (max-width: 640px) {
+  .game-title-row {
+    align-items: center;
+  }
+  .game-title-row .ui-button {
+    width: 32px;
+    height: 32px;
+  }
+}
