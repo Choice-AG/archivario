@@ -1753,3 +1753,71 @@ test("importa una exportación de HowLongToBeat", async ({ page }) => {
     })
     .toEqual([8.5, "completado", "2026-02-01", 1080]);
 });
+
+// Apunta tiempo en los días de la demo para ver gráficos e imágenes.
+async function seedMinutes(page: Page) {
+  await page.goto("/juegos/celeste?demo=1");
+  await page.getByRole("button", { name: "Añadir a favoritos" }).click();
+  await page.evaluate(() => {
+    const data = JSON.parse(localStorage.getItem("archivario-demo-v1")!);
+    data.activities.forEach((a: { minutes?: number }, i: number) => {
+      a.minutes = 60 * (i + 1);
+    });
+    localStorage.setItem("archivario-demo-v1", JSON.stringify(data));
+  });
+}
+
+test("el resumen anual muestra tu tiempo jugado y se guarda como imagen", async ({
+  page,
+}) => {
+  await seedMinutes(page);
+  await page.goto("/?demo=1");
+  await page.getByRole("button", { name: "Mi resumen anual" }).click();
+  const dialog = page.getByRole("dialog", { name: "Tu año en juegos" });
+  await expect(
+    dialog.getByRole("heading", { name: "Tu tiempo jugado" }),
+  ).toBeVisible();
+  const year = madridDay().slice(0, 4);
+  const chart = dialog.getByRole("figure", {
+    name: "Tiempo jugado cada mes de " + year,
+  });
+  await expect(chart).toBeVisible();
+  await chart.getByText("Ver como tabla").click();
+  await expect(chart.getByRole("table")).toContainText("h");
+  await expect(
+    dialog.getByRole("figure", { name: "Tiempo jugado por plataforma" }),
+  ).toContainText("PC");
+  await dialog.getByRole("button", { name: "Tu año en una imagen" }).click();
+  await expect(dialog.getByAltText("Vista previa de la imagen")).toBeVisible({
+    timeout: 15000,
+  });
+  const download = dialog.getByRole("link", { name: "Descargar" });
+  await expect(download).toHaveAttribute(
+    "download",
+    "archivario-" + year + ".png",
+  );
+  // La imagen se ha dibujado de verdad (1080 × 1350).
+  const size = await dialog
+    .getByAltText("Vista previa de la imagen")
+    .evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight]);
+  expect(size).toEqual([1080, 1350]);
+});
+
+test("el mes se guarda como imagen y el perfil muestra el tiempo por meses", async ({
+  page,
+}) => {
+  await seedMinutes(page);
+  await page.goto("/?demo=1");
+  const month = page.locator(".month-card");
+  await expect(month).toContainText("jugados según tu diario");
+  await month.getByRole("button", { name: "Tu mes en una imagen" }).click();
+  await expect(month.getByAltText("Vista previa de la imagen")).toBeVisible({
+    timeout: 15000,
+  });
+  await openProfile(page);
+  await expect(
+    page.getByRole("figure", {
+      name: "Tiempo jugado en los últimos doce meses",
+    }),
+  ).toBeVisible();
+});

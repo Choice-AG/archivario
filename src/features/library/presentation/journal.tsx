@@ -12,6 +12,8 @@ import { Heatmap } from "./heatmap";
 import { Button } from "@/components/ui/button";
 import { monthlySummary, type Activity, type Library } from "../domain/model";
 import { formatMinutes, minutesIn } from "../domain/session";
+import { ShareRecap } from "./recap-share";
+import { recapData } from "./recap-data";
 import { releasesIn } from "../domain/releases";
 import { Cover } from "./shared";
 import { formatDate, monthLabel, plural } from "./format";
@@ -264,6 +266,13 @@ export function MonthCard({ state, today }: { state: Library; today: string }) {
       <p className="month-foot">
         <Sparkles size={15} /> Cada aventura cuenta, dure lo que dure.
       </p>
+      {summary.games > 0 && (
+        <ShareRecap
+          build={() => recapData(state, today.slice(0, 7))}
+          filename={"archivario-" + today.slice(0, 7) + ".png"}
+          label="Tu mes en una imagen"
+        />
+      )}
     </section>
   );
 }

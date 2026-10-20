@@ -6,8 +6,9 @@ import { gzipSync } from "node:zlib";
 import { join } from "node:path";
 
 const dist = process.env.NEXT_DIST_DIR ?? ".next";
-// Límite holgado sobre el tamaño actual; súbelo solo con motivo.
-const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 400);
+// Límite holgado sobre el tamaño actual (unos 305 KB desde que la validación
+// se carga aparte); súbelo solo con motivo.
+const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 340);
 const pages = ["index", "diario", "calendario", "favoritos", "proximos"];
 
 let failed = false;

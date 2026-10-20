@@ -13,7 +13,10 @@ import {
 import { Avatar, Cover, type Execute } from "./shared";
 import { Heatmap } from "./heatmap";
 import { Markdown } from "./markdown";
-import { formatDate, plural } from "./format";
+import { formatDate, monthLabel, plural } from "./format";
+import { BarList, ColumnChart } from "./charts";
+import { lastMonths, minutesBy } from "../domain/recap";
+import { compactTime } from "../domain/session";
 
 const decimal = (n: number) =>
   n.toLocaleString("es", { maximumFractionDigits: 1 });
@@ -43,6 +46,8 @@ export function ProfilePage({
   const showcase = showcaseGames(state);
   const reviews = latestReviews(state);
   const [year, setYear] = useState(today.slice(0, 4));
+  const timeline = useMemo(() => lastMonths(state, today), [state, today]);
+  const platformTime = useMemo(() => minutesBy(state, "", "platform"), [state]);
   const years = useMemo(
     () =>
       [
@@ -219,6 +224,42 @@ export function ProfilePage({
           onDay={onDay}
         />
       </section>
+
+      {timeline.some((m) => m.minutes) && (
+        <section className="panel profile-time">
+          <div className="section-header">
+            <h2>Tu tiempo jugado</h2>
+          </div>
+          <p className="muted text-xs">
+            Los últimos doce meses, según lo que apuntas en el diario.
+          </p>
+          <div className="profile-time-grid">
+            <ColumnChart
+              title="Tiempo jugado en los últimos doce meses"
+              format={compactTime}
+              data={timeline.map((m) => ({
+                key: m.month,
+                label: monthLabel(m.month).slice(0, 3),
+                full: monthLabel(m.month),
+                value: m.minutes,
+              }))}
+            />
+            {platformTime.length > 0 && (
+              <div>
+                <h3>Por plataforma</h3>
+                <BarList
+                  title="Tiempo jugado por plataforma"
+                  format={compactTime}
+                  items={platformTime.map((p) => ({
+                    name: p.name,
+                    value: p.minutes,
+                  }))}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <div className="profile-columns">
         <section className="panel">
