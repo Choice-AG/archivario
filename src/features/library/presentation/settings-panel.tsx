@@ -18,6 +18,7 @@ import { ThemePicker } from "./theme";
 import { ImportGames } from "./import-games";
 import { SocialSettings } from "@/features/social/presentation/social-pages";
 import { TagManager } from "./tag-manager";
+import { NoticeToggle } from "./notices";
 
 const avatarColorLabels: Record<AvatarColor, string> = {
   violeta: "Violeta",
@@ -264,6 +265,7 @@ export function SettingsPanel({
           />{" "}
           Celebrar cuando completo un juego
         </label>
+        <NoticeToggle />
         <SectionFeedback section="apariencia" feedback={feedback} />
       </SettingsSection>
 

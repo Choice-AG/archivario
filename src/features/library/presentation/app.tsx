@@ -1,17 +1,16 @@
 "use client";
 import { Fragment, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   BookOpen,
   CalendarDays,
-  CalendarRange,
   Check,
   Gamepad2,
   Heart,
   Layers3,
+  ListChecks,
   LogOut,
   NotebookPen,
   Plus,
@@ -25,16 +24,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { configured, clientAuth } from "@/features/account/firebase-client";
 import { useLibrary } from "./use-library";
-import { dateInZone, type Activity } from "../domain/model";
+import { dateInZone } from "../domain/model";
 import { GlobalSearch } from "./library-improvements";
 import { Login } from "./login";
 import { VerifyEmailBanner } from "./verify-email";
-import { ShortcutList, useShortcuts } from "./shortcuts";
+import { useShortcuts } from "./shortcuts";
+import { AppModals, load, shortcutModal, type ModalState } from "./modals";
+import { DayNotices } from "./notices";
 import { clearOfflineData } from "./offline-store";
 import { CalendarView, Recent } from "./journal";
 import { LibraryView } from "./library-view";
 import { useLibraryFilters, viewDefaults } from "./library-filters";
-import { Avatar, Modal, type Execute } from "./shared";
+import { Avatar, type Execute } from "./shared";
 import { plural } from "./format";
 import {
   publicRequest,
@@ -53,40 +54,16 @@ import {
   viewPaths,
 } from "./routes";
 
-// Lo que solo se usa al abrir una vista o un modal se descarga bajo demanda,
-// para que la primera carga sea más ligera.
-function load<P>(loader: () => Promise<React.ComponentType<P>>) {
-  return dynamic<P>(loader, {
-    loading: () => <p className="loading-inline">Cargando…</p>,
-  });
-}
+// Cada vista se descarga al abrirla, para que la primera carga sea ligera.
 const CatalogGamePage = load(() =>
   import("./catalog-game-page").then((m) => m.CatalogGamePage),
 );
-const DayActivity = load(() =>
-  import("./day-activity").then((m) => m.DayActivity),
-);
 const Sagas = load(() => import("./sagas").then((m) => m.Sagas));
 const GamePage = load(() => import("./game-page").then((m) => m.GamePage));
-const BulkActivity = load(() =>
-  import("./bulk-activity").then((m) => m.BulkActivity),
-);
 const Planning = load(() => import("./planning").then((m) => m.Planning));
 const YearReview = load(() =>
   import("./year-review").then((m) => m.YearReview),
 );
-const BulkLink = load(() => import("./bulk-link").then((m) => m.BulkLink));
-const Tonight = load(() => import("./tonight").then((m) => m.Tonight));
-const PriorityEditor = load(() =>
-  import("./priority-editor").then((m) => m.PriorityEditor),
-);
-const StopSession = load(() =>
-  import("./stop-session").then((m) => m.StopSession),
-);
-const ImportGames = load(() =>
-  import("./import-games").then((m) => m.ImportGames),
-);
-const AddGame = load(() => import("./add-game").then((m) => m.AddGame));
 const ProfilePage = load(() =>
   import("./profile-page").then((m) => m.ProfilePage),
 );
@@ -144,53 +121,62 @@ export function ArchivarioApp() {
   );
 }
 
-type ModalState = {
-  kind:
-    | "add"
-    | "activity"
-    | "year"
-    | "planning"
-    | "bulk"
-    | "link"
-    | "import"
-    | "shortcuts"
-    | "tonight"
-    | "priority"
-    | "stop";
-  source?: "steam" | "csv";
-  // Momento en que se paró la sesión.
-  at?: number;
-  id?: string;
-  activity?: Activity;
-  date?: string;
-} | null;
-
 const nav = [
   { name: "Biblioteca", icon: BookOpen },
   { name: "Sagas", icon: Layers3 },
   { name: "Diario", icon: NotebookPen },
-  { name: "Calendario", icon: CalendarDays },
+  { name: "Listas", icon: ListChecks },
   { name: "Favoritos", icon: Heart },
   { name: "Próximos", icon: Sparkles },
   { name: "Amigos", icon: Users },
 ];
-// En móvil, Favoritos y Próximos están como vistas dentro de la biblioteca;
-// el perfil se abre desde el avatar de arriba. En medio va el botón de añadir.
+// En móvil, Favoritos y Próximos son vistas dentro de la biblioteca, las
+// listas se abren desde ella y el perfil, desde el avatar de arriba. El
+// calendario es una vista del diario. En medio va el botón de añadir.
 const mobileNav = nav.filter((n) =>
-  ["Biblioteca", "Sagas", "Diario", "Calendario"].includes(n.name),
+  ["Biblioteca", "Sagas", "Diario", "Amigos"].includes(n.name),
 );
-// Accesos directos de la app instalada: /?accion=registrar, etc.
-function shortcutModal(): ModalState {
-  if (typeof window === "undefined") return null;
-  const action = new URLSearchParams(window.location.search).get("accion");
-  return action === "registrar"
-    ? { kind: "activity" }
-    : action === "anadir"
-      ? { kind: "add" }
-      : action === "esta-noche"
-        ? { kind: "tonight" }
-        : null;
-}
+// Título de cada vista. En móvil solo se muestra el título, en pequeño.
+const headings: Record<
+  string,
+  { eyebrow: string; title: string; text: string }
+> = {
+  Biblioteca: {
+    eyebrow: "CADA JUEGO, UNA HISTORIA",
+    title: "Tu próxima aventura empieza aquí.",
+    text: "Un lugar para volver a tus mundos favoritos.",
+  },
+  Favoritos: {
+    eyebrow: "TUS JUEGOS, A TU RITMO",
+    title: "Los que se quedan contigo.",
+    text: "Los juegos que marcaste con el corazón.",
+  },
+  Próximos: {
+    eyebrow: "TUS JUEGOS, A TU RITMO",
+    title: "Un pequeño horizonte.",
+    text: "Todos tus juegos pendientes y tus próximos favoritos. Sin fechas límite.",
+  },
+  Diario: {
+    eyebrow: "TUS JUEGOS, A TU RITMO",
+    title: "Lo que has estado jugando.",
+    text: "Cada día que jugaste, con lo que quisiste recordar.",
+  },
+  Calendario: {
+    eyebrow: "UN DÍA, UN NUEVO RECUERDO",
+    title: "Tu calendario de aventuras.",
+    text: "Mira de un vistazo qué jugaste cada día del mes.",
+  },
+  Listas: {
+    eyebrow: "A TU MANERA",
+    title: "Tus listas y próximos planes.",
+    text: "Agrupa tus juegos, ordénalos y compara cuál empezar.",
+  },
+  Resumen: {
+    eyebrow: "UN VISTAZO ATRÁS",
+    title: "Tu año en juegos.",
+    text: "Los mundos que has visitado, mes a mes.",
+  },
+};
 
 function Dashboard({
   user,
@@ -229,7 +215,12 @@ function Dashboard({
   const suffix = user ? "" : "?demo=1";
   const mobileActive = (name: string) =>
     view === name ||
-    (name === "Biblioteca" && ["Favoritos", "Próximos"].includes(view));
+    (name === "Biblioteca" &&
+      ["Favoritos", "Próximos", "Listas", "Resumen"].includes(view)) ||
+    (name === "Diario" && view === "Calendario");
+
+  const sideActive = (name: string) =>
+    view === name || (name === "Diario" && view === "Calendario");
 
   const navigate = (path: string) => {
     setModal(null);
@@ -325,6 +316,13 @@ function Dashboard({
     },
   });
   if (!ready) return <div className="loading">Abriendo tu biblioteca…</div>;
+  const journalView = view === "Diario" || view === "Calendario";
+  const headingKind = journalView
+    ? "diario"
+    : view === "Listas" || view === "Resumen"
+      ? "pagina"
+      : "biblioteca";
+  const heading = headings[view] ?? headings.Biblioteca;
   const stopSession = () => setModal({ kind: "stop", at: Date.now() });
   const ownedGame = gameId
     ? state.games.find((g) => g.id === gameId)
@@ -348,8 +346,8 @@ function Dashboard({
           {nav.map((n) => (
             <button
               key={n.name}
-              className={view === n.name ? "active" : ""}
-              aria-current={view === n.name ? "page" : undefined}
+              className={sideActive(n.name) ? "active" : ""}
+              aria-current={sideActive(n.name) ? "page" : undefined}
               onClick={() => goTo(n.name)}
             >
               <n.icon size={19} />
@@ -397,15 +395,8 @@ function Dashboard({
       </aside>
       <div className="main-shell">
         <header className="topbar">
-          <span className="breadcrumbs">
-            Mi espacio <span>/</span> <strong>{view}</strong>
-            {settings && (
-              <>
-                {" "}
-                <span>/</span> <strong>Ajustes</strong>
-              </>
-            )}
-          </span>
+          {/* En móvil, este hueco muestra la marca. */}
+          <span className="breadcrumbs" aria-hidden="true" />
           <div className="top-actions">
             <GlobalSearch
               state={state}
@@ -414,9 +405,6 @@ function Dashboard({
               onGame={openGame}
               onSaga={openSaga}
             />
-            <span className="private-label">
-              <ShieldCheck size={14} /> Privado
-            </span>
             <button
               className="mobile-settings mobile-profile"
               aria-label="Perfil"
@@ -468,6 +456,12 @@ function Dashboard({
               Los cambios se guardan solo en este navegador.
             </div>
           )}
+          <DayNotices
+            state={state}
+            today={today}
+            onGame={openGame}
+            onStop={stopSession}
+          />
           {error && (
             <div className="error-banner" role="alert">
               {error}
@@ -515,7 +509,7 @@ function Dashboard({
               today={today}
               onGame={openGame}
               onDay={(date) => setModal({ kind: "activity", date })}
-              onYear={() => setModal({ kind: "year" })}
+              onYear={() => goTo("Resumen")}
               onLibrary={backToLibrary}
               onSettings={() => navigate(settingsPath)}
               onFriends={() => goTo("Amigos")}
@@ -607,41 +601,23 @@ function Dashboard({
             )
           ) : (
             <>
-              <section className="page-heading">
+              <section className={"page-heading heading-" + headingKind}>
                 <div>
-                  <p className="eyebrow">
-                    {view === "Biblioteca"
-                      ? "CADA JUEGO, UNA HISTORIA"
-                      : view === "Calendario"
-                        ? "UN DÍA, UN NUEVO RECUERDO"
-                        : "TUS JUEGOS, A TU RITMO"}
-                  </p>
-                  <h1>
-                    {view === "Biblioteca"
-                      ? "Tu próxima aventura empieza aquí."
-                      : view === "Diario"
-                        ? "Lo que has estado jugando."
-                        : view === "Calendario"
-                          ? "Tu calendario de aventuras."
-                          : view === "Favoritos"
-                            ? "Los que se quedan contigo."
-                            : "Un pequeño horizonte."}
-                  </h1>
-                  <p>
-                    {view === "Próximos"
-                      ? "Todos tus juegos pendientes y tus próximos favoritos. Sin fechas límite."
-                      : view === "Diario"
-                        ? "Cada día que jugaste, con lo que quisiste recordar."
-                        : view === "Calendario"
-                          ? "Mira de un vistazo qué jugaste cada día del mes."
-                          : view === "Favoritos"
-                            ? "Los juegos que marcaste con el corazón."
-                            : "Un lugar para volver a tus mundos favoritos."}
-                  </p>
+                  <p className="eyebrow">{heading.eyebrow}</p>
+                  <h1>{heading.title}</h1>
+                  <p>{heading.text}</p>
                 </div>
-                <Button onClick={() => setModal({ kind: "add" })}>
-                  <Plus size={18} /> Añadir juego
-                </Button>
+                {journalView ? (
+                  <Button
+                    onClick={() => setModal({ kind: "activity", date: today })}
+                  >
+                    <Plus size={18} /> Registrar un día
+                  </Button>
+                ) : headingKind === "biblioteca" ? (
+                  <Button onClick={() => setModal({ kind: "add" })}>
+                    <Plus size={18} /> Añadir juego
+                  </Button>
+                ) : null}
               </section>
               {view === "Biblioteca" && showOnboarding(state) && (
                 <Onboarding
@@ -664,7 +640,7 @@ function Dashboard({
                   onGame={openGame}
                   onSagas={() => openSaga()}
                   onAdd={() => setModal({ kind: "add" })}
-                  onPlanning={() => setModal({ kind: "planning" })}
+                  onPlanning={() => goTo("Listas")}
                   onTonight={() => setModal({ kind: "tonight" })}
                   onPriority={() => setModal({ kind: "priority" })}
                   onStopSession={stopSession}
@@ -677,7 +653,7 @@ function Dashboard({
                       )
                       .catch(() => {})
                   }
-                  onYear={() => setModal({ kind: "year" })}
+                  onYear={() => goTo("Resumen")}
                   onEditActivity={(a) =>
                     setModal({ kind: "activity", activity: a })
                   }
@@ -687,50 +663,75 @@ function Dashboard({
                   onImport={(source) => setModal({ kind: "import", source })}
                   demo={!user}
                 />
-              ) : view === "Diario" ? (
-                <section className="panel">
-                  <div className="section-header">
-                    <h2>Tu diario</h2>
-                    <div className="section-actions">
-                      <Button
-                        variant="ghost"
-                        onClick={() => goTo("Calendario")}
-                      >
-                        <CalendarRange size={16} /> Ver calendario
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setModal({ kind: "bulk" })}
-                      >
-                        Registrar varios días
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() =>
-                          setModal({ kind: "activity", date: today })
-                        }
-                      >
-                        <Plus size={16} /> Registrar un día
-                      </Button>
-                    </div>
-                  </div>
-                  <Recent
+              ) : view === "Listas" ? (
+                <section className="panel page-panel">
+                  <Planning
                     state={state}
-                    onEdit={(a) => setModal({ kind: "activity", activity: a })}
-                    full
-                    initialGameId={journalGame}
+                    execute={safeExecute}
+                    onGame={openGame}
+                    handle={
+                      social.data?.enabled ? social.data.handle : undefined
+                    }
                   />
                 </section>
+              ) : view === "Resumen" ? (
+                <section className="panel page-panel">
+                  <YearReview state={state} today={today} onGame={openGame} />
+                </section>
               ) : (
-                <CalendarView
-                  state={state}
-                  today={today}
-                  month={month}
-                  onMonth={setMonth}
-                  onDay={(date) => setModal({ kind: "activity", date })}
-                  onBulk={() => setModal({ kind: "bulk" })}
-                  onJournal={() => goTo("Diario")}
-                />
+                <>
+                  <div className="journal-bar">
+                    <div
+                      className="library-views journal-views"
+                      role="group"
+                      aria-label="Cómo ver el diario"
+                    >
+                      {(
+                        [
+                          ["Diario", "Lista", NotebookPen],
+                          ["Calendario", "Calendario", CalendarDays],
+                        ] as const
+                      ).map(([name, label, Icon]) => (
+                        <button
+                          key={name}
+                          aria-pressed={view === name}
+                          className={view === name ? "selected" : ""}
+                          onClick={() => goTo(name)}
+                        >
+                          <Icon size={15} aria-hidden="true" /> {label}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setModal({ kind: "bulk" })}
+                    >
+                      Registrar varios días
+                    </Button>
+                  </div>
+                  {view === "Diario" ? (
+                    <section className="panel">
+                      <h2 className="sr-only">Tu diario</h2>
+                      <Recent
+                        state={state}
+                        today={today}
+                        onEdit={(a) =>
+                          setModal({ kind: "activity", activity: a })
+                        }
+                        full
+                        initialGameId={journalGame}
+                      />
+                    </section>
+                  ) : (
+                    <CalendarView
+                      state={state}
+                      today={today}
+                      month={month}
+                      onMonth={setMonth}
+                      onDay={(date) => setModal({ kind: "activity", date })}
+                    />
+                  )}
+                </>
               )}
             </>
           )}
@@ -797,6 +798,9 @@ function Dashboard({
             >
               <n.icon size={20} />
               {n.name}
+              {n.name === "Amigos" && !!social.data?.unread && (
+                <span className="bottom-unread" aria-hidden="true" />
+              )}
             </button>
           </Fragment>
         ))}
@@ -844,148 +848,17 @@ function Dashboard({
           }}
         />
       )}
-      {modal?.kind === "add" && (
-        <Modal
-          title="Tu próxima aventura"
-          description="Busca un juego o añade uno a tu manera."
+      {modal && (
+        <AppModals
+          modal={modal}
+          state={state}
+          today={today}
+          demo={!user}
+          execute={safeExecute}
+          request={api.request}
           onClose={() => setModal(null)}
-        >
-          <AddGame
-            demo={!user}
-            state={state}
-            execute={safeExecute}
-            request={api.request}
-            onClose={() => setModal(null)}
-            onOpen={openGame}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "activity" && (
-        <Modal
-          title="Tu día de juego"
-          description="Todos los juegos de este día, sus partidas y lo que quieras recordar."
-          onClose={() => setModal(null)}
-        >
-          <DayActivity
-            state={state}
-            initial={modal.activity}
-            gameId={modal.id}
-            date={modal.date ?? today}
-            execute={safeExecute}
-            onGame={openGame}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "bulk" && (
-        <Modal
-          title="Registrar varios días"
-          description="Selecciona los días en que jugaste."
-          onClose={() => setModal(null)}
-        >
-          <BulkActivity
-            state={state}
-            today={today}
-            execute={safeExecute}
-            onClose={() => setModal(null)}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "planning" && (
-        <Modal
-          title="Tus listas y próximos planes"
-          description="Organiza tus juegos y encuentra tu próxima aventura."
-          onClose={() => setModal(null)}
-        >
-          <Planning state={state} execute={safeExecute} onGame={openGame} />
-        </Modal>
-      )}
-      {modal?.kind === "tonight" && (
-        <Modal
-          title="¿A qué juego esta noche?"
-          description="Dime cuánto tiempo tienes y lo que te apetece, y te propongo tres juegos."
-          onClose={() => setModal(null)}
-        >
-          <Tonight
-            state={state}
-            today={today}
-            execute={safeExecute}
-            onGame={openGame}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "priority" && (
-        <Modal
-          title="Tu orden de prioridad"
-          description="Ordena tus pendientes y próximos como quieras jugarlos."
-          onClose={() => setModal(null)}
-        >
-          <PriorityEditor
-            state={state}
-            execute={safeExecute}
-            onClose={() => setModal(null)}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "stop" && (
-        <Modal
-          title="Parar la sesión"
-          description="Revisa el tiempo y apúntalo en tu diario."
-          onClose={() => setModal(null)}
-        >
-          <StopSession
-            state={state}
-            stoppedAt={modal.at ?? 0}
-            execute={safeExecute}
-            onClose={() => setModal(null)}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "shortcuts" && (
-        <Modal
-          title="Atajos de teclado"
-          description="Funcionan cuando no estás escribiendo en un campo."
-          onClose={() => setModal(null)}
-        >
-          <ShortcutList />
-        </Modal>
-      )}
-      {modal?.kind === "import" && (
-        <Modal
-          title="Importar juegos"
-          description="Los juegos que ya tienes no se duplican y entran como pendientes."
-          onClose={() => setModal(null)}
-        >
-          <ImportGames
-            state={state}
-            execute={safeExecute}
-            request={api.request}
-            demo={!user}
-            initialSource={modal.source}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "link" && (
-        <Modal
-          title="Completar fichas con IGDB"
-          description="Vincula los juegos añadidos a mano o importados con su ficha del catálogo."
-          onClose={() => setModal(null)}
-        >
-          <BulkLink
-            state={state}
-            request={api.request}
-            execute={safeExecute}
-            onDone={() => setModal(null)}
-          />
-        </Modal>
-      )}
-      {modal?.kind === "year" && (
-        <Modal
-          title="Tu año en juegos"
-          description="Un vistazo a los mundos que has visitado."
-          onClose={() => setModal(null)}
-        >
-          <YearReview state={state} today={today} onGame={openGame} />
-        </Modal>
+          onGame={openGame}
+        />
       )}
     </div>
   );

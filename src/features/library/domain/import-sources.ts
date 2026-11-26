@@ -30,6 +30,7 @@ export type ImportCandidate = {
   // Fecha en que lo terminaste y tiempo que jugaste (en minutos).
   completedOn?: string;
   minutes?: number;
+  steam?: { appId: number; minutes: number };
 };
 
 // --- CSV -------------------------------------------------------------------
@@ -418,7 +419,10 @@ export function candidatesFromCsv(text: string) {
 
 export type SteamGame = { appid: number; name: string; minutes: number };
 
-export function candidatesFromSteam(games: SteamGame[]): ImportCandidate[] {
+export function candidatesFromSteam(
+  games: SteamGame[],
+  wishlist = false,
+): ImportCandidate[] {
   return games
     .filter((g) => Number.isSafeInteger(g.appid) && g.name)
     .map((g) => ({
@@ -426,11 +430,30 @@ export function candidatesFromSteam(games: SteamGame[]): ImportCandidate[] {
       platforms: ["PC"],
       stores: ["Steam"],
       status: "pendiente" as const,
+      steam: { appId: g.appid, minutes: g.minutes },
+      ...(wishlist ? { wishlist: true } : {}),
       cover:
         "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
         g.appid +
         "/library_600x900.jpg",
     }));
+}
+
+// Juegos que ya tienes cuyo tiempo en Steam ha cambiado. Se reconocen por su
+// identificador de Steam o, la primera vez, por el título.
+export function steamUpdates(state: Library, games: SteamGame[]) {
+  const byApp = new Map(games.map((g) => [g.appid, g]));
+  const byTitle = new Map(games.map((g) => [normalize(g.name), g]));
+  return state.games.flatMap((g) => {
+    const match = g.steam
+      ? byApp.get(g.steam.appId)
+      : g.stores.some((s) => normalize(s) === "steam")
+        ? byTitle.get(normalize(g.title))
+        : undefined;
+    return match && match.minutes !== g.steam?.minutes
+      ? [{ gameId: g.id, appId: match.appid, minutes: match.minutes }]
+      : [];
+  });
 }
 
 // --- Conversión ------------------------------------------------------------
@@ -497,6 +520,7 @@ export function libraryFromCandidates(
       ...(c.format ? { format: c.format } : {}),
       ...(c.edition ? { edition: c.edition } : {}),
       ...(c.recommendedBy ? { recommendedBy: c.recommendedBy } : {}),
+      ...(c.steam ? { steam: c.steam } : {}),
     });
     runs.push({
       id: runId,

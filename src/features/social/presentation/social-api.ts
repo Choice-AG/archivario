@@ -1,7 +1,7 @@
 "use client";
 import useSWR from "swr";
 import type { ApiRequest } from "@/features/library/presentation/shared";
-import type { FeedEvent, PublicGame } from "../domain";
+import type { FeedEvent, PublicGame, PublicList } from "../domain";
 
 export type Person = { handle: string; name: string; avatarColor?: string };
 export type SocialMe = { enabled: boolean; handle?: string; unread: number };
@@ -41,6 +41,7 @@ export type ProfileData = {
     playing: { gameId: string; title: string; cover?: string }[];
     favorites: { gameId: string; title: string; cover?: string }[];
     library: ProfileGameSummary[];
+    lists?: PublicList[];
   };
   events: (FeedEvent & { id: string; at: string })[];
   self: boolean;

@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Pencil, Settings, Sparkles, Users } from "lucide-react";
+import {
+  BarChart3,
+  Pencil,
+  Quote,
+  Settings,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Stars } from "./rating-input";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
@@ -17,6 +24,7 @@ import { formatDate, monthLabel, plural } from "./format";
 import { BarList, ColumnChart } from "./charts";
 import { lastMonths, minutesBy } from "../domain/recap";
 import { compactTime } from "../domain/session";
+import { allMoments } from "../domain/memories";
 
 const decimal = (n: number) =>
   n.toLocaleString("es", { maximumFractionDigits: 1 });
@@ -45,6 +53,8 @@ export function ProfilePage({
   const stats = useMemo(() => profileStats(state), [state]);
   const showcase = showcaseGames(state);
   const reviews = latestReviews(state);
+  const moments = useMemo(() => allMoments(state), [state]);
+  const [allShown, setAllShown] = useState(false);
   const [year, setYear] = useState(today.slice(0, 4));
   const timeline = useMemo(() => lastMonths(state, today), [state, today]);
   const platformTime = useMemo(() => minutesBy(state, "", "platform"), [state]);
@@ -258,6 +268,44 @@ export function ProfilePage({
               </div>
             )}
           </div>
+        </section>
+      )}
+
+      {moments.length > 0 && (
+        <section className="panel profile-moments">
+          <div className="section-header">
+            <h2>Tus momentos</h2>
+            {moments.length > 4 && (
+              <button
+                className="text-link"
+                aria-expanded={allShown}
+                onClick={() => setAllShown(!allShown)}
+              >
+                {allShown ? "Ver menos" : "Ver los " + moments.length}
+              </button>
+            )}
+          </div>
+          <ul className="moment-list">
+            {(allShown ? moments : moments.slice(0, 4)).map(
+              ({ game, moment }) => (
+                <li key={moment.id}>
+                  <Quote size={15} aria-hidden="true" />
+                  <p>
+                    {moment.text}
+                    <small>
+                      <button
+                        className="text-link"
+                        onClick={() => onGame(game.id)}
+                      >
+                        {game.title}
+                      </button>
+                      {moment.date && " · " + formatDate(moment.date)}
+                    </small>
+                  </p>
+                </li>
+              ),
+            )}
+          </ul>
         </section>
       )}
 

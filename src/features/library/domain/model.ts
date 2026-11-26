@@ -18,6 +18,28 @@ export const formats = [
 ] as const;
 export type Format = (typeof formats)[number];
 export const TAGS_MAX = 12;
+export const MOMENTS_MAX = 30;
+export const EXTRAS_MAX = 30;
+export const VIEWS_MAX = 12;
+export type Moment = { id: string; text: string; date?: string };
+export type GameExtra = { id: string; title: string; done: boolean };
+// Una combinación de filtros guardada con nombre («Cortos en Switch»).
+export type SavedView = {
+  id: string;
+  name: string;
+  filters: {
+    status?: string;
+    platform?: string;
+    genre?: string;
+    duration?: string;
+    ownership?: string;
+    ratingFilter?: string;
+    sort?: string;
+    tag?: string;
+    format?: string;
+    recommendedBy?: string;
+  };
+};
 export type TimeEstimate = { hours: number; source: "IGDB" | "manual" };
 export type GameTimes = {
   main?: TimeEstimate;
@@ -50,6 +72,12 @@ export type Game = {
   // Etiquetas propias («en pareja», «relajante») y quién te lo recomendó.
   tags?: string[];
   recommendedBy?: string;
+  // Frases, escenas o instantes que quieres recordar del juego.
+  moments?: Moment[];
+  // Contenido adicional (DLC, expansiones) y si ya lo has jugado.
+  extras?: GameExtra[];
+  // Identificador y tiempo jugado según Steam, en minutos.
+  steam?: { appId: number; minutes: number };
   favorite: boolean;
   next: boolean;
   rating?: number;
@@ -100,12 +128,15 @@ export type Profile = {
   // Orden en que quieres jugar tus pendientes (identificadores de juego).
   priority?: string[];
   timer?: SessionTimer;
+  views?: SavedView[];
 };
 export type GameList = {
   id: string;
   name: string;
   description: string;
   gameIds: string[];
+  // Visible en tu perfil público, con enlace propio.
+  shared?: boolean;
 };
 export type SagaEntry = {
   alternatives?: { catalogId: number; title: string }[];
@@ -186,6 +217,13 @@ export type Command =
   | { type: "batch-tag"; gameIds: string[]; tag: string; remove?: boolean }
   // Sin «to», la etiqueta se quita de todos los juegos.
   | { type: "rename-tag"; from: string; to?: string }
+  | { type: "save-view"; view: SavedView }
+  | { type: "delete-view"; id: string }
+  // Tiempo jugado según Steam de juegos que ya tienes.
+  | {
+      type: "steam-sync";
+      items: { gameId: string; appId: number; minutes: number }[];
+    }
   | { type: "timer"; timer?: SessionTimer }
   | {
       type: "log-session";
@@ -299,6 +337,11 @@ export function assertLibrary(s: Library) {
   for (const g of s.games) {
     if (g.tags && !unique(g.tags.map(tagKey)))
       throw new DomainError("Un juego tiene etiquetas repetidas.");
+    if (
+      !unique((g.moments ?? []).map((m) => m.id)) ||
+      !unique((g.extras ?? []).map((e) => e.id))
+    )
+      throw new DomainError("Un juego tiene momentos o extras repetidos.");
     if (!s.runs.some((r) => r.id === g.primaryRunId && r.gameId === g.id))
       throw new DomainError(
         "Cada juego necesita una partida principal propia.",
@@ -334,6 +377,8 @@ export function assertLibrary(s: Library) {
     priority.some((id) => !s.games.some((g) => g.id === id))
   )
     throw new DomainError("El orden de prioridad no es válido.");
+  if (!unique((s.profile.views ?? []).map((v) => v.id)))
+    throw new DomainError("Hay vistas guardadas repetidas.");
   const timer = s.profile.timer;
   if (
     timer &&
@@ -578,6 +623,31 @@ export function applyCommand(
       }
       break;
     }
+    case "save-view": {
+      const views = (s.profile.views ?? []).filter(
+        (v) => v.id !== command.view.id,
+      );
+      if (views.length >= VIEWS_MAX)
+        throw new DomainError(
+          "Puedes guardar hasta " + VIEWS_MAX + " vistas. Quita alguna antes.",
+        );
+      s.profile.views = [...views, command.view];
+      break;
+    }
+    case "delete-view": {
+      const views = (s.profile.views ?? []).filter((v) => v.id !== command.id);
+      if (views.length) s.profile.views = views;
+      else delete s.profile.views;
+      break;
+    }
+    case "steam-sync":
+      // No cuenta como actividad: solo refresca el dato de Steam.
+      for (const item of command.items) {
+        const g = s.games.find((g) => g.id === item.gameId);
+        if (!g) throw new DomainError("Juego no encontrado.");
+        g.steam = { appId: item.appId, minutes: item.minutes };
+      }
+      break;
     case "timer":
       if (command.timer) {
         const { gameId, runId } = command.timer;
@@ -665,14 +735,16 @@ export function applyCommand(
     }
     case "profile": {
       // El orden de prioridad y la sesión en marcha tienen sus propios comandos.
-      const { priority, timer } = s.profile;
+      const { priority, timer, views } = s.profile;
       const next = { ...command.profile };
       delete next.priority;
       delete next.timer;
+      delete next.views;
       s.profile = {
         ...next,
         ...(priority ? { priority } : {}),
         ...(timer ? { timer } : {}),
+        ...(views ? { views } : {}),
       };
       break;
     }

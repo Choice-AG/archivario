@@ -28,6 +28,7 @@ import { formatHours, timeLabels, changeRunStatus } from "../domain/daily";
 import { formatMinutes, playedTime } from "../domain/session";
 import { SessionButton } from "./session-timer";
 import { CoverPicker } from "./cover-picker";
+import { Extras, Moments } from "./game-keepsakes";
 import { formatLabels } from "../domain/organize";
 import { activityId, type Game, type Library } from "../domain/model";
 
@@ -269,11 +270,19 @@ export function GamePage({
               busy={busy}
               onStop={onStopSession}
             />
-            <Button variant="secondary" onClick={onActivity}>
-              <CalendarPlus size={16} /> Otro día
+            <Button
+              variant="secondary"
+              className="hero-compact"
+              onClick={onActivity}
+            >
+              <CalendarPlus size={16} /> <span>Otro día</span>
             </Button>
-            <Button variant="secondary" onClick={() => setEditor("Ficha")}>
-              <Pencil size={16} /> Editar juego
+            <Button
+              variant="secondary"
+              className="hero-compact"
+              onClick={() => setEditor("Ficha")}
+            >
+              <Pencil size={16} /> <span>Editar juego</span>
             </Button>
           </div>
           {playedToday &&
@@ -494,6 +503,11 @@ export function GamePage({
                   "Apunta cuánto juegas en el diario o con «Empezar sesión»."
                 )}
               </p>
+              {!!game.steam?.minutes && (
+                <p className="muted steam-time">
+                  En Steam: <strong>{formatMinutes(game.steam.minutes)}</strong>
+                </p>
+              )}
               <button
                 className="text-link"
                 onClick={() => setEditor("Tiempos")}
@@ -649,6 +663,9 @@ export function GamePage({
             )}
           </section>
         )}
+        {tab === "partidas" && !game.wishlist && (
+          <Extras game={game} busy={busy} mutate={mutate} />
+        )}
         {tab === "resena" && (
           <section className="game-section" id="game-notes">
             <div className="section-header">
@@ -672,6 +689,9 @@ export function GamePage({
               </details>
             )}
           </section>
+        )}
+        {tab === "resena" && (
+          <Moments game={game} today={today} busy={busy} mutate={mutate} />
         )}
         {tab === "diario" && (
           <section className="game-section" id="game-journal">
