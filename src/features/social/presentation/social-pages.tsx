@@ -718,6 +718,13 @@ export function PublicProfileView({
     () => "",
   );
   const openGame = hash.startsWith("juego-") ? hash.slice(6) : undefined;
+  // Un enlace a una lista compartida (#lista-id) lleva hasta ella.
+  const listHash = hash.startsWith("lista-") ? hash : undefined,
+    loaded = !!data.data;
+  useEffect(() => {
+    if (listHash && loaded)
+      document.getElementById(listHash)?.scrollIntoView({ block: "start" });
+  }, [listHash, loaded]);
   if (data.loading) return <p role="status">Cargando perfil…</p>;
   if (data.error || !data.data)
     return (
@@ -803,6 +810,30 @@ export function PublicProfileView({
           </section>
         )}
       </div>
+      {(profile.lists ?? []).map((list) => {
+        const done = list.games.filter((g) => g.done).length;
+        return (
+          <section
+            className={
+              "panel public-list" +
+              (listHash === "lista-" + list.id ? " targeted" : "")
+            }
+            id={"lista-" + list.id}
+            key={list.id}
+          >
+            <p className="eyebrow">LISTA</p>
+            <h2>{list.name}</h2>
+            {list.description && (
+              <p className="profile-bio">{list.description}</p>
+            )}
+            <p className="muted text-sm">
+              {plural(list.games.length, "juego", "juegos")}
+              {done > 0 && " · " + plural(done, "completado", "completados")}
+            </p>
+            <CoverRow items={list.games} />
+          </section>
+        );
+      })}
       <section className="panel">
         <div className="section-header">
           <h2>Sus juegos</h2>

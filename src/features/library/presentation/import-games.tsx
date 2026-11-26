@@ -8,6 +8,7 @@ import {
   importPlan,
   libraryFromCandidates,
   readCsv,
+  steamUpdates,
   type CsvSource,
   type ImportCandidate,
   type SteamGame,
@@ -15,6 +16,8 @@ import {
 import { dateInZone, type Library } from "../domain/model";
 import { plural } from "./format";
 import type { ApiRequest, Execute } from "./shared";
+
+const STEAM_KEY = "archivario-steam-perfil";
 
 // Importa juegos desde un CSV o desde una biblioteca pública de Steam.
 export function ImportGames({
@@ -35,16 +38,31 @@ export function ImportGames({
     [csvSource, setCsvSource] = useState<CsvSource>(),
     [steamGames, setSteamGames] = useState<SteamGame[]>(),
     [playedOnly, setPlayedOnly] = useState(false),
-    [profile, setProfile] = useState(""),
+    [steamList, setSteamList] = useState<"biblioteca" | "deseos">("biblioteca"),
+    // El perfil de Steam se recuerda en este navegador para la próxima vez.
+    [profile, setProfile] = useState(() => {
+      try {
+        return localStorage.getItem(STEAM_KEY) ?? "";
+      } catch {
+        return "";
+      }
+    }),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [pending, setPending] = useState(false);
   const chosen =
     source === "steam" && steamGames
       ? candidatesFromSteam(
-          playedOnly ? steamGames.filter((g) => g.minutes > 0) : steamGames,
+          playedOnly && steamList === "biblioteca"
+            ? steamGames.filter((g) => g.minutes > 0)
+            : steamGames,
+          steamList === "deseos",
         )
       : candidates;
+  const updates =
+    source === "steam" && steamGames && steamList === "biblioteca"
+      ? steamUpdates(state, steamGames)
+      : [];
   const plan = chosen ? importPlan(state, chosen) : undefined;
   const reset = () => {
     setCandidates(undefined);
@@ -132,10 +150,17 @@ export function ImportGames({
             try {
               const data = (await (
                 await request(
-                  "/api/import/steam?profile=" + encodeURIComponent(profile),
+                  "/api/import/steam?profile=" +
+                    encodeURIComponent(profile) +
+                    (steamList === "deseos" ? "&lista=deseos" : ""),
                 )
               ).json()) as { games: SteamGame[] };
               setSteamGames(data.games);
+              try {
+                localStorage.setItem(STEAM_KEY, profile.trim());
+              } catch {
+                // Sin almacenamiento habrá que escribirlo otra vez.
+              }
             } catch (err) {
               setError((err as Error).message);
             } finally {
@@ -156,11 +181,36 @@ export function ImportGames({
               Tu perfil y tu lista de juegos deben ser públicos en Steam.
             </small>
           </label>
+          <div
+            className="segmented"
+            role="group"
+            aria-label="Qué traer de Steam"
+          >
+            {(
+              [
+                ["biblioteca", "Mi biblioteca"],
+                ["deseos", "Mi lista de deseos"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={steamList === value}
+                className={steamList === value ? "selected" : ""}
+                onClick={() => {
+                  setSteamList(value);
+                  reset();
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <Button variant="secondary" disabled={pending}>
             {pending && <LoaderCircle size={15} className="animate-spin" />}
-            Buscar mis juegos
+            {steamList === "deseos" ? "Buscar mis deseos" : "Buscar mis juegos"}
           </Button>
-          {steamGames && (
+          {steamGames && steamList === "biblioteca" && (
             <label className="checkbox-label mt-3">
               <input
                 type="checkbox"
@@ -181,6 +231,38 @@ export function ImportGames({
         <p role="status" className="accent-text text-sm mt-3">
           {notice}
         </p>
+      )}
+      {updates.length > 0 && (
+        <div className="import-preview" role="status">
+          <p>
+            <strong>
+              {plural(updates.length, "juego tiene", "juegos tienen")}
+            </strong>{" "}
+            horas nuevas en Steam.
+          </p>
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={async () => {
+              setPending(true);
+              setError("");
+              try {
+                await execute({ type: "steam-sync", items: updates });
+                setNotice(
+                  "Horas de Steam actualizadas en " +
+                    plural(updates.length, "juego", "juegos") +
+                    ". Las verás en la ficha de cada uno.",
+                );
+              } catch (err) {
+                setError((err as Error).message);
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            Actualizar las horas de Steam
+          </Button>
+        </div>
       )}
       {plan && (
         <div className="import-preview" role="status">
@@ -236,7 +318,9 @@ export function ImportGames({
                 reset();
                 setNotice(
                   plural(count, "juego importado", "juegos importados") +
-                    ". Están como pendientes; ajusta su estado cuando quieras.",
+                    (steamList === "deseos" && source === "steam"
+                      ? ". Están en tu lista de deseos."
+                      : ". Están como pendientes; ajusta su estado cuando quieras."),
                 );
               } catch (err) {
                 setError((err as Error).message);

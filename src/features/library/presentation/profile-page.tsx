@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Pencil, Settings, Sparkles, Users } from "lucide-react";
+import {
+  BarChart3,
+  Pencil,
+  Quote,
+  Settings,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Stars } from "./rating-input";
 import { Button } from "@/components/ui/button";
 import type { Library } from "../domain/model";
@@ -13,7 +20,11 @@ import {
 import { Avatar, Cover, type Execute } from "./shared";
 import { Heatmap } from "./heatmap";
 import { Markdown } from "./markdown";
-import { formatDate, plural } from "./format";
+import { formatDate, monthLabel, plural } from "./format";
+import { BarList, ColumnChart } from "./charts";
+import { lastMonths, minutesBy } from "../domain/recap";
+import { compactTime } from "../domain/session";
+import { allMoments } from "../domain/memories";
 
 const decimal = (n: number) =>
   n.toLocaleString("es", { maximumFractionDigits: 1 });
@@ -42,7 +53,11 @@ export function ProfilePage({
   const stats = useMemo(() => profileStats(state), [state]);
   const showcase = showcaseGames(state);
   const reviews = latestReviews(state);
+  const moments = useMemo(() => allMoments(state), [state]);
+  const [allShown, setAllShown] = useState(false);
   const [year, setYear] = useState(today.slice(0, 4));
+  const timeline = useMemo(() => lastMonths(state, today), [state, today]);
+  const platformTime = useMemo(() => minutesBy(state, "", "platform"), [state]);
   const years = useMemo(
     () =>
       [
@@ -219,6 +234,80 @@ export function ProfilePage({
           onDay={onDay}
         />
       </section>
+
+      {timeline.some((m) => m.minutes) && (
+        <section className="panel profile-time">
+          <div className="section-header">
+            <h2>Tu tiempo jugado</h2>
+          </div>
+          <p className="muted text-xs">
+            Los últimos doce meses, según lo que apuntas en el diario.
+          </p>
+          <div className="profile-time-grid">
+            <ColumnChart
+              title="Tiempo jugado en los últimos doce meses"
+              format={compactTime}
+              data={timeline.map((m) => ({
+                key: m.month,
+                label: monthLabel(m.month).slice(0, 3),
+                full: monthLabel(m.month),
+                value: m.minutes,
+              }))}
+            />
+            {platformTime.length > 0 && (
+              <div>
+                <h3>Por plataforma</h3>
+                <BarList
+                  title="Tiempo jugado por plataforma"
+                  format={compactTime}
+                  items={platformTime.map((p) => ({
+                    name: p.name,
+                    value: p.minutes,
+                  }))}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {moments.length > 0 && (
+        <section className="panel profile-moments">
+          <div className="section-header">
+            <h2>Tus momentos</h2>
+            {moments.length > 4 && (
+              <button
+                className="text-link"
+                aria-expanded={allShown}
+                onClick={() => setAllShown(!allShown)}
+              >
+                {allShown ? "Ver menos" : "Ver los " + moments.length}
+              </button>
+            )}
+          </div>
+          <ul className="moment-list">
+            {(allShown ? moments : moments.slice(0, 4)).map(
+              ({ game, moment }) => (
+                <li key={moment.id}>
+                  <Quote size={15} aria-hidden="true" />
+                  <p>
+                    {moment.text}
+                    <small>
+                      <button
+                        className="text-link"
+                        onClick={() => onGame(game.id)}
+                      >
+                        {game.title}
+                      </button>
+                      {moment.date && " · " + formatDate(moment.date)}
+                    </small>
+                  </p>
+                </li>
+              ),
+            )}
+          </ul>
+        </section>
+      )}
 
       <div className="profile-columns">
         <section className="panel">

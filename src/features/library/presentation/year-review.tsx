@@ -4,7 +4,11 @@ import { useState } from "react";
 import type { Library } from "../domain/model";
 import { annualSummary } from "../domain/insights";
 import { Stars } from "./rating-input";
-import { formatMinutes } from "../domain/session";
+import { compactTime, formatMinutes } from "../domain/session";
+import { minutesBy, minutesByMonth } from "../domain/recap";
+import { BarList, ColumnChart } from "./charts";
+import { ShareRecap } from "./recap-share";
+import { recapData } from "./recap-data";
 export function YearReview({
   state,
   today,
@@ -66,6 +70,14 @@ export function YearReview({
           ))}
         </select>
       </label>
+      {summary.games > 0 && (
+        <ShareRecap
+          key={year}
+          build={() => recapData(state, year)}
+          filename={"archivario-" + year + ".png"}
+          label="Tu año en una imagen"
+        />
+      )}
       <div className="summary-grid">
         <div>
           <strong>{summary.games}</strong>
@@ -121,6 +133,47 @@ export function YearReview({
               )}
               .
             </p>
+          )}
+          {summary.minutes > 0 && (
+            <>
+              <h3>Tu tiempo jugado</h3>
+              <p className="muted text-xs">
+                Lo que apuntaste en el diario, mes a mes.
+              </p>
+              <ColumnChart
+                title={"Tiempo jugado cada mes de " + year}
+                format={compactTime}
+                data={minutesByMonth(state, year).map((minutes, i) => ({
+                  key: String(i),
+                  label: labels[i],
+                  full: fullMonths[i] + " de " + year,
+                  value: minutes,
+                }))}
+              />
+              <div className="year-breakdown">
+                {(
+                  [
+                    ["Por plataforma", "platform"],
+                    ["Por género", "genre"],
+                  ] as const
+                ).map(([title, by]) => {
+                  const items = minutesBy(state, year, by);
+                  return items.length ? (
+                    <div key={by}>
+                      <h3>{title}</h3>
+                      <BarList
+                        title={"Tiempo jugado " + title.toLowerCase()}
+                        format={compactTime}
+                        items={items.map((i) => ({
+                          name: i.name,
+                          value: i.minutes,
+                        }))}
+                      />
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </>
           )}
           {summary.first && summary.last && (
             <div className="year-bookends">

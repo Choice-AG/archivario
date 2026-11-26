@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { GameList, Library } from "../domain/model";
 import {
@@ -15,10 +16,13 @@ export function Planning({
   state,
   execute,
   onGame,
+  handle,
 }: {
   state: Library;
   execute: Execute;
   onGame: (id: string) => void;
+  // Nombre de usuario si tienes el perfil público activo.
+  handle?: string;
 }) {
   const [tab, setTab] = useState("Mis listas");
   return (
@@ -36,7 +40,12 @@ export function Planning({
         ))}
       </div>
       {tab === "Mis listas" ? (
-        <Lists state={state} execute={execute} onGame={onGame} />
+        <Lists
+          state={state}
+          execute={execute}
+          onGame={onGame}
+          handle={handle}
+        />
       ) : (
         <Compare state={state} onGame={onGame} />
       )}
@@ -47,11 +56,14 @@ function Lists({
   state,
   execute,
   onGame,
+  handle,
 }: {
   state: Library;
   execute: Execute;
   onGame: (id: string) => void;
+  handle?: string;
 }) {
+  const [copied, setCopied] = useState("");
   const [draft, setDraft] = useState<GameList>(),
     [error, setError] = useState(""),
     [pending, setPending] = useState(false),
@@ -116,6 +128,24 @@ function Lists({
                 }
               />
             </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={!!draft.shared}
+                onChange={(e) => {
+                  const rest = { ...draft };
+                  delete rest.shared;
+                  setDraft(e.target.checked ? { ...rest, shared: true } : rest);
+                }}
+              />{" "}
+              Compartir esta lista en mi perfil público
+            </label>
+            {draft.shared && !handle && (
+              <p className="muted text-xs">
+                Se verá cuando actives tu perfil público en Ajustes → Amigos.
+                Los juegos ocultos nunca se comparten.
+              </p>
+            )}
             <h3>Orden de los juegos</h3>
             <ol className="ordered-games">
               {draft.gameIds.map((id, i) => {
@@ -234,7 +264,10 @@ function Lists({
           )}
           {(state.lists ?? []).map((l) => (
             <section className="personal-list" key={l.id}>
-              <h3>{l.name}</h3>
+              <h3>
+                {l.name}
+                {l.shared && <span className="run-primary">Compartida</span>}
+              </h3>
               <p>{l.description}</p>
               <small>
                 {listProgress(state, l.gameIds).completed} / {l.gameIds.length}{" "}
@@ -277,6 +310,29 @@ function Lists({
                 >
                   Eliminar lista {l.name}
                 </Button>
+                {l.shared && handle && (
+                  <Button
+                    variant="ghost"
+                    aria-label={"Copiar el enlace de " + l.name}
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(
+                          window.location.origin +
+                            "/u/" +
+                            encodeURIComponent(handle) +
+                            "#lista-" +
+                            l.id,
+                        );
+                        setCopied(l.id);
+                      } catch {
+                        setError("No se ha podido copiar el enlace.");
+                      }
+                    }}
+                  >
+                    <Link2 size={15} />{" "}
+                    {copied === l.id ? "Enlace copiado" : "Copiar enlace"}
+                  </Button>
+                )}
               </div>
               {confirm === l.id && (
                 <div className="danger-area">

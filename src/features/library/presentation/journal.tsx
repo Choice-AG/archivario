@@ -2,17 +2,22 @@
 import { useMemo, useState } from "react";
 import {
   ArrowUpRight,
+  CalendarRange,
   ChevronLeft,
   ChevronRight,
-  NotebookPen,
+  History,
   Rocket,
+  Search,
   Sparkles,
 } from "lucide-react";
 import { Heatmap } from "./heatmap";
 import { Button } from "@/components/ui/button";
 import { monthlySummary, type Activity, type Library } from "../domain/model";
-import { formatMinutes, minutesIn } from "../domain/session";
-import { releasesIn } from "../domain/releases";
+import { formatMinutes, minutesIn, sumMinutes } from "../domain/session";
+import { groupByDay, onThisDay, searchJournal } from "../domain/memories";
+import { ShareRecap } from "./recap-share";
+import { recapData } from "./recap-data";
+import { daysBetween, releasesIn } from "../domain/releases";
 import { Cover } from "./shared";
 import { formatDate, monthLabel, plural } from "./format";
 
@@ -36,18 +41,70 @@ export function groupByMonth(items: Activity[]) {
 
 const PAGE = 30;
 
+const weekday = new Intl.DateTimeFormat("es", {
+  weekday: "long",
+  timeZone: "UTC",
+});
+// «jueves 26» o, si es hoy o ayer, eso mismo.
+function dayTitle(date: string, today?: string) {
+  const d = new Date(date + "T12:00:00Z");
+  const name = weekday.format(d) + " " + d.getUTCDate();
+  if (today && date === today) return "Hoy · " + name;
+  if (today && daysBetween(date, today) === 1) return "Ayer · " + name;
+  return name[0].toLocaleUpperCase("es") + name.slice(1);
+}
+
+// «Tal día como hoy»: un recuerdo de otros años, si lo hay.
+export function OnThisDay({
+  state,
+  today,
+  onEdit,
+}: {
+  state: Library;
+  today: string;
+  onEdit: (a: Activity) => void;
+}) {
+  const memories = useMemo(() => onThisDay(state, today), [state, today]);
+  if (!memories.length) return null;
+  return (
+    <section className="on-this-day" aria-labelledby="on-this-day-title">
+      <h2 id="on-this-day-title">
+        <History size={16} aria-hidden="true" /> Tal día como hoy
+      </h2>
+      <ul>
+        {memories.map(({ activity, game, years }) => (
+          <li key={activity.id}>
+            <button onClick={() => onEdit(activity)}>
+              <Cover game={game} />
+              <span>
+                <small>
+                  {years === 1 ? "Hace un año" : "Hace " + years + " años"}
+                </small>
+                <strong>{game.title}</strong>
+                {activity.note && <q>{activity.note}</q>}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function Recent({
   state,
   onEdit,
   onAll,
   full = false,
   initialGameId,
+  today,
 }: {
   state: Library;
   onEdit: (a: Activity) => void;
   onAll?: () => void;
   full?: boolean;
   initialGameId?: string;
+  today?: string;
 }) {
   const [page, setPage] = useState(1),
     // El diario puede abrirse ya filtrado desde la ficha (?juego=id).
@@ -59,26 +116,30 @@ export function Recent({
       return id && state.games.some((g) => g.id === id) ? id : "";
     }),
     [from, setFrom] = useState(""),
-    [to, setTo] = useState("");
+    [to, setTo] = useState(""),
+    [query, setQuery] = useState(""),
+    [showDates, setShowDates] = useState(false);
   const games = useMemo(
     () => new Map(state.games.map((g) => [g.id, g])),
     [state.games],
   );
   const items = useMemo(
     () =>
-      state.activities
-        .filter(
+      searchJournal(
+        state.activities.filter(
           (a) =>
             games.has(a.gameId) &&
             (!full ||
               ((!gameId || a.gameId === gameId) &&
                 (!from || a.date >= from) &&
                 (!to || a.date <= to))),
-        )
-        .sort((a, b) => b.date.localeCompare(a.date)),
-    [state.activities, games, full, gameId, from, to],
+        ),
+        games,
+        full ? query : "",
+      ).sort((a, b) => b.date.localeCompare(a.date)),
+    [state.activities, games, full, gameId, from, to, query],
   );
-  const filtering = !!(gameId || from || to);
+  const filtering = !!(gameId || from || to || query.trim());
   const visible = items.slice(
     full ? (page - 1) * PAGE : 0,
     full ? page * PAGE : 3,
@@ -107,6 +168,37 @@ export function Recent({
       </button>
     );
   };
+  // En el diario completo, cada entrada enseña la nota entera y el tiempo.
+  const entry = (a: Activity) => {
+    const g = games.get(a.gameId)!;
+    return (
+      <button
+        className="activity-row journal-entry"
+        key={a.id}
+        onClick={() => onEdit(a)}
+        aria-label={
+          "Editar " +
+          g.title +
+          ", " +
+          formatDate(a.date) +
+          (a.note ? ": " + a.note : "")
+        }
+      >
+        <Cover game={g} />
+        <span>
+          <strong>{g.title}</strong>
+          {a.note ? (
+            <span className="journal-note">{a.note}</span>
+          ) : (
+            <span className="journal-note empty">Un día de juego</span>
+          )}
+        </span>
+        {a.minutes ? (
+          <span className="journal-time">{formatMinutes(a.minutes)}</span>
+        ) : null}
+      </button>
+    );
+  };
   const reset = (change: () => void) => {
     change();
     setPage(1);
@@ -121,8 +213,21 @@ export function Recent({
           </button>
         </div>
       )}
+      {full && today && !filtering && (
+        <OnThisDay state={state} today={today} onEdit={onEdit} />
+      )}
       {full && (
         <div className="journal-filters">
+          <div className="search-field journal-search">
+            <Search size={17} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Buscar en el diario"
+              placeholder="Buscar en tus notas…"
+              value={query}
+              onChange={(e) => reset(() => setQuery(e.target.value))}
+            />
+          </div>
           <label>
             Juego
             <select
@@ -139,24 +244,36 @@ export function Recent({
                 ))}
             </select>
           </label>
-          <label>
-            Desde
-            <input
-              type="date"
-              value={from}
-              max={to || undefined}
-              onChange={(e) => reset(() => setFrom(e.target.value))}
-            />
-          </label>
-          <label>
-            Hasta
-            <input
-              type="date"
-              value={to}
-              min={from || undefined}
-              onChange={(e) => reset(() => setTo(e.target.value))}
-            />
-          </label>
+          {showDates || from || to ? (
+            <>
+              <label>
+                Desde
+                <input
+                  type="date"
+                  value={from}
+                  max={to || undefined}
+                  onChange={(e) => reset(() => setFrom(e.target.value))}
+                />
+              </label>
+              <label>
+                Hasta
+                <input
+                  type="date"
+                  value={to}
+                  min={from || undefined}
+                  onChange={(e) => reset(() => setTo(e.target.value))}
+                />
+              </label>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDates(true)}
+            >
+              <CalendarRange size={15} /> Entre fechas
+            </Button>
+          )}
           {filtering && (
             <Button
               variant="ghost"
@@ -166,6 +283,8 @@ export function Recent({
                   setGameId("");
                   setFrom("");
                   setTo("");
+                  setQuery("");
+                  setShowDates(false);
                 })
               }
             >
@@ -187,7 +306,17 @@ export function Recent({
                   {plural(group.items.length, "registro", "registros")}
                 </small>
               </h3>
-              {group.items.map(row)}
+              {groupByDay(group.items).map((d) => (
+                <div className="journal-day" key={d.date}>
+                  <h4>
+                    <time dateTime={d.date}>{dayTitle(d.date, today)}</time>
+                    {sumMinutes(d.items) > 0 && d.items.length > 1 && (
+                      <small>{formatMinutes(sumMinutes(d.items))}</small>
+                    )}
+                  </h4>
+                  {d.items.map(entry)}
+                </div>
+              ))}
             </div>
           ))
         ) : (
@@ -264,6 +393,13 @@ export function MonthCard({ state, today }: { state: Library; today: string }) {
       <p className="month-foot">
         <Sparkles size={15} /> Cada aventura cuenta, dure lo que dure.
       </p>
+      {summary.games > 0 && (
+        <ShareRecap
+          build={() => recapData(state, today.slice(0, 7))}
+          filename={"archivario-" + today.slice(0, 7) + ".png"}
+          label="Tu mes en una imagen"
+        />
+      )}
     </section>
   );
 }
@@ -274,16 +410,12 @@ export function CalendarView({
   month,
   onMonth,
   onDay,
-  onBulk,
-  onJournal,
 }: {
   state: Library;
   today: string;
   month: string;
   onMonth: (month: string) => void;
   onDay: (date: string) => void;
-  onBulk: () => void;
-  onJournal: () => void;
 }) {
   const summary = monthlySummary(state, month);
   const minutes = minutesIn(state, month);
@@ -309,16 +441,6 @@ export function CalendarView({
     <section className="panel">
       <div className="section-header">
         <h2>Calendario</h2>
-        <Button
-          variant="ghost"
-          onClick={onJournal}
-          className="calendar-bulk calendar-journal"
-        >
-          <NotebookPen size={16} /> Ver diario
-        </Button>
-        <Button variant="secondary" onClick={onBulk} className="calendar-bulk">
-          Registrar varios días
-        </Button>
         <div className="month-nav">
           <Button
             variant="ghost"

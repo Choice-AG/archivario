@@ -67,3 +67,13 @@ export function clock(seconds: number) {
     h + ":" + String(m).padStart(2, "0") + ":" + String(r).padStart(2, "0")
   );
 }
+
+// Versión corta para gráficos: «45 min», «1,5 h», «12 h».
+export function compactTime(total: number) {
+  if (total < 60) return total + " min";
+  const hours = total / 60;
+  return (
+    hours.toLocaleString("es", { maximumFractionDigits: hours < 10 ? 1 : 0 }) +
+    " h"
+  );
+}

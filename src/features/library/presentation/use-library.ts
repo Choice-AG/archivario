@@ -7,12 +7,13 @@ import {
   type Command,
   type Library,
 } from "../domain/model";
-import { commandSchema, librarySchema } from "../application/validation";
+import { loadValidation } from "./validation-loader";
 import { demoLibrary } from "../infrastructure/demo";
 import {
   loadCachedLibrary,
   loadQueue,
   OfflineError,
+  queueLength,
   saveCachedLibrary,
   saveQueue,
 } from "./offline-store";
@@ -26,7 +27,7 @@ export function useLibrary(user: User | null) {
     [error, setError] = useState(""),
     [offline, setOffline] = useState(false),
     [pendingSync, setPendingSync] = useState(() =>
-      user ? loadQueue(user.uid).length : 0,
+      user ? queueLength(user.uid) : 0,
     );
   const [undoEntry, setUndoEntry] = useState<{
     before: Library;
@@ -93,9 +94,9 @@ export function useLibrary(user: User | null) {
   // medias, se vuelve a aplicar sobre la versión nueva.
   const flush = useCallback(async () => {
     if (!uid || locked.current) return;
-    const queue = loadQueue(uid);
-    if (!queue.length) return;
+    if (!queueLength(uid)) return;
     locked.current = true;
+    const queue = await loadQueue(uid);
     const dropped: string[] = [];
     try {
       let server = (await (await request("/api/library")).json()) as Library;
@@ -139,7 +140,7 @@ export function useLibrary(user: User | null) {
   }, [uid, request, post, update]);
   const reload = useCallback(async () => {
     if (locked.current) return;
-    if (uid && loadQueue(uid).length) return flush();
+    if (uid && queueLength(uid)) return flush();
     try {
       // Tras la primera carga solo se pide la biblioteca si ha cambiado.
       const known = current.current.revision;
@@ -165,8 +166,8 @@ export function useLibrary(user: User | null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       reload()
         .then(() => setReady(true))
-        .catch((e) => {
-          const cached = loadCachedLibrary(user.uid);
+        .catch(async (e) => {
+          const cached = await loadCachedLibrary(user.uid);
           if (e instanceof OfflineError && cached) {
             // Sin conexión: se muestra la última copia y se guarda en cola.
             current.current = cached;
@@ -176,25 +177,29 @@ export function useLibrary(user: User | null) {
           setReady(true);
         });
     } else {
-      try {
-        const saved =
-          localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
-        const initial = saved
-          ? librarySchema.parse(JSON.parse(saved))
-          : demoLibrary();
-        if (saved) {
-          localStorage.setItem(key, JSON.stringify(initial));
-          localStorage.removeItem(legacyKey);
-        }
-        update(initial);
-      } catch {
+      const saved =
+        localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
+      if (!saved) {
         update(demoLibrary());
-        setError(
-          "La demostración guardada no era válida; se han cargado los ejemplos.",
-        );
-      }
-      setReady(true);
+        setReady(true);
+      } else
+        loadValidation()
+          .then(({ librarySchema }) => {
+            const initial = librarySchema.parse(JSON.parse(saved));
+            localStorage.setItem(key, JSON.stringify(initial));
+            localStorage.removeItem(legacyKey);
+            update(initial);
+          })
+          .catch(() => {
+            update(demoLibrary());
+            setError(
+              "La demostración guardada no era válida; se han cargado los ejemplos.",
+            );
+          })
+          .finally(() => setReady(true));
     }
+    // Se descarga ya, para que el primer cambio no tenga que esperarla.
+    loadValidation().catch(() => {});
     const focus = () => {
       if (user)
         reload().catch((e) => {
@@ -219,13 +224,13 @@ export function useLibrary(user: User | null) {
       clearInterval(timer);
     };
   }, [user, reload, update]);
-  function saveLocally(uid: string, command: Command) {
+  async function saveLocally(uid: string, command: Command) {
     const next = applyCommand(
       current.current,
       command,
       new Date().toISOString(),
     );
-    const queue = [...loadQueue(uid), command];
+    const queue = [...(await loadQueue(uid)), command];
     saveQueue(uid, queue);
     setPendingSync(queue.length);
     setOffline(true);
@@ -240,16 +245,17 @@ export function useLibrary(user: User | null) {
     setError("");
     try {
       const before = structuredClone(current.current);
+      const { commandSchema } = await loadValidation();
       const valid = commandSchema.parse(command);
       if (user) {
-        if (offline || !navigator.onLine || loadQueue(user.uid).length)
-          saveLocally(user.uid, valid);
+        if (offline || !navigator.onLine || queueLength(user.uid))
+          await saveLocally(user.uid, valid);
         else
           try {
             update(await post(current.current.revision, valid));
           } catch (e) {
             if (!(e instanceof OfflineError)) throw e;
-            saveLocally(user.uid, valid);
+            await saveLocally(user.uid, valid);
           }
       } else {
         const next = applyCommand(

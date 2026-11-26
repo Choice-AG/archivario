@@ -6,6 +6,8 @@ export const viewPaths: Record<string, string> = {
   Diario: "/diario",
   Calendario: "/calendario",
   Favoritos: "/favoritos",
+  Listas: "/listas",
+  Resumen: "/resumen",
   Próximos: "/proximos",
   Perfil: "/perfil",
   Amigos: "/amigos",

@@ -1,6 +1,12 @@
 "use client";
 import { useMemo, useState } from "react";
-import { sameTag, type Game, type Library, type Run } from "../domain/model";
+import {
+  sameTag,
+  type Game,
+  type Library,
+  type Run,
+  type SavedView,
+} from "../domain/model";
 import { estimatedHours, matchesGame, type TimeMode } from "../domain/daily";
 import { sortGames, type GameSort } from "../domain/insights";
 
@@ -133,4 +139,39 @@ export function useFilteredGames(
   }, [state, filters, view, runs]);
   const runOf = (g: Game): Run | undefined => runs.get(g.primaryRunId);
   return { filtered, runOf };
+}
+
+// Lo que se guarda en una vista: solo lo que difiere de lo habitual.
+const VIEW_KEYS = [
+  "status",
+  "platform",
+  "genre",
+  "duration",
+  "ownership",
+  "ratingFilter",
+  "sort",
+  "tag",
+  "format",
+  "recommendedBy",
+] as const;
+export function viewFilters(f: LibraryFilters): SavedView["filters"] {
+  const out: SavedView["filters"] = {};
+  for (const key of VIEW_KEYS)
+    if (f[key] !== defaultFilters[key]) out[key] = f[key];
+  return out;
+}
+const sorts: readonly string[] = [
+  "recent",
+  "title",
+  "rating",
+  "critic",
+  "shortest",
+  "priority",
+];
+export function filtersOfView(view: SavedView): Partial<LibraryFilters> {
+  const { sort, ...rest } = view.filters;
+  return {
+    ...rest,
+    ...(sort && sorts.includes(sort) ? { sort: sort as GameSort } : {}),
+  };
 }

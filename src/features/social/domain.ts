@@ -53,6 +53,14 @@ export type PublicProfile = {
   stats: { games: number; completed: number; playing: number };
   playing: { gameId: string; title: string; cover?: string }[];
   favorites: { gameId: string; title: string; cover?: string }[];
+  // Listas que has decidido compartir, solo con juegos visibles.
+  lists?: PublicList[];
+};
+export type PublicList = {
+  id: string;
+  name: string;
+  description: string;
+  games: { gameId: string; title: string; cover?: string; done: boolean }[];
 };
 
 const visible = (g: Game) => !g.hidden;
@@ -96,6 +104,24 @@ export function publicProfile(s: Library): PublicProfile {
   const status = (g: Game) => primary(s, g)?.status;
   const card = (g: Game) =>
     optional({ gameId: g.id, title: g.title, cover: g.cover });
+  const lists: PublicList[] = (s.lists ?? [])
+    .filter((l) => l.shared)
+    .slice(0, 20)
+    .map((l) => ({
+      id: l.id,
+      name: l.name,
+      description: l.description,
+      games: l.gameIds
+        .map((id) => shared.find((g) => g.id === id))
+        .filter((g): g is Game => !!g)
+        .slice(0, 100)
+        .map((g) => ({
+          ...card(g),
+          done: s.runs.some(
+            (r) => r.gameId === g.id && r.status === "completado",
+          ),
+        })),
+    }));
   const showcase = (s.profile.showcase ?? [])
     .map((id) => shared.find((g) => g.id === id))
     .filter((g): g is Game => !!g);
@@ -115,6 +141,7 @@ export function publicProfile(s: Library): PublicProfile {
     favorites: (showcase.length ? showcase : shared.filter((g) => g.favorite))
       .slice(0, 5)
       .map(card),
+    lists: lists.length ? lists : undefined,
   });
 }
 

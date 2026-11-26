@@ -11,6 +11,8 @@ const pages = [
   ["ficha", "/juegos/hollow?demo=1"],
   ["catalogo", "/juegos/igdb-1219?demo=1"],
   ["proximos", "/proximos?demo=1"],
+  ["listas", "/listas?demo=1"],
+  ["resumen", "/resumen?demo=1"],
   ["esta noche", "/?accion=esta-noche&demo=1"],
 ] as const;
 

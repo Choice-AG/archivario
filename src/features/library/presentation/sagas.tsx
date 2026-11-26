@@ -509,81 +509,84 @@ export function Sagas({
               </button>
             ))}
           </div>
-          <section className="saved-sagas" aria-labelledby="saved-sagas-title">
-            <h2 id="saved-sagas-title" className="saga-library-title">
-              Mis sagas
-            </h2>
-            <p className="muted">
-              Tus guías guardadas. Guardar una saga no añade sus juegos a la
-              biblioteca.
-            </p>
-            {(
-              [
-                ["siguiendo", "En curso"],
-                ["en pausa", "En pausa"],
-                ["completada", "Completadas"],
-                ["abandonada", "Abandonadas"],
-              ] as const
-            ).map(([group, title]) => {
-              const items = saved.filter((x) => sagaStatus(state, x) === group);
-              if (!items.length) return null;
-              const tiles = (
-                <div className="saga-library">
-                  {items.map((s) => {
-                    const done = s.entries.filter((e) =>
-                      sagaCompleted(state, e),
-                    ).length;
-                    return (
-                      <button
-                        className="saga-tile"
-                        key={s.id}
-                        onClick={() => onSelect(s.id)}
-                      >
-                        <SagaArt saga={s} />
-                        <div>
-                          <span>
-                            {labels[s.order]} · {sagaStatusLabels[group]}
-                          </span>
-                          <h3>{s.name}</h3>
-                          <p>
-                            {done} / {s.entries.length} completados
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-              // Las abandonadas siguen a mano, pero plegadas para no estorbar.
-              return group === "abandonada" ? (
-                <details key={group} className="saga-group">
-                  <summary>
-                    {title} ({items.length})
-                  </summary>
-                  {tiles}
-                </details>
-              ) : (
-                <div key={group} className="saga-group">
-                  {items.length < saved.length && (
-                    <h3>
-                      {title} ({items.length})
-                    </h3>
-                  )}
-                  {tiles}
-                </div>
-              );
-            })}
-            {!saved.length && (
-              <p className="info-note">
-                Aún no has guardado ninguna saga. Explora las guías de abajo y
-                pulsa «Guardar saga».
+          {saved.length > 0 && (
+            <section
+              className="saved-sagas"
+              aria-labelledby="saved-sagas-title"
+            >
+              <h2 id="saved-sagas-title" className="saga-library-title">
+                Mis sagas
+              </h2>
+              <p className="muted">
+                Tus guías guardadas. Guardar una saga no añade sus juegos a la
+                biblioteca.
               </p>
-            )}
-          </section>
+              {(
+                [
+                  ["siguiendo", "En curso"],
+                  ["en pausa", "En pausa"],
+                  ["completada", "Completadas"],
+                  ["abandonada", "Abandonadas"],
+                ] as const
+              ).map(([group, title]) => {
+                const items = saved.filter(
+                  (x) => sagaStatus(state, x) === group,
+                );
+                if (!items.length) return null;
+                const tiles = (
+                  <div className="saga-library">
+                    {items.map((s) => {
+                      const done = s.entries.filter((e) =>
+                        sagaCompleted(state, e),
+                      ).length;
+                      return (
+                        <button
+                          className="saga-tile"
+                          key={s.id}
+                          onClick={() => onSelect(s.id)}
+                        >
+                          <SagaArt saga={s} />
+                          <div>
+                            <span>
+                              {labels[s.order]} · {sagaStatusLabels[group]}
+                            </span>
+                            <h3>{s.name}</h3>
+                            <p>
+                              {done} / {s.entries.length} completados
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+                // Las abandonadas siguen a mano, pero plegadas para no estorbar.
+                return group === "abandonada" ? (
+                  <details key={group} className="saga-group">
+                    <summary>
+                      {title} ({items.length})
+                    </summary>
+                    {tiles}
+                  </details>
+                ) : (
+                  <div key={group} className="saga-group">
+                    {items.length < saved.length && (
+                      <h3>
+                        {title} ({items.length})
+                      </h3>
+                    )}
+                    {tiles}
+                  </div>
+                );
+              })}
+            </section>
+          )}
           <h2 className="saga-library-title">Guías para empezar</h2>
           <p className="muted">
             {guides.length} recorridos preparados para ti. Ábrelos, consulta sus
             notas y guarda los que quieras personalizar.
+            {!saved.length &&
+              " Las que guardes aparecerán arriba, en «Mis sagas»."}
           </p>
           <div className="saga-library">
             {guides.map((s) => (

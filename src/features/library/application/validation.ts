@@ -4,7 +4,10 @@ import {
   assertLibrary,
   DAY_MINUTES,
   formats,
+  EXTRAS_MAX,
+  MOMENTS_MAX,
   TAGS_MAX,
+  VIEWS_MAX,
   LIMITS,
   sagaStatuses,
   statuses,
@@ -45,6 +48,33 @@ export const criticSchema = z
   })
   .strict();
 const tag = z.string().trim().min(1).max(40);
+const steamAppId = z
+    .number()
+    .int()
+    .positive()
+    .max(2 ** 31),
+  steamMinutes = z.number().int().min(0).max(60_000_000);
+const filterValue = text(80).optional();
+export const viewSchema = z
+  .object({
+    id,
+    name: text(40).trim().min(1),
+    filters: z
+      .object({
+        status: filterValue,
+        platform: filterValue,
+        genre: filterValue,
+        duration: filterValue,
+        ownership: filterValue,
+        ratingFilter: filterValue,
+        sort: filterValue,
+        tag: filterValue,
+        format: filterValue,
+        recommendedBy: filterValue,
+      })
+      .strict(),
+  })
+  .strict();
 export const gameSchema = z
   .object({
     times: timesSchema.optional(),
@@ -74,6 +104,30 @@ export const gameSchema = z
     edition: text(80).optional(),
     tags: z.array(tag).max(TAGS_MAX).optional(),
     recommendedBy: text(80).optional(),
+    moments: z
+      .array(
+        z
+          .object({
+            id,
+            text: text(500).trim().min(1),
+            date: localDate.optional(),
+          })
+          .strict(),
+      )
+      .max(MOMENTS_MAX)
+      .optional(),
+    extras: z
+      .array(
+        z
+          .object({ id, title: text(160).trim().min(1), done: z.boolean() })
+          .strict(),
+      )
+      .max(EXTRAS_MAX)
+      .optional(),
+    steam: z
+      .object({ appId: steamAppId, minutes: steamMinutes })
+      .strict()
+      .optional(),
     favorite: z.boolean(),
     next: z.boolean(),
     rating: z.number().min(1).max(10).multipleOf(0.5).optional(),
@@ -137,6 +191,7 @@ export const profileSchema = z
     celebrate: z.boolean().optional(),
     priority: z.array(id).max(LIMITS.games).optional(),
     timer: timerSchema.optional(),
+    views: z.array(viewSchema).max(VIEWS_MAX).optional(),
   })
   .strict();
 export const listSchema = z
@@ -145,6 +200,7 @@ export const listSchema = z
     name: text(80).trim().min(1),
     description: text(1000),
     gameIds: z.array(id).max(LIMITS.games),
+    shared: z.boolean().optional(),
   })
   .strict();
 export const sagaSchema = z
@@ -324,6 +380,21 @@ export const commandSchema = z.discriminatedUnion("type", [
     .strict(),
   z
     .object({ type: z.literal("timer"), timer: timerSchema.optional() })
+    .strict(),
+  z.object({ type: z.literal("save-view"), view: viewSchema }).strict(),
+  z.object({ type: z.literal("delete-view"), id }).strict(),
+  z
+    .object({
+      type: z.literal("steam-sync"),
+      items: z
+        .array(
+          z
+            .object({ gameId: id, appId: steamAppId, minutes: steamMinutes })
+            .strict(),
+        )
+        .min(1)
+        .max(LIMITS.games),
+    })
     .strict(),
   z
     .object({

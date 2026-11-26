@@ -13,6 +13,48 @@ async function openFilters(page: Page) {
   if ((await toggle.getAttribute("aria-expanded")) !== "true")
     await toggle.click();
   await expect(page.locator("#library-filters")).toBeVisible();
+  // Solo tres filtros están a la vista; el resto, tras «Más filtros».
+  const more = page.getByRole("button", { name: "Más filtros" });
+  if (await more.count()) await more.click();
+}
+const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1440) <= 640;
+// En móvil, el orden y la vista de portadas o lista van dentro de los filtros.
+async function openSort(page: Page) {
+  if (isMobile(page)) await openFilters(page);
+}
+// El calendario es una de las dos vistas del diario.
+async function openCalendar(page: Page) {
+  if (!/\/diario/.test(page.url()))
+    await page
+      .locator(isMobile(page) ? ".bottom-nav" : ".sidebar nav")
+      .getByRole("button", { name: "Diario", exact: true })
+      .click();
+  await page
+    .getByRole("group", { name: "Cómo ver el diario" })
+    .getByRole("button", { name: "Calendario" })
+    .click();
+  await expect(page).toHaveURL(/\/calendario/);
+}
+// Listas y resumen anual son páginas: se vuelve por el menú.
+async function backToLibrary(page: Page) {
+  await page
+    .locator(isMobile(page) ? ".bottom-nav" : ".sidebar nav")
+    .getByRole("button", { name: /^Biblioteca/ })
+    .click();
+  await expect(page).toHaveURL(/\/\?demo=1$/);
+}
+// En móvil se añade desde el botón central de la barra inferior.
+async function addGame(page: Page) {
+  if (isMobile(page)) {
+    await page
+      .locator(".bottom-nav")
+      .getByRole("button", { name: "Añadir", exact: true })
+      .click();
+    await page.getByRole("menuitem", { name: "Añadir juego" }).click();
+  } else
+    await page
+      .getByRole("button", { name: "Añadir juego", exact: true })
+      .click();
 }
 // El estado de cada tarjeta es un menú propio, no un <select>.
 const statusButton = (scope: Page | Locator, title: string) =>
@@ -120,7 +162,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
   await page
     .getByRole("button", { name: "Volver a la biblioteca", exact: true })
     .click();
-  await page.getByRole("button", { name: "Añadir juego", exact: true }).click();
+  await addGame(page);
   await page.getByRole("button", { name: "Añádelo a mano" }).click();
   await page.getByLabel("Título", { exact: true }).fill("Aventura de prueba");
   await pickPlatform(page, "PC");
@@ -173,11 +215,7 @@ test("biblioteca, actividad, notas, rejugada e importación", async ({
 test("calendario adaptable y API cerrada", async ({ page, request }) => {
   expect((await request.get("/api/library")).status()).toBe(401);
   await openDemo(page);
-  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
-  await page
-    .locator(mobile ? ".bottom-nav" : ".sidebar nav")
-    .getByRole("button", { name: "Calendario", exact: true })
-    .click();
+  await openCalendar(page);
   await expect(
     page.getByRole("heading", { name: "Tu calendario de aventuras." }),
   ).toBeVisible();
@@ -189,6 +227,7 @@ test("calendario adaptable y API cerrada", async ({ page, request }) => {
 });
 test("filtros de valoración, orden y resumen anual", async ({ page }) => {
   await openDemo(page);
+  await openSort(page);
   await page.getByLabel("Ordenar biblioteca").selectOption("rating");
   const ratings = await page.locator(".game-card .rating").allTextContents();
   expect(ratings.length).toBeGreaterThan(0);
@@ -208,7 +247,8 @@ test("filtros de valoración, orden y resumen anual", async ({ page }) => {
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await backToLibrary(page);
+  await openSort(page);
   await expect(page.getByLabel("Ordenar biblioteca")).toBeVisible();
 });
 test("listas, deseos, reseña de rejugada, selector y comparador", async ({
@@ -245,7 +285,7 @@ test("listas, deseos, reseña de rejugada, selector y comparador", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await backToLibrary(page);
   await page.getByRole("button", { name: "Abrir Hades", exact: true }).click();
   await page.getByRole("button", { name: "Editar juego", exact: true }).click();
   await page
@@ -382,11 +422,7 @@ test("estados rápidos, retomar, tiempos, búsqueda, varios días y deshacer", a
   await page
     .getByRole("button", { name: "Limpiar filtros", exact: true })
     .click();
-  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
-  await page
-    .locator(mobile ? ".bottom-nav" : ".sidebar nav")
-    .getByRole("button", { name: "Calendario", exact: true })
-    .click();
+  await openCalendar(page);
   await page
     .getByRole("button", { name: "Registrar varios días", exact: true })
     .click();
@@ -593,7 +629,6 @@ test("desglose diario completo, edición de una nota y pendientes en Próximos",
   }
   await chooseStatus(page, page, "Hades", "pendiente");
   const mobileView = (page.viewportSize()?.width ?? 1440) <= 640;
-  const nav = page.locator(mobileView ? ".bottom-nav" : ".sidebar nav");
   // En móvil, Próximos es una vista dentro de la biblioteca.
   await page
     .locator(mobileView ? ".library-views" : ".sidebar nav")
@@ -602,7 +637,7 @@ test("desglose diario completo, edición de una nota y pendientes en Próximos",
   await expect(
     page.getByRole("button", { name: "Abrir Hades", exact: true }),
   ).toBeVisible();
-  await nav.getByRole("button", { name: "Calendario", exact: true }).click();
+  await openCalendar(page);
   await page.locator(".calendar-day.today").click();
   await expect(
     page.getByRole("heading", { name: "Tu día de juego", exact: true }),
@@ -687,7 +722,7 @@ test("buscador global, continuar, lote y varios juegos en un día", async ({
     "data-status",
     "jugando",
   );
-  await nav.getByRole("button", { name: "Calendario", exact: true }).click();
+  await openCalendar(page);
   await page.locator(".calendar-day.today").click();
   await page
     .getByRole("button", { name: "Añadir juegos", exact: true })
@@ -827,11 +862,7 @@ test("cada vista tiene su propia URL y título", async ({ page }) => {
     page.getByRole("heading", { name: "Lo que has estado jugando." }),
   ).toBeVisible();
   await expect(page).toHaveTitle("Diario · Archivario");
-  const mobile = (page.viewportSize()?.width ?? 1440) <= 640;
-  await page
-    .locator(mobile ? ".bottom-nav" : ".sidebar nav")
-    .getByRole("button", { name: "Calendario", exact: true })
-    .click();
+  await openCalendar(page);
   await expect(page).toHaveURL(/\/calendario\?demo=1$/);
   await page.goBack();
   await expect(page).toHaveURL(/\/diario\?demo=1$/);
@@ -1135,6 +1166,7 @@ test("la biblioteca se puede ver como lista y se recuerda", async ({
   page,
 }) => {
   await openDemo(page);
+  await openSort(page);
   await page.getByRole("button", { name: "Lista", exact: true }).click();
   await expect(page.locator(".game-row").first()).toBeVisible();
   await expect(page.locator(".game-card")).toHaveCount(0);
@@ -1146,6 +1178,7 @@ test("la biblioteca se puede ver como lista y se recuerda", async ({
   await expect(
     row.getByRole("button", { name: /^Estado de Disco Elysium: Jugando/ }),
   ).toBeVisible();
+  await openSort(page);
   await page.getByRole("button", { name: "Portadas", exact: true }).click();
   await expect(page.locator(".game-card").first()).toBeVisible();
 });
@@ -1239,7 +1272,7 @@ test("añadir un juego a mano: dos preguntas y añadir otro", async ({
   page,
 }) => {
   await openDemo(page);
-  await page.getByRole("button", { name: "Añadir juego", exact: true }).click();
+  await addGame(page);
   await page.getByLabel("Buscar un juego").fill("Tunic");
   await page.getByRole("button", { name: "Añádelo a mano" }).click();
   // El título se toma de lo que habías escrito en la búsqueda.
@@ -1572,6 +1605,7 @@ test("Próximos se ordena por prioridad y muestra los lanzamientos", async ({
   page,
 }) => {
   await page.goto("/proximos?demo=1");
+  await openSort(page);
   await expect(page.getByLabel("Ordenar biblioteca")).toHaveValue("priority");
   await page.getByRole("button", { name: "Ordenar prioridad" }).click();
   const dialog = page.getByRole("dialog", { name: "Tu orden de prioridad" });
@@ -1752,4 +1786,165 @@ test("importa una exportación de HowLongToBeat", async ({ page }) => {
       ];
     })
     .toEqual([8.5, "completado", "2026-02-01", 1080]);
+});
+
+// Apunta tiempo en los días de la demo para ver gráficos e imágenes.
+async function seedMinutes(page: Page) {
+  await page.goto("/juegos/celeste?demo=1");
+  await page.getByRole("button", { name: "Añadir a favoritos" }).click();
+  await page.evaluate(() => {
+    const data = JSON.parse(localStorage.getItem("archivario-demo-v1")!);
+    data.activities.forEach((a: { minutes?: number }, i: number) => {
+      a.minutes = 60 * (i + 1);
+    });
+    localStorage.setItem("archivario-demo-v1", JSON.stringify(data));
+  });
+}
+
+test("el resumen anual muestra tu tiempo jugado y se guarda como imagen", async ({
+  page,
+}) => {
+  await seedMinutes(page);
+  await page.goto("/?demo=1");
+  await page.getByRole("button", { name: "Mi resumen anual" }).click();
+  await expect(page).toHaveURL(/\/resumen/);
+  const dialog = page.locator("main");
+  await expect(
+    dialog.getByRole("heading", { name: "Tu tiempo jugado" }),
+  ).toBeVisible();
+  const year = madridDay().slice(0, 4);
+  const chart = dialog.getByRole("figure", {
+    name: "Tiempo jugado cada mes de " + year,
+  });
+  await expect(chart).toBeVisible();
+  await chart.getByText("Ver como tabla").click();
+  await expect(chart.getByRole("table")).toContainText("h");
+  await expect(
+    dialog.getByRole("figure", { name: "Tiempo jugado por plataforma" }),
+  ).toContainText("PC");
+  await dialog.getByRole("button", { name: "Tu año en una imagen" }).click();
+  await expect(dialog.getByAltText("Vista previa de la imagen")).toBeVisible({
+    timeout: 15000,
+  });
+  const download = dialog.getByRole("link", { name: "Descargar" });
+  await expect(download).toHaveAttribute(
+    "download",
+    "archivario-" + year + ".png",
+  );
+  // La imagen se ha dibujado de verdad (1080 × 1350).
+  const size = await dialog
+    .getByAltText("Vista previa de la imagen")
+    .evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight]);
+  expect(size).toEqual([1080, 1350]);
+});
+
+test("el mes se guarda como imagen y el perfil muestra el tiempo por meses", async ({
+  page,
+}) => {
+  await seedMinutes(page);
+  await page.goto("/?demo=1");
+  const month = page.locator(".month-card");
+  await expect(month).toContainText("jugados según tu diario");
+  await month.getByRole("button", { name: "Tu mes en una imagen" }).click();
+  await expect(month.getByAltText("Vista previa de la imagen")).toBeVisible({
+    timeout: 15000,
+  });
+  await openProfile(page);
+  await expect(
+    page.getByRole("figure", {
+      name: "Tiempo jugado en los últimos doce meses",
+    }),
+  ).toBeVisible();
+});
+
+test("el diario busca en las notas y recuerda tal día como hoy", async ({
+  page,
+}) => {
+  // Un día del año pasado, con su nota.
+  await page.goto("/juegos/celeste?demo=1");
+  await page.getByRole("button", { name: "Añadir a favoritos" }).click();
+  const today = madridDay();
+  const lastYear = Number(today.slice(0, 4)) - 1 + today.slice(4);
+  await page.evaluate((date) => {
+    const data = JSON.parse(localStorage.getItem("archivario-demo-v1")!);
+    data.activities.push({
+      id: "celeste_" + date,
+      gameId: "celeste",
+      runId: data.games.find((g: { id: string }) => g.id === "celeste")
+        .primaryRunId,
+      date,
+      note: "La cima, por fin",
+    });
+    localStorage.setItem("archivario-demo-v1", JSON.stringify(data));
+  }, lastYear);
+  await page.goto("/diario?demo=1");
+  const memory = page.getByRole("region", { name: "Tal día como hoy" });
+  await expect(memory).toContainText("Hace un año");
+  await expect(memory).toContainText("La cima, por fin");
+  await page.getByLabel("Buscar en el diario").fill("CIMA");
+  await expect(page.locator(".activity-row strong")).toHaveText(["Celeste"]);
+  await page.getByRole("button", { name: "Quitar filtros" }).click();
+  // El calendario es la otra vista de la misma página.
+  await openCalendar(page);
+  await expect(
+    page.getByRole("heading", { name: "Tu calendario de aventuras." }),
+  ).toBeVisible();
+});
+
+test("una combinación de filtros se guarda como vista", async ({ page }) => {
+  await openDemo(page);
+  await openFilters(page);
+  await page.getByLabel("Filtrar por plataforma").selectOption("PC");
+  const total = await page.locator(".result-count").textContent();
+  await page.getByRole("button", { name: "Guardar como vista" }).click();
+  await page.getByLabel("Nombre de la vista").fill("Solo PC");
+  await page.getByRole("button", { name: "Guardar vista" }).click();
+  const views = page.getByRole("group", { name: "Vistas guardadas" });
+  await expect(views).toContainText("Solo PC");
+  await page.getByRole("button", { name: "Limpiar filtros" }).click();
+  await expect(page.getByLabel("Filtrar por plataforma")).toHaveValue("Todas");
+  await views.getByRole("button", { name: "Solo PC", exact: true }).click();
+  await expect(page.getByLabel("Filtrar por plataforma")).toHaveValue("PC");
+  await expect(page.locator(".result-count")).toHaveText(total!);
+  await views.getByRole("button", { name: "Quitar la vista Solo PC" }).click();
+  await expect(views).toHaveCount(0);
+});
+
+test("la ficha guarda momentos y contenido adicional", async ({ page }) => {
+  await page.goto("/juegos/hollow?demo=1#resena");
+  await page.getByRole("button", { name: "Guardar un momento" }).click();
+  await page.getByLabel("Nuevo momento").fill("El primer banco en Bocasucia");
+  await page.getByRole("button", { name: "Guardar momento" }).click();
+  await expect(page.locator(".moment-list")).toContainText("El primer banco");
+  await openTab(page, "Partidas");
+  await page.getByLabel("Nombre del DLC o la expansión").fill("Godmaster");
+  await page
+    .locator(".extras-form")
+    .getByRole("button", { name: "Añadir" })
+    .click();
+  await page.getByRole("checkbox", { name: "Godmaster" }).check();
+  await expect(page.locator("#game-extras")).toContainText("1 de 1 jugados");
+  // Los momentos se reúnen en el perfil.
+  await page.goto("/perfil?demo=1");
+  await expect(
+    page.getByRole("heading", { name: "Tus momentos" }),
+  ).toBeVisible();
+  await expect(page.locator(".profile-moments")).toContainText("Hollow Knight");
+});
+
+test("las listas tienen su página y se pueden marcar para compartir", async ({
+  page,
+}) => {
+  await page.goto("/listas?demo=1");
+  await expect(page).toHaveTitle("Listas · Archivario");
+  await page.getByRole("button", { name: "Nueva lista", exact: true }).click();
+  await page.getByLabel("Nombre de la lista").fill("Para recomendar");
+  await page.getByLabel("Compartir esta lista en mi perfil público").check();
+  await page.getByRole("button", { name: "+ Hades", exact: true }).click();
+  await page.getByRole("button", { name: "Guardar lista" }).click();
+  await expect(page.locator(".personal-list")).toContainText("Compartida");
+  expect((await demoData(page)).lists[0].shared).toBe(true);
+  // Próximos dice cuánto suma lo pendiente.
+  await page.goto("/proximos?demo=1");
+  await expect(page.locator(".backlog-note")).toContainText("pendiente");
 });
